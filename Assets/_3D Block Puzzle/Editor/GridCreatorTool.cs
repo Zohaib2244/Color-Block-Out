@@ -533,6 +533,7 @@ public class GridCreatorTool : EditorWindow
         gridManager.MarkExteriorCellsAsOccupied(interiorCells);
         gridManager.SaveGridDataToAsset(gridName);
         EditorUtility.SetDirty(gridParent);
+        gridManager.LoadGridData();
         Debug.Log("Custom grid created successfully!");
     }
     #endregion

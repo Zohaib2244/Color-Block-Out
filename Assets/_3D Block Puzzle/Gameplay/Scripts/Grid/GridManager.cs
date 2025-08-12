@@ -953,6 +953,14 @@ public class GridManager : MonoBehaviour
     {
         return x >= 0 && x < gridWidth && z >= 0 && z < gridLength;
     }
+    public void SetBlocksVisibility(bool isVisible)
+    {
+        foreach (var block in placedBlocks)
+        {
+            // if (block != null)
+            //     block.SetVisible(isVisible);
+        }
+    }
     public List<Vector2Int> GetWallPositions()
     {
         List<Vector2Int> positions = new List<Vector2Int>();
