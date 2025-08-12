@@ -51,6 +51,7 @@ MonoBehaviour:
   gridSpacing: 0.57
   WallParent: {fileID: 7132906394263757675}
   CellParent: {fileID: 106343542956780322}
+  HoleParent: {fileID: 0}
   placedBlocks:
   - {fileID: 1318083954768416467}
   - {fileID: 4639902063764976900}
@@ -61,6 +62,7 @@ MonoBehaviour:
   - {fileID: 8426638385636856437}
   Gates:
   - colorType: 1
+    obj: {fileID: 0}
     positions:
     - {x: 1, y: 4}
     - {x: 2, y: 4}
@@ -68,23 +70,19 @@ MonoBehaviour:
     - {x: 2, y: 2}
     - {x: 1, y: 2}
     - {x: 1, y: 3}
-    originalMeshMaterial: {fileID: 2100000, guid: 55d828cdbc997e041818443aa684256d,
-      type: 2}
   - colorType: 6
+    obj: {fileID: 0}
     positions:
     - {x: 4, y: 6}
     - {x: 4, y: 4}
     - {x: 4, y: 5}
-    originalMeshMaterial: {fileID: 2100000, guid: 709e710309651cc449860bc154e2fa7c,
-      type: 2}
   - colorType: 5
+    obj: {fileID: 0}
     positions:
     - {x: 2, y: 6}
     - {x: 2, y: 5}
     - {x: 3, y: 5}
     - {x: 3, y: 6}
-    originalMeshMaterial: {fileID: 2100000, guid: 709e710309651cc449860bc154e2fa7c,
-      type: 2}
   onBlockRemoved:
     m_PersistentCalls:
       m_Calls: []

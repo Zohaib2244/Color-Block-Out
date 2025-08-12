@@ -19,13 +19,13 @@ public class gateColor
 public class Gate
 {
     public BlockColorTypes colorType; // Changed from Color to BlockColorTypes
+    public GameObject obj;
     public List<Vector2Int> positions = new List<Vector2Int>();
-    public Material originalMeshMaterial; // Optional: Store original mesh material if needed
-    public Gate(BlockColorTypes colorType, List<Vector2Int> positions, Material originalMeshMaterial)
+    public Gate(BlockColorTypes colorType, List<Vector2Int> positions, GameObject obj)
     {
         this.colorType = colorType;
         this.positions = positions;
-        this.originalMeshMaterial = originalMeshMaterial;
+        this.obj = obj;
     }
 }
 

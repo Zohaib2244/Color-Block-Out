@@ -9,6 +9,7 @@ public class GateCreatorTool : EditorWindow
 {
     #region Variables
     private GridManager targetGrid;
+    private HoleConfiguration holeConfiguration;
     private BlockColorTypes selectedColorType = BlockColorTypes.Red;
     private List<Vector2Int> selectedPositions = new List<Vector2Int>();
     private Vector2 scrollPosition;
@@ -43,12 +44,20 @@ public class GateCreatorTool : EditorWindow
 
         // Target grid selection
         targetGrid = (GridManager)EditorGUILayout.ObjectField("Target Grid", targetGrid, typeof(GridManager), true);
+        // Hole Configuration selection
+        holeConfiguration = (HoleConfiguration)EditorGUILayout.ObjectField("Hole Configuration", holeConfiguration, typeof(HoleConfiguration), false);
 
         if (targetGrid == null)
         {
             EditorGUILayout.HelpBox("Please select a GridManager object", MessageType.Warning);
             EditorGUILayout.EndVertical();
             return;
+        }
+        if (holeConfiguration == null)
+        {
+            // Optionally, you can provide a default path as a string for reference or logging
+            string configPath = "Assets/_3D Block Puzzle/Gameplay/Scriptable Objects/HoleConfiguration.asset";
+            holeConfiguration = AssetDatabase.LoadAssetAtPath<HoleConfiguration>(configPath);
         }
 
         // Grid visualization settings
@@ -134,7 +143,7 @@ public class GateCreatorTool : EditorWindow
         GUI.enabled = selectedPositions.Count > 0;
         if (GUILayout.Button("Create Gate", GUILayout.Height(35)))
         {
-            CreateGate();
+            CreateHoleGate();
             selectedPositions.Clear();
         }
         GUI.enabled = true;
@@ -372,18 +381,128 @@ public class GateCreatorTool : EditorWindow
         }
     }
     #endregion
-    private void CreateGate()
+    #region Hole Creation Logic
+
+    private void CreateHoleGate()
     {
-        if (selectedPositions.Count == 0)
+        if (selectedPositions.Count == 0 || holeConfiguration == null)
             return;
 
-        Undo.RecordObject(targetGrid, "Add Gate");
+        Undo.RecordObject(targetGrid, "Create Hole Gate");
 
-        // Create the gate in the GridManager (no mesh needed)
-        targetGrid.AddGate(selectedColorType, new List<Vector2Int>(selectedPositions));
+        // Create a parent GameObject to hold all hole meshes for this gate
+        GameObject gateParent = new GameObject("HoleGate");
+        Undo.RegisterCreatedObjectUndo(gateParent, "Create HoleGate Parent");
 
+        // Use a HashSet for efficient neighbor checking
+        var selectedSet = new HashSet<Vector2Int>(selectedPositions);
+
+        foreach (var pos in selectedPositions)
+        {
+            // 1. Analyze the cell's connections
+            var connections = GetConnections(pos, selectedSet);
+            var holeType = GetHoleType(connections);
+            var prefabData = holeConfiguration.GetDataForType(holeType);
+
+            if (prefabData == null || prefabData.prefab == null)
+            {
+                Debug.LogWarning($"No prefab configured for HoleType: {holeType}");
+                continue;
+            }
+
+            // 2. Calculate rotation
+            float rotationAngle = CalculateRotation(prefabData, connections);
+
+            // 3. Instantiate and configure the prefab
+            Vector3 worldPos = targetGrid.GridToWorldPosition(pos);
+            GameObject holeInstance = (GameObject)PrefabUtility.InstantiatePrefab(prefabData.prefab, gateParent.transform);
+            holeInstance.transform.position = worldPos;
+            holeInstance.transform.rotation = Quaternion.Euler(0, rotationAngle, 0);
+
+            // Apply color to the new instance
+            var renderer = holeInstance.GetComponentInChildren<MeshRenderer>();
+            if (renderer != null)
+            {
+                // Create a new material instance to avoid changing the asset
+                Material newMat = new Material(GameConstants.GetGateColorMaterial(selectedColorType));
+                renderer.material = newMat;
+            }
+
+            Undo.RegisterCreatedObjectUndo(holeInstance, "Create Hole Piece");
+        }
+
+        // Parent the gateParent under the HoleParent in GridManager, if assigned
+        if (targetGrid.HoleParent != null)
+        {
+            gateParent.transform.SetParent(targetGrid.HoleParent, true);
+        }
+        else
+        {
+            gateParent.transform.SetParent(targetGrid.transform, true);
+        }
+        gateParent.transform.localPosition = Vector3.zero;
+        // 4. Register the logical gate in GridManager
+        targetGrid.AddHole(selectedColorType, new List<Vector2Int>(selectedPositions), gateParent);
         EditorUtility.SetDirty(targetGrid);
     }
-    
+
+    private List<Direction> GetConnections(Vector2Int pos, HashSet<Vector2Int> selectedSet)
+    {
+        var connections = new List<Direction>();
+        if (selectedSet.Contains(pos + Vector2Int.up)) connections.Add(Direction.Up);
+        if (selectedSet.Contains(pos + Vector2Int.right)) connections.Add(Direction.Right);
+        if (selectedSet.Contains(pos + Vector2Int.down)) connections.Add(Direction.Down);
+        if (selectedSet.Contains(pos + Vector2Int.left)) connections.Add(Direction.Left);
+        return connections;
+    }
+
+    private HoleType GetHoleType(List<Direction> connections)
+    {
+        switch (connections.Count)
+        {
+            case 0: return HoleType.Isolated;
+            case 1: return HoleType.EndCap;
+            case 2:
+                // Check if connections are opposite (Straight) or adjacent (Corner)
+                bool isOpposite = (connections.Contains(Direction.Up) && connections.Contains(Direction.Down)) ||
+                                  (connections.Contains(Direction.Right) && connections.Contains(Direction.Left));
+                return isOpposite ? HoleType.Straight : HoleType.Corner;
+            case 3: return HoleType.One_Side;
+            case 4: return HoleType.Middle;
+            default: return HoleType.Isolated;
+        }
+    }
+
+    private float CalculateRotation(HolePrefabData prefabData, List<Direction> actualConnections)
+    {
+        if (actualConnections.Count == 0 || actualConnections.Count >= 4) return 0;
+
+        // Convert connection directions to a set for easy lookup
+        var actualSet = new HashSet<Direction>(actualConnections);
+        var defaultSet = new HashSet<Direction>(prefabData.defaultOpenings);
+
+        // Try rotating 0, 90, 180, 270 degrees to find a match
+        for (int i = 0; i < 4; i++)
+        {
+            float angle = i * 90f;
+            int rotationSteps = Mathf.RoundToInt(angle / 90f);
+            var rotatedDefaultSet = new HashSet<Direction>(defaultSet.Select(d => RotateDirection(d, rotationSteps)));
+            if (rotatedDefaultSet.SetEquals(actualSet))
+            {
+                return angle;
+            }
+        }
+
+        return 0; // Fallback
+    }
+
+    private Direction RotateDirection(Direction dir, int rotationSteps)
+    {
+        // Always rotate clockwise in 90-degree steps
+        int dirInt = (int)dir;
+        int newDirInt = (dirInt + rotationSteps) % 4;
+        return (Direction)newDirInt;
+    }
+    #endregion
 }
 #endif

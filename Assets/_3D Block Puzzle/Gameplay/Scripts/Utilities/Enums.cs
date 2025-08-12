@@ -24,10 +24,10 @@ public static class EnumExtensions
 
 public enum Direction
 {
-    Up,
-    Down,
-    Left,
-    Right,
+    Up,    // 0 (North)
+    Right, // 1 (East)
+    Down,  // 2 (South)
+    Left   // 3 (West)
 }
 public enum ScreenType
 {

@@ -14,20 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   holePrefabs:
   - holeType: 0
-    prefab: {fileID: 0}
+    prefab: {fileID: 8884665514922113770, guid: 92099c90afc9366458297602d1e600dc,
+      type: 3}
     defaultOpenings: 
   - holeType: 1
-    prefab: {fileID: 0}
-    defaultOpenings: 
+    prefab: {fileID: 4693165436938532883, guid: 2b7a885fc2ae5e34bad0062218b8c992,
+      type: 3}
+    defaultOpenings: 01000000
   - holeType: 2
-    prefab: {fileID: 0}
-    defaultOpenings: 
+    prefab: {fileID: 2038664864200602780, guid: aa9bdbf6f513f7b4caffb43ed2fa9fc4,
+      type: 3}
+    defaultOpenings: 0100000003000000
   - holeType: 3
-    prefab: {fileID: 0}
-    defaultOpenings: 
+    prefab: {fileID: 1900918409881343599, guid: 7e1c48130e9313146b3edd49209f1f09,
+      type: 3}
+    defaultOpenings: 0100000002000000
   - holeType: 4
-    prefab: {fileID: 0}
-    defaultOpenings: 
+    prefab: {fileID: 3857665401255977549, guid: d7655589a54bd404d83c87aecaa7d007,
+      type: 3}
+    defaultOpenings: 010000000200000003000000
   - holeType: 5
-    prefab: {fileID: 0}
-    defaultOpenings: 
+    prefab: {fileID: 6490168748705778865, guid: 5803cce5dbd6b304bbaf87a406533562,
+      type: 3}
+    defaultOpenings: 00000000010000000200000003000000

@@ -20,6 +20,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private float gridSpacing = 2.25f; // Spacing between grid cells (for custom meshes)
     public Transform WallParent; // Parent object for walls
     public Transform CellParent;
+    public Transform HoleParent;
     private int gridWidth = 10; // Number of columns in the grid
     private int gridLength = 10; // Number of rows in the grid
     private Vector3 gridStartPosition; // Starting position of the grid
@@ -621,25 +622,22 @@ public class GridManager : MonoBehaviour
     }
 
     // Add a new gate to the grid
-    public void AddGate(BlockColorTypes colorType, List<Vector2Int> positions)
+    public void AddHole(BlockColorTypes colorType, List<Vector2Int> positions, GameObject obj)
     {
-        Material originalMaterial = null;
-
         foreach (var pos in positions)
         {
             //* Draw The Visual of the Gate
             if (cellRegistry.TryGetValue(pos, out GameObject cellObj))
             {
-                originalMaterial = cellObj.GetComponent<MeshRenderer>().sharedMaterial; // Store original material
-                cellObj.GetComponent<MeshRenderer>().material = GameConstants.GetGateColorMaterial(colorType);
+                cellObj.SetActive(false);
             }
         }
         // Create a new gate
         Gate gate = new(
             colorType,
             positions,
-            originalMaterial
-            );
+            obj);
+
         Gates.Add(gate);
 
     }
@@ -654,13 +652,10 @@ public class GridManager : MonoBehaviour
         {
             if (cellRegistry.TryGetValue(pos, out GameObject cellObj))
             {
-                //* Reset the cell's material to the original one
-                if (cellObj.TryGetComponent<MeshRenderer>(out MeshRenderer meshRenderer))
-                {
-                    meshRenderer.material = gate.originalMeshMaterial; // Restore original material
-                }
+                cellObj.SetActive(true); // Re-enable the cell
             }
         }
+        DestroyImmediate(gate.obj);
         //* Remove from list
         Gates.Remove(gate);
     }

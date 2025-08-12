@@ -497,6 +497,12 @@ public class GridCreatorTool : EditorWindow
         blocksContainer.transform.localPosition = new Vector3(0f, wallHeight / 2, 0f);
         blocksContainer.transform.localRotation = Quaternion.identity;
 
+        GameObject holesContainer = new GameObject("Holes");
+        Undo.RegisterCreatedObjectUndo(holesContainer, "Create Holes Container");
+        holesContainer.transform.SetParent(gridParent.transform);
+        holesContainer.transform.localPosition = new Vector3(0f, 0.03f, 0f);
+        holesContainer.transform.localRotation = Quaternion.identity;
+
         // Determine which cells are inside the walls
         bool[,] interiorCells = new bool[gridWidth, gridLength];
         FindInteriorCells(interiorCells);
@@ -521,6 +527,7 @@ public class GridCreatorTool : EditorWindow
         // Initialize grid manager with created cells
         gridManager.WallParent = wallsContainer.transform;
         gridManager.CellParent = gridCellsContainer.transform;
+        gridManager.HoleParent = holesContainer.transform;
         gridManager.GridStartPosition = gridParent.transform.position;
         gridManager.InitializeGridFromChildren();
         gridManager.MarkExteriorCellsAsOccupied(interiorCells);
