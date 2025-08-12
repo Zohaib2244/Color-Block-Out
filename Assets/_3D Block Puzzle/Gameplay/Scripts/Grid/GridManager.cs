@@ -411,7 +411,7 @@ public class GridManager : MonoBehaviour
         cellRegistry.Clear();
         HashSet<Vector2Int> processedPositions = new HashSet<Vector2Int>();
 
-        CellObject[] allCells = CellParent.GetComponentsInChildren<CellObject>();
+        CellObject[] allCells = CellParent.GetComponentsInChildren<CellObject>(true);
         DebugLogger.Log($"Building cell registry with {allCells.Length} cells...");
         foreach (CellObject cell in allCells)
         {
@@ -643,7 +643,7 @@ public class GridManager : MonoBehaviour
     }
 
     // Remove a gate from the grid
-    public void RemoveGate(Gate gate)
+    public void RemoveHole(Gate gate)
     {
         if (gate == null) return;
 

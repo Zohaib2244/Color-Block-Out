@@ -253,8 +253,8 @@ public class GateCreatorTool : EditorWindow
                     Gate gateToRemove = targetGrid.GetGate(clickPos);
                     if (gateToRemove != null)
                     {
-                        Undo.RecordObject(targetGrid, "Remove Gate");
-                        targetGrid.RemoveGate(gateToRemove);
+                        Undo.RecordObject(targetGrid, "Remove Hole");
+                        targetGrid.RemoveHole(gateToRemove);
                         EditorUtility.SetDirty(targetGrid);
                     }
                 }
@@ -421,11 +421,10 @@ public class GateCreatorTool : EditorWindow
 
             // Apply color to the new instance
             var renderer = holeInstance.GetComponentInChildren<MeshRenderer>();
-            if (renderer != null)
+            if (renderer)
             {
                 // Create a new material instance to avoid changing the asset
-                Material newMat = new Material(GameConstants.GetGateColorMaterial(selectedColorType));
-                renderer.material = newMat;
+                renderer.material = GameConstants.GetGateColorMaterial(selectedColorType);
             }
 
             Undo.RegisterCreatedObjectUndo(holeInstance, "Create Hole Piece");

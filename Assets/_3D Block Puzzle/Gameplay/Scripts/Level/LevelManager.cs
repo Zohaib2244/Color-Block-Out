@@ -79,6 +79,7 @@ public class LevelManager : MonoBehaviour
             }
         }
     }
+    [ContextMenu("Set Camera Properties")]
     void SetCamera()
     {
         cameraPosition = Camera.main.transform.position;

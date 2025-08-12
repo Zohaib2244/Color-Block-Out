@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3ca693f9ab3450c4ab6029353d696b13, type: 3}
-  m_Name: 
+  m_Name: LVL_2
   m_EditorClassIdentifier: 
   gridWidth: 6
   gridLength: 6

@@ -15,9 +15,4 @@ MonoBehaviour:
   collectionName: v1.0
   description: 
   levelPrefabs:
-  - {fileID: 4003410770681690014, guid: b0ed9359ecea01b4a9f007992fd54009, type: 3}
-  - {fileID: 7741233238378585433, guid: 317a5fdc45f03ee46a69664b5623ea3e, type: 3}
-  - {fileID: 8326804522038411889, guid: 49d5b63e783373144b1e234ee37d24d3, type: 3}
-  - {fileID: 5962808761418816697, guid: ae68c89d6ee37f346bdae759584500aa, type: 3}
-  - {fileID: 8198344815516127304, guid: 55c32ee463a6e474db70710e6d8f42e3, type: 3}
-  - {fileID: 3313759192823679613, guid: aef366d6b649210488abb465420b669f, type: 3}
+  - {fileID: 6972358481134453006, guid: 06e2ee0baddde8041abb47e79b2ed174, type: 3}
