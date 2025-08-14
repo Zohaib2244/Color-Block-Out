@@ -16,3 +16,10 @@ MonoBehaviour:
   description: 
   levelPrefabs:
   - {fileID: 6972358481134453006, guid: 06e2ee0baddde8041abb47e79b2ed174, type: 3}
+  - {fileID: 8788919260201333187, guid: db4ddcf20ddefe549ad368829f015397, type: 3}
+  - {fileID: 4990889324600796497, guid: 34dc0db9f7ee8a4498fd0102aa93b128, type: 3}
+  - {fileID: 8044713623021401163, guid: 608cf8fda90b654488be387d24f29094, type: 3}
+  - {fileID: 8926471913836822489, guid: a9175132b4866b540a3fa3fc9d12b935, type: 3}
+  - {fileID: 4402870042256116064, guid: 0687d8a10aad409418acf97221c5ef22, type: 3}
+  - {fileID: 1286803038811180770, guid: 95231d77d8e3ff942923c361f721277b, type: 3}
+  - {fileID: 246895316129706297, guid: 14d24f7e460d04c43ac58a5935a0ee33, type: 3}

@@ -12,6 +12,11 @@ public enum BlockColorTypes
     Pink,
     Teal
 }
+public enum BlockState
+{
+    Idle,
+    Moving,
+}
 
 public static class EnumExtensions
 {
