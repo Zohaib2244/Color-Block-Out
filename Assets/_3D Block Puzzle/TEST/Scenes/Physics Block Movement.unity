@@ -132,6 +132,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: BLK_L
       objectReference: {fileID: 0}
+    - target: {fileID: 2081392546138135497, guid: 30a9e30f4f61eee49a9bbfbf8d666131,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2422957545864552833, guid: 30a9e30f4f61eee49a9bbfbf8d666131,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -182,6 +187,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4621293280114100140, guid: 30a9e30f4f61eee49a9bbfbf8d666131,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     m_RemovedComponents:
     - {fileID: 3078550455324750600, guid: 30a9e30f4f61eee49a9bbfbf8d666131, type: 3}
     - {fileID: 4751586563606194141, guid: 30a9e30f4f61eee49a9bbfbf8d666131, type: 3}
@@ -233,7 +243,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &149831808
 MonoBehaviour:
@@ -247,20 +257,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &149831809
 MonoBehaviour:
@@ -293,6 +303,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: BLK_1x1
       objectReference: {fileID: 0}
+    - target: {fileID: 6243390432295384878, guid: 3dcd948099473514da5ce50d83d5a538,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6765578518825261181, guid: 3dcd948099473514da5ce50d83d5a538,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 7559121287707561582, guid: 3dcd948099473514da5ce50d83d5a538,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -394,7 +414,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &370056429
 MonoBehaviour:
@@ -408,20 +428,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &370056430
 MonoBehaviour:
@@ -499,10 +519,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1571517964992309709, guid: 6b09e86780f4f13478423029ade38fd2,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 8602162723037213333, guid: 6b09e86780f4f13478423029ade38fd2,
         type: 3}
       propertyPath: m_Name
       value: BLK_Small L
+      objectReference: {fileID: 0}
+    - target: {fileID: 8602162723037213333, guid: 6b09e86780f4f13478423029ade38fd2,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 3692354427327069154, guid: 6b09e86780f4f13478423029ade38fd2, type: 3}
@@ -555,7 +585,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &633646844
 MonoBehaviour:
@@ -569,20 +599,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &633646845
 MonoBehaviour:
@@ -615,6 +645,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: BLK_Plus
       objectReference: {fileID: 0}
+    - target: {fileID: 2710315357781382511, guid: 34701b07a92d8da40a661626a3ba69ca,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5563248018909757216, guid: 34701b07a92d8da40a661626a3ba69ca,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 7822303194263474622, guid: 34701b07a92d8da40a661626a3ba69ca,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -716,7 +756,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &933317085
 MonoBehaviour:
@@ -730,20 +770,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 1
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &933317086
 MonoBehaviour:
@@ -908,10 +948,20 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2333039854561947088, guid: 45a9b4e60f445914ea8c75305dcda124,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 4854115063532324756, guid: 45a9b4e60f445914ea8c75305dcda124,
         type: 3}
       propertyPath: m_Name
       value: BLK_1x3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4854115063532324756, guid: 45a9b4e60f445914ea8c75305dcda124,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5042150132073691638, guid: 45a9b4e60f445914ea8c75305dcda124,
         type: 3}
@@ -1014,7 +1064,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &1363917017
 MonoBehaviour:
@@ -1028,20 +1078,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &1363917018
 MonoBehaviour:
@@ -1074,6 +1124,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: BLK_L Inverted
       objectReference: {fileID: 0}
+    - target: {fileID: 1563043879817914565, guid: 379fe6e0c8203d542aa7204dea8f01aa,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574907069366853370, guid: 379fe6e0c8203d542aa7204dea8f01aa,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 5664961018367329774, guid: 379fe6e0c8203d542aa7204dea8f01aa,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1175,7 +1235,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &1366845289
 MonoBehaviour:
@@ -1189,20 +1249,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &1366845290
 MonoBehaviour:
@@ -1332,6 +1392,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: BLK_1x2
       objectReference: {fileID: 0}
+    - target: {fileID: 1310610162529741384, guid: eb9529d3bc2e23a49bc07924b4a607bb,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 6369267468788804766, guid: eb9529d3bc2e23a49bc07924b4a607bb,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1382,6 +1447,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6862127039185785866, guid: eb9529d3bc2e23a49bc07924b4a607bb,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     m_RemovedComponents:
     - {fileID: 4324220753363177875, guid: eb9529d3bc2e23a49bc07924b4a607bb, type: 3}
     - {fileID: 7856777971835518701, guid: eb9529d3bc2e23a49bc07924b4a607bb, type: 3}
@@ -1433,7 +1503,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &1813632191
 MonoBehaviour:
@@ -1447,20 +1517,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &1813632192
 MonoBehaviour:
@@ -1647,10 +1717,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5899549307616283793, guid: 5dc2999cf6f29854b80f08d485d1421a,
+        type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e3da215c2c3d8264a97aaf054fa5f690, type: 2}
     - target: {fileID: 8158624305623248686, guid: 5dc2999cf6f29854b80f08d485d1421a,
         type: 3}
       propertyPath: m_Name
       value: BLK_T
+      objectReference: {fileID: 0}
+    - target: {fileID: 8158624305623248686, guid: 5dc2999cf6f29854b80f08d485d1421a,
+        type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7589059012307624713, guid: 5dc2999cf6f29854b80f08d485d1421a, type: 3}
@@ -1703,7 +1783,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &2101641602
 MonoBehaviour:
@@ -1717,20 +1797,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d33c0ebc8413c4a85734f60d9242e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockState: 0
   enablePhysicsMovement: 1
-  hoverHeight: 1
   moveForce: 5
   maxSpeed: 5
   mouseSensitivity: 1
-  physicsTiltMultiplier: 1.5
   blockLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  physicsTiltMultiplier: 1.5
   maxTiltAngle: 45
   tiltSmoothness: 10
-  staticOnHit: 0
-  shakeDuration: 0.1
-  shakeMagnitude: 0.1
+  bumpForce: 2
+  bumpTiltAmount: 20
+  bumpTiltDuration: 0.25
   outline: {fileID: 0}
 --- !u!114 &2101641603
 MonoBehaviour:

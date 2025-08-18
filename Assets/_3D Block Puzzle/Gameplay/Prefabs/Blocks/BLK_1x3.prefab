@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 1097674213647451573}
   - component: {fileID: 2333039854561947088}
   - component: {fileID: 6003335405305478092}
-  - component: {fileID: 6376297386660028034}
   - component: {fileID: 8687663231703027499}
   - component: {fileID: 2623379287068355790}
+  - component: {fileID: -3747156633997604835}
   m_Layer: 0
   m_Name: BLK_1x3
   m_TagString: Untagged
@@ -30,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4854115063532324756}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.45000002, y: 0.45000002, z: 0.45000002}
   m_ConstrainProportionsScale: 1
@@ -111,18 +111,8 @@ MonoBehaviour:
       m_Calls: []
   gridPosition: []
   gridManager: {fileID: 0}
---- !u!114 &6376297386660028034
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4854115063532324756}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe20fe00581f5e047965d37e09beee5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  Rigidbody: {fileID: -3747156633997604835}
+  canBump: 1
 --- !u!114 &8687663231703027499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -160,5 +150,32 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.2117974, y: 0.7836293, z: 3.659857}
-  m_Center: {x: 0.00000038743025, y: 0.39181364, z: 0.0000002384186}
+  m_Size: {x: 1.2117974, y: 0.78362936, z: 3.6598563}
+  m_Center: {x: 0.00000039736426, y: 0.39181364, z: 0.00000026490952}
+--- !u!54 &-3747156633997604835
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4854115063532324756}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 2
+  m_AngularDrag: 5
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 36
+  m_CollisionDetection: 0

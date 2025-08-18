@@ -2,10 +2,10 @@ using UnityEngine;
 
 public static class BlockProperties
 {
-    public const float maxTiltAngle = 10f; // Maximum tilt angle for blocks
-    public const float tiltSmoothness = 5f;
-    public const float collisionThreshold = 0.9f; // Threshold for collision detection
-
+    public static float bumpForce = 2f;
+    public static float bumpTiltAmount = 25f;
+    public static float bumpTiltDuration = 0.5f;
+    public static float bumpDetectDirectionThreshold = 0.1f;
     public static float GetBlockRandomStartYValue()
     {
         // Generate a random start Y value for blocks

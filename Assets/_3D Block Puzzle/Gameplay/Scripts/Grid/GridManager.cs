@@ -733,7 +733,7 @@ public class GridManager : MonoBehaviour
             //* Play SFX
             AudioManager.Instance.PlayBlockRemove();
             //* Move the block to the exit point
-            block.transform.DOMoveY(-0.5f, 0.6f).SetEase(Ease.InOutBack)
+            block.transform.DOMoveY(-0.5f, 0.6f).SetEase(Ease.InCubic)
                 .OnComplete(() =>
                 {
                     // Only remove and trigger event if not already done
@@ -877,7 +877,7 @@ public class GridManager : MonoBehaviour
             gridStartPosition.z + pivotGrid.y * gridSpacing
         );
 
-        block.SetGridPosition(gridPositions);
+        block.gridPosition = gridPositions;
         block.transform.position = targetWorld;
 
     }

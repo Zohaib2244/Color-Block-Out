@@ -53,8 +53,8 @@ public class LevelManager : MonoBehaviour
     }
     void SpawnLevel()
     {
-        transform.localScale = Vector3.zero;
-        transform.DOScale(Vector3.one, 0.75f).SetEase(Ease.OutBack);
+        //? transform.localScale = Vector3.zero;
+        //? transform.DOScale(Vector3.one, 0.75f).SetEase(Ease.OutBack);
     }
     void DespawnLevel()
     {

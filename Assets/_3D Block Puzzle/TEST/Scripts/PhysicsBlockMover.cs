@@ -11,10 +11,10 @@ public class PhysicsBlockMover : MonoBehaviour
     [SerializeField] private float moveForce = 4f;
     [SerializeField] private float maxSpeed = 5f;
     [SerializeField] private float mouseSensitivity = 1f;
-    [SerializeField] private float physicsTiltMultiplier = 1.5f;
     [SerializeField] private LayerMask blockLayer = -1; // What layers to consider as blocks
 
     [Header("Tilt Settings")]
+    [SerializeField] private float physicsTiltMultiplier = 1.5f;
     [SerializeField] private float maxTiltAngle = 45f;
     [SerializeField] private float tiltSmoothness = 10f;
     [SerializeField] private float bumpForce = 2f;
