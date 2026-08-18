@@ -19,6 +19,8 @@ public sealed class GridCreatorTool : EditorWindow
     private int gridWidth = 10;
     private int gridLength = 10;
     private float cellSize = 0.57f;
+    private float catParentHeight = 0.03f;
+    private float holeParentHeight = 0.03f;
 
     private bool[,] blockedCells;
     private Vector2 scroll;
@@ -40,6 +42,11 @@ public sealed class GridCreatorTool : EditorWindow
     private void OnEnable()
     {
         config = CatPuzzleConfig.Resolve(config);
+        if (config != null)
+        {
+            catParentHeight = config.defaultCatParentHeight;
+            holeParentHeight = config.defaultHoleParentHeight;
+        }
         EnsureCells();
     }
 
@@ -80,6 +87,12 @@ public sealed class GridCreatorTool : EditorWindow
         if (EditorGUI.EndChangeCheck() && (newWidth != gridWidth || newLength != gridLength)) Resize(newWidth, newLength);
 
         cellSize = Mathf.Max(0.01f, EditorGUILayout.FloatField("Cell Size", cellSize));
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Content Heights", EditorStyles.boldLabel);
+        catParentHeight = EditorGUILayout.FloatField("Cats Parent Y", catParentHeight);
+        holeParentHeight = EditorGUILayout.FloatField("Holes Parent Y", holeParentHeight);
+        EditorGUILayout.HelpBox("Local Y of the Cats and Holes parents created inside the grid. Saved with the grid, so every level built on it lines up.", MessageType.None);
         EditorGUILayout.EndVertical();
     }
 
@@ -202,6 +215,8 @@ public sealed class GridCreatorTool : EditorWindow
         gridWidth = data.gridWidth;
         gridLength = data.gridLength;
         cellSize = data.cellSize;
+        catParentHeight = data.catParentHeight;
+        holeParentHeight = data.holeParentHeight;
         gridName = data.name;
         blockedCells = new bool[gridWidth, gridLength];
         for (int x = 0; x < gridWidth; x++)
@@ -228,6 +243,8 @@ public sealed class GridCreatorTool : EditorWindow
         Undo.RecordObject(target, "Save Grid");
         target.Initialize(gridWidth, gridLength);
         target.cellSize = cellSize;
+        target.catParentHeight = catParentHeight;
+        target.holeParentHeight = holeParentHeight;
         for (int x = 0; x < gridWidth; x++)
             for (int z = 0; z < gridLength; z++)
                 target.SetWall(x, z, blockedCells[x, z] || !interior[x, z]);
@@ -245,6 +262,8 @@ public sealed class GridCreatorTool : EditorWindow
         GridData data = CreateInstance<GridData>();
         data.Initialize(gridWidth, gridLength);
         data.cellSize = cellSize;
+        data.catParentHeight = catParentHeight;
+        data.holeParentHeight = holeParentHeight;
         bool[,] interior = FindInteriorCells();
         for (int x = 0; x < gridWidth; x++)
             for (int z = 0; z < gridLength; z++)

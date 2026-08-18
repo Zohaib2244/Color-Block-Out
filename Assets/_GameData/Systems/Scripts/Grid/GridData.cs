@@ -11,6 +11,13 @@ public class GridData : ScriptableObject
     public int gridLength = 10;
     public float cellSize = 0.57f;
 
+    [Header("Content Heights")]
+    [Tooltip("Local Y of the Cats parent inside the grid. Every cat sits at this height.")]
+    public float catParentHeight = 0.03f;
+
+    [Tooltip("Local Y of the Holes parent inside the grid. Every hole sits at this height.")]
+    public float holeParentHeight = 0.03f;
+
     [HideInInspector] public Vector3 gridStartPosition = Vector3.zero;
 
     [System.Serializable]

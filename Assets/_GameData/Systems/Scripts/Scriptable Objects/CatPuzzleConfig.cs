@@ -29,8 +29,13 @@ public sealed class CatPuzzleConfig : ScriptableObject
     [Header("Pieces")]
     public GameObject catPrefab;
     public CatHoleConfiguration holeConfiguration;
-    public float catHeight = 0.03f;
-    public float holeHeight = 0.03f;
+
+    [Header("Defaults For New Grids")]
+    [Tooltip("Seeds GridData.catParentHeight when a grid is created. Per-grid value wins after that.")]
+    public float defaultCatParentHeight = 0.03f;
+
+    [Tooltip("Seeds GridData.holeParentHeight when a grid is created. Per-grid value wins after that.")]
+    public float defaultHoleParentHeight = 0.03f;
 
     private static CatPuzzleConfig cached;
 

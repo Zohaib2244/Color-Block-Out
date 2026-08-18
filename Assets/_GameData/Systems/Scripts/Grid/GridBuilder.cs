@@ -38,9 +38,10 @@ public static class GridBuilder
         Transform cells = CreateContainer(gridObject.transform, CellsContainerName, 0f);
         Transform walls = CreateContainer(gridObject.transform, WallsContainerName, 0f);
 
-        // Content parents belong to the grid, so cats and holes share its cell space.
-        Transform cats = CreateContainer(gridObject.transform, CatsContainerName, config != null ? config.catHeight : 0.03f);
-        Transform holes = CreateContainer(gridObject.transform, HolesContainerName, config != null ? config.holeHeight : 0.03f);
+        // Content parents belong to the grid, so cats and holes share its cell space and
+        // sit at the heights this grid asset asks for.
+        Transform cats = CreateContainer(gridObject.transform, CatsContainerName, data.catParentHeight);
+        Transform holes = CreateContainer(gridObject.transform, HolesContainerName, data.holeParentHeight);
 
         for (int x = 0; x < data.gridWidth; x++)
             for (int z = 0; z < data.gridLength; z++)
