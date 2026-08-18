@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.IO;
 
-[CreateAssetMenu(fileName = "New Grid Data", menuName = "3D Block Puzzle/Grid Data")]
+[CreateAssetMenu(fileName = "New Grid Data", menuName = "Cat Puzzle/Grid Data")]
 public class GridData : ScriptableObject
 {
     // Grid dimensions

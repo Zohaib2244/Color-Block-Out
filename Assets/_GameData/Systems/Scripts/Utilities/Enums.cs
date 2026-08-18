@@ -53,12 +53,3 @@ public enum LevelState
     Completed,
     Failed,
 }
-public enum HoleType
-{
-    Isolated,   //* 0 connections
-    EndCap,     //* 1 connection
-    Straight,   //* 2 opposite connections
-    Corner,     //* 2 adjacent connections
-    One_Side,   //* 3 connections
-    Middle      //* 4 connections
-}

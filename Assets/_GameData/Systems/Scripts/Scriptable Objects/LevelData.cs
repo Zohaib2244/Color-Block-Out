@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Level Collection", menuName = "3D Block Puzzle/Level Collection")]
+[CreateAssetMenu(fileName = "New Level Collection", menuName = "Cat Puzzle/Level Collection")]
 public class LevelData : ScriptableObject
 {
     [Tooltip("Name of this level collection")]

@@ -5,7 +5,6 @@ using Voodoo.Utils;
 public static class GameConstants
 {
     private static List<BlockColor> blockColors = new List<BlockColor>();
-    private static List<gateColor> gateColors = new List<gateColor>();
     private static Material defaultWallMaterial;
     private static int currentLevelIndex = 0;
     public static bool inputEnabled = true;
@@ -35,29 +34,6 @@ public static class GameConstants
             defaultWallMaterial = Resources.Load<Material>("Materials/DefaultWall");
         }
         return defaultWallMaterial;
-    }
-    public static Material GetGateColorMaterial(BlockColorTypes colorType)
-    {
-        if (gateColors.Count == 0)
-        {
-            InitializeGateColors();
-        }
-        return gateColors[(int)colorType].colorMaterial;
-    }
-    static void InitializeGateColors()
-    {
-        int colorCount = EnumExtensions.Count<BlockColorTypes>();
-        // Initialize
-        gateColors = new List<gateColor>(colorCount);
-        for (int i = 0; i < colorCount; i++)
-        {
-            gateColor color = new gateColor
-            {
-                colorType = (BlockColorTypes)i,
-                colorMaterial = Resources.Load<Material>($"Materials/GateColors/{(BlockColorTypes)i}")
-            };
-            gateColors.Add(color);
-        }
     }
     public static Material GetBlockColorMaterial(BlockColorTypes colorType)
     {

@@ -47,7 +47,7 @@ public class GridCreatorTool : EditorWindow
     #endregion
 
     #region Essentials
-    [MenuItem("Block Puzzle/Grid Creator")]
+    [MenuItem("Cat Puzzle/Grid Creator")]
     public static void ShowWindow()
     {
         GetWindow<GridCreatorTool>("Grid Creator");
@@ -256,7 +256,9 @@ public class GridCreatorTool : EditorWindow
             {
                 // Calculate grid coordinates
                 int newHoverX = Mathf.FloorToInt((mousePos.x - gridRect.x) / cellWidth);
-                int newHoverZ = Mathf.FloorToInt((mousePos.y - gridRect.y) / cellWidth);
+                // The scene uses +Z upward, so the top row of the editor is
+                // the highest Z row (not Z=0).
+                int newHoverZ = gridLength - 1 - Mathf.FloorToInt((mousePos.y - gridRect.y) / cellWidth);
 
                 // Ensure we're within the grid bounds
                 if (newHoverX >= 0 && newHoverX < gridWidth && newHoverZ >= 0 && newHoverZ < gridLength)
@@ -307,7 +309,8 @@ public class GridCreatorTool : EditorWindow
         // Draw row labels (Z axis)
         for (int z = 0; z < gridLength; z++)
         {
-            Rect labelRect = new Rect(gridRect.x - 20, gridRect.y + z * cellWidth, 20, cellWidth);
+            int displayRow = gridLength - 1 - z;
+            Rect labelRect = new Rect(gridRect.x - 20, gridRect.y + displayRow * cellWidth, 20, cellWidth);
             GUI.Label(labelRect, z.ToString(), new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight });
         }
 
@@ -318,7 +321,7 @@ public class GridCreatorTool : EditorWindow
             {
                 Rect cellRect = new Rect(
                     gridRect.x + x * cellWidth,
-                    gridRect.y + z * cellWidth,
+                    gridRect.y + (gridLength - 1 - z) * cellWidth,
                     cellWidth,
                     cellWidth
                 );
