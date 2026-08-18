@@ -30,6 +30,15 @@ public sealed class CatPuzzleConfig : ScriptableObject
     public GameObject catPrefab;
     public CatHoleConfiguration holeConfiguration;
 
+    [Header("Hole Highlight")]
+    [Tooltip("Scale multiplier applied to a hole's meshes while it is being dragged.")]
+    public float highlightScale = 1.08f;
+
+    [Tooltip("How far a hole's meshes lift while it is being dragged.")]
+    public float highlightLift = 0.04f;
+
+    public float highlightDuration = 0.15f;
+
     [Header("Defaults For New Grids")]
     [Tooltip("Seeds GridData.catParentHeight when a grid is created. Per-grid value wins after that.")]
     public float defaultCatParentHeight = 0.03f;

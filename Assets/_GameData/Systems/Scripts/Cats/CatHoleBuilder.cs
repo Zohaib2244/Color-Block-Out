@@ -32,6 +32,7 @@ public static class CatHoleBuilder
 
         CatHole hole = root.AddComponent<CatHole>();
         hole.Configure(placement.color, placement.origin, offsets);
+        root.AddComponent<CatHoleHighlight>();
         root.AddComponent<CatHoleDragHandler>();
 
         BuildPieces(hole, grid, config);
@@ -57,6 +58,15 @@ public static class CatHoleBuilder
             if (Application.isPlaying) Object.Destroy(existing); else Object.DestroyImmediate(existing);
         }
 
+        // Meshes hang off a Visual child so highlight tweens never fight the root's grid snapping.
+        Transform visual = CreateVisualRoot(hole.transform);
+        CatHoleHighlight highlight = hole.GetComponent<CatHoleHighlight>();
+        if (highlight != null)
+        {
+            highlight.SetVisual(visual);
+            if (config != null) highlight.Configure(config.highlightScale, config.highlightLift, config.highlightDuration);
+        }
+
         float spacing = grid != null ? grid.GetCellSize() : 1f;
         HashSet<Vector2Int> shape = new HashSet<Vector2Int>(hole.Offsets);
         Material material = GameConstants.GetGateColorMaterial(hole.Color);
@@ -72,7 +82,7 @@ public static class CatHoleBuilder
                 continue;
             }
 
-            GameObject piece = GridBuilder.InstantiatePrefab(data.prefab, hole.transform);
+            GameObject piece = GridBuilder.InstantiatePrefab(data.prefab, visual);
             piece.name = $"{type}_{offset.x}_{offset.y}";
             piece.transform.localPosition = new Vector3(offset.x * spacing, 0f, offset.y * spacing);
             piece.transform.localRotation = Quaternion.Euler(0f, GetQuarterTurns(data, connections) * 90f, 0f);
@@ -98,6 +108,17 @@ public static class CatHoleBuilder
         hole.SetOriginCell(origin);
         if (grid == null) return;
         hole.transform.localPosition = grid.CellToLocalPosition(origin);
+    }
+
+    private static Transform CreateVisualRoot(Transform parent)
+    {
+        GameObject visual = new GameObject(CatHoleHighlight.VisualName);
+        GridBuilder.RegisterCreated(visual, "Create Hole Visual");
+        visual.transform.SetParent(parent, false);
+        visual.transform.localPosition = Vector3.zero;
+        visual.transform.localRotation = Quaternion.identity;
+        visual.transform.localScale = Vector3.one;
+        return visual.transform;
     }
 
     /// <summary>Shifts offsets so the lowest cell sits at (0,0), the shape's anchor.</summary>

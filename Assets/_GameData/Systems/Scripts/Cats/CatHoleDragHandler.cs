@@ -11,6 +11,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
     [SerializeField] private float moveDuration = 0.12f;
 
     private CatHole hole;
+    private CatHoleHighlight highlight;
     private Vector2Int originalCell;
     private Vector2Int previewCell;
     private Vector3 grabOffset;
@@ -18,7 +19,11 @@ public sealed class CatHoleDragHandler : MonoBehaviour
 
     private CatPuzzleController Controller => CatPuzzleController.Instance;
 
-    private void Awake() => hole = GetComponent<CatHole>();
+    private void Awake()
+    {
+        hole = GetComponent<CatHole>();
+        highlight = GetComponent<CatHoleHighlight>();
+    }
 
     public void OnTouchBegin(Vector2 screenPosition)
     {
@@ -27,6 +32,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         previewCell = originalCell;
         grabOffset = transform.position - GetWorldPosition(screenPosition);
         dragging = true;
+        if (highlight != null) highlight.SetHighlighted(true);
     }
 
     public void OnTouchMove(Vector2 screenPosition)
@@ -48,6 +54,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         if (!dragging) return;
         dragging = false;
         transform.DOKill();
+        if (highlight != null) highlight.SetHighlighted(false);
 
         if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell)) return;
         MoveTo(originalCell);
