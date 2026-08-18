@@ -32,11 +32,14 @@ public sealed class CatHoleDragHandler : MonoBehaviour
     public void OnTouchMove(Vector2 screenPosition)
     {
         if (!dragging || Controller == null) return;
-        Vector2Int candidate = Controller.WorldToGrid(GetWorldPosition(screenPosition) + grabOffset);
-        if (candidate == previewCell) return;
-        if (!Controller.CanPlaceHole(hole, candidate)) return;
+        Vector2Int target = Controller.WorldToGrid(GetWorldPosition(screenPosition) + grabOffset);
+        if (target == previewCell) return;
 
-        previewCell = candidate;
+        // Walk toward the finger rather than teleporting, so obstacles actually stop the shape.
+        Vector2Int reachable = Controller.SlideHole(hole, previewCell, target);
+        if (reachable == previewCell) return;
+
+        previewCell = reachable;
         MoveTo(previewCell);
     }
 

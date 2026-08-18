@@ -33,6 +33,8 @@ public sealed class CatPuzzleController : MonoBehaviour
 
     public bool HasLevel => activeLevel != null;
     public bool IsComplete => HasLevel && Cats.All(cat => cat == null || cat.IsCollected);
+    public int GridWidth => GridManager != null ? GridManager.GetGridWidth() : 0;
+    public int GridHeight => GridManager != null ? GridManager.GetGridLength() : 0;
 
     private void Awake()
     {
@@ -119,20 +121,69 @@ public sealed class CatPuzzleController : MonoBehaviour
     #endregion
 
     #region Hole movement
-    /// <summary>True when every cell the hole would cover from <paramref name="origin"/> is free.</summary>
+    /// <summary>
+    /// True when every cell the shape would cover from <paramref name="origin"/> is free. The
+    /// shape is what defines the limits: the board edge and walls, holes of any colour, and cats
+    /// this hole cannot swallow. Cats of the hole's own colour are not obstacles — it eats them.
+    /// </summary>
     public bool CanPlaceHole(CatHole hole, Vector2Int origin)
     {
         if (hole == null || !hole.IsActive) return false;
         foreach (Vector2Int cell in hole.CellsAt(origin))
         {
             if (!IsPlayable(cell)) return false;
-            foreach (CatHole other in Holes)
-            {
-                if (other == null || other == hole || !other.IsActive) continue;
-                if (other.Covers(cell)) return false;
-            }
+            if (IsBlockedByCat(hole, cell)) return false;
+            if (IsBlockedByHole(hole, cell)) return false;
         }
         return true;
+    }
+
+    private bool IsBlockedByCat(CatHole hole, Vector2Int cell)
+    {
+        foreach (CatPiece cat in Cats)
+        {
+            if (cat == null || cat.IsCollected || cat.GridPosition != cell) continue;
+            if (cat.Color != hole.Color) return true;
+        }
+        return false;
+    }
+
+    private bool IsBlockedByHole(CatHole hole, Vector2Int cell)
+    {
+        foreach (CatHole other in Holes)
+        {
+            if (other == null || other == hole || !other.IsActive) continue;
+            if (other.Covers(cell)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Walks the hole one cell at a time toward <paramref name="target"/> and stops where the
+    /// shape would clip something, so a hole can never jump an obstacle. When the dominant axis
+    /// is blocked the other one is tried, which lets the shape slide along a wall instead of
+    /// sticking. Returns the furthest origin actually reachable.
+    /// </summary>
+    public Vector2Int SlideHole(CatHole hole, Vector2Int from, Vector2Int target)
+    {
+        if (hole == null || !hole.IsActive) return from;
+
+        Vector2Int current = from;
+        int remaining = Mathf.Abs(target.x - from.x) + Mathf.Abs(target.y - from.y);
+        while (current != target && remaining-- > 0)
+        {
+            Vector2Int delta = target - current;
+            Vector2Int stepX = new Vector2Int(System.Math.Sign(delta.x), 0);
+            Vector2Int stepY = new Vector2Int(0, System.Math.Sign(delta.y));
+            bool xFirst = Mathf.Abs(delta.x) >= Mathf.Abs(delta.y);
+            Vector2Int primary = xFirst ? stepX : stepY;
+            Vector2Int secondary = xFirst ? stepY : stepX;
+
+            if (primary != Vector2Int.zero && CanPlaceHole(hole, current + primary)) { current += primary; continue; }
+            if (secondary != Vector2Int.zero && CanPlaceHole(hole, current + secondary)) { current += secondary; continue; }
+            break;
+        }
+        return current;
     }
 
     /// <summary>Moves a hole and resolves any cats it now sits on.</summary>
