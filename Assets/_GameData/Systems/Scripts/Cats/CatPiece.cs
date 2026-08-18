@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>Logical representation of a single 1x1 cat.</summary>
@@ -41,10 +42,34 @@ public sealed class CatPiece : MonoBehaviour
         if (fallback != null) fallback.sharedMaterial = material;
     }
 
-    public void Collect()
+    /// <summary>
+    /// Hops the cat to <paramref name="localTarget"/> inside the hole, then drops it to
+    /// <paramref name="sinkY"/> while shrinking it away. The cat counts as collected the moment
+    /// this starts, so it stops blocking before the animation has finished.
+    /// </summary>
+    public void CollectInto(Vector3 localTarget, float sinkY, CatPuzzleConfig config)
     {
         if (collected) return;
         collected = true;
-        gameObject.SetActive(false);
+
+        if (config == null || !Application.isPlaying)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        Vector3 restingScale = transform.localScale;
+        transform.DOKill();
+
+        Sequence exit = DOTween.Sequence();
+        exit.Append(transform.DOLocalJump(localTarget, config.catJumpPower, 1, config.catJumpDuration).SetEase(Ease.OutQuad));
+        exit.Append(transform.DOLocalMoveY(sinkY, config.catExitDuration).SetEase(Ease.InQuad));
+        exit.Join(transform.DOScale(Vector3.zero, config.catExitDuration).SetEase(Ease.InBack));
+        exit.OnComplete(() =>
+        {
+            // Restore the resting scale so the object is reusable if the level is rebuilt.
+            transform.localScale = restingScale;
+            gameObject.SetActive(false);
+        });
     }
 }

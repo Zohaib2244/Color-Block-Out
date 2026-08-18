@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
 {
     [SerializeField] private float moveDuration = 0.12f;
 
+    private readonly List<Vector2Int> path = new List<Vector2Int>();
     private CatHole hole;
     private CatHoleHighlight highlight;
     private Vector2Int originalCell;
@@ -42,11 +44,14 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         if (target == previewCell) return;
 
         // Walk toward the finger rather than teleporting, so obstacles actually stop the shape.
-        Vector2Int reachable = Controller.SlideHole(hole, previewCell, target);
+        Vector2Int reachable = Controller.SlideHole(hole, previewCell, target, path);
         if (reachable == previewCell) return;
 
         previewCell = reachable;
         MoveTo(previewCell);
+
+        // Every cell passed through counts, so a fast drag cannot skip over a cat.
+        foreach (Vector2Int step in path) Controller.CollectCatsUnder(hole, step);
     }
 
     public void OnTouchEnd()

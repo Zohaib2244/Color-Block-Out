@@ -164,8 +164,9 @@ public sealed class CatPuzzleController : MonoBehaviour
     /// is blocked the other one is tried, which lets the shape slide along a wall instead of
     /// sticking. Returns the furthest origin actually reachable.
     /// </summary>
-    public Vector2Int SlideHole(CatHole hole, Vector2Int from, Vector2Int target)
+    public Vector2Int SlideHole(CatHole hole, Vector2Int from, Vector2Int target, List<Vector2Int> path = null)
     {
+        path?.Clear();
         if (hole == null || !hole.IsActive) return from;
 
         Vector2Int current = from;
@@ -179,9 +180,11 @@ public sealed class CatPuzzleController : MonoBehaviour
             Vector2Int primary = xFirst ? stepX : stepY;
             Vector2Int secondary = xFirst ? stepY : stepX;
 
-            if (primary != Vector2Int.zero && CanPlaceHole(hole, current + primary)) { current += primary; continue; }
-            if (secondary != Vector2Int.zero && CanPlaceHole(hole, current + secondary)) { current += secondary; continue; }
-            break;
+            if (primary != Vector2Int.zero && CanPlaceHole(hole, current + primary)) current += primary;
+            else if (secondary != Vector2Int.zero && CanPlaceHole(hole, current + secondary)) current += secondary;
+            else break;
+
+            path?.Add(current);
         }
         return current;
     }
@@ -201,16 +204,34 @@ public sealed class CatPuzzleController : MonoBehaviour
         foreach (CatHole hole in Holes.ToArray()) ResolveHole(hole);
     }
 
-    private void ResolveHole(CatHole hole)
+    private void ResolveHole(CatHole hole) => CollectCatsUnder(hole, hole != null ? hole.OriginCell : Vector2Int.zero);
+
+    /// <summary>
+    /// Eats every matching cat the shape covers from <paramref name="origin"/>. Called while the
+    /// hole is still being dragged, so a cat is taken the moment the hole reaches it rather than
+    /// on release. Each cat hops to a hole cell no other cat is using before it disappears.
+    /// </summary>
+    public void CollectCatsUnder(CatHole hole, Vector2Int origin)
     {
         if (hole == null || !hole.IsActive || activeLevel == null) return;
+
+        List<Vector2Int> holeCells = hole.CellsAt(origin).ToList();
+        HashSet<Vector2Int> taken = new HashSet<Vector2Int>();
+        foreach (CatPiece cat in Cats)
+            if (cat != null && !cat.IsCollected && holeCells.Contains(cat.GridPosition)) taken.Add(cat.GridPosition);
 
         bool collectedAny = false;
         foreach (CatPiece cat in Cats.ToArray())
         {
             if (cat == null || cat.IsCollected || cat.Color != hole.Color) continue;
-            if (!hole.Covers(cat.GridPosition)) continue;
-            cat.Collect();
+            if (!holeCells.Contains(cat.GridPosition)) continue;
+
+            taken.Remove(cat.GridPosition);
+            Vector2Int exit = PickExitCell(holeCells, taken, cat.GridPosition);
+            taken.Add(exit);
+
+            cat.SetGridPosition(exit);
+            cat.CollectInto(CellToLocal(exit), SinkDepth(), Config);
             collectedAny = true;
             CatCollected.Invoke(cat, hole);
         }
@@ -227,6 +248,30 @@ public sealed class CatPuzzleController : MonoBehaviour
         }
 
         if (IsComplete) PuzzleCompleted.Invoke();
+    }
+
+    /// <summary>Closest hole cell nobody else is heading for, so cats never stack up on the way out.</summary>
+    private static Vector2Int PickExitCell(List<Vector2Int> holeCells, HashSet<Vector2Int> taken, Vector2Int from)
+    {
+        Vector2Int best = from;
+        int bestDistance = int.MaxValue;
+        foreach (Vector2Int cell in holeCells)
+        {
+            if (taken.Contains(cell)) continue;
+            int distance = Mathf.Abs(cell.x - from.x) + Mathf.Abs(cell.y - from.y);
+            if (distance >= bestDistance) continue;
+            best = cell;
+            bestDistance = distance;
+        }
+        return best;
+    }
+
+    /// <summary>How far a cat drops, in the Cats parent's space, to fall through the hole surface.</summary>
+    private float SinkDepth()
+    {
+        GridData data = GridManager != null ? GridManager.SavedGridData : null;
+        float surface = data != null ? data.holeParentHeight - data.catParentHeight : 0f;
+        return surface - (Config != null ? Config.catSinkDepth : 0.15f);
     }
     #endregion
 }

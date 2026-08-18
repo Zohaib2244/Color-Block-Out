@@ -30,6 +30,15 @@ public sealed class CatPuzzleConfig : ScriptableObject
     public GameObject catPrefab;
     public CatHoleConfiguration holeConfiguration;
 
+    [Header("Cat Collection")]
+    [Tooltip("Arc height of the hop a cat makes into the hole.")]
+    public float catJumpPower = 0.25f;
+    public float catJumpDuration = 0.18f;
+
+    [Tooltip("How far below the hole surface a cat sinks as it shrinks away.")]
+    public float catSinkDepth = 0.15f;
+    public float catExitDuration = 0.22f;
+
     [Header("Hole Highlight")]
     [Tooltip("Scale multiplier applied to a hole's meshes while it is being dragged.")]
     public float highlightScale = 1.08f;
