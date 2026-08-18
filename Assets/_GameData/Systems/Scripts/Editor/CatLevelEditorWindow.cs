@@ -454,13 +454,13 @@ public sealed class CatLevelEditorWindow : EditorWindow
         {
             if (cat == null) continue;
             Undo.RecordObject(cat.transform, "Snap Cat");
-            CatLevelBuilder.PlaceCat(cat, instance.Grid.WorldToGridPosition(cat.transform.position), instance.Grid, config);
+            CatLevelBuilder.PlaceCat(cat, instance.Grid.LocalPositionToCell(cat.transform.localPosition), instance.Grid, config);
         }
         foreach (CatHole hole in instance.Holes)
         {
             if (hole == null) continue;
             Undo.RecordObject(hole.transform, "Snap Hole");
-            CatHoleBuilder.MoveTo(hole, instance.Grid.WorldToGridPosition(hole.transform.position), instance.Grid, config);
+            CatHoleBuilder.MoveTo(hole, instance.Grid.LocalPositionToCell(hole.transform.localPosition), instance.Grid, config);
         }
         MarkSceneDirty();
     }
@@ -536,7 +536,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     /// <summary>Reads a live transform back to a cell so the board reflects manual moves immediately.</summary>
     private Vector2Int CellOf(Transform target, Vector2Int fallback) =>
-        instance != null && instance.Grid != null ? instance.Grid.WorldToGridPosition(target.position) : fallback;
+        instance != null && instance.Grid != null ? instance.Grid.LocalPositionToCell(target.localPosition) : fallback;
 
     private void MarkSceneDirty()
     {

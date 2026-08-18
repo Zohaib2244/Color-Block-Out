@@ -16,6 +16,10 @@ public sealed class GridManager : MonoBehaviour
     public Transform WallParent;
     public Transform CellParent;
 
+    /// <summary>Content parents, created with the grid so cats and holes share its cell space.</summary>
+    public Transform CatParent;
+    public Transform HoleParent;
+
     public GridData SavedGridData => savedGridData;
     public Vector3 GridStartPosition => transform.position;
 
@@ -89,7 +93,18 @@ public sealed class GridManager : MonoBehaviour
             wallRegistry[wall.wallGridPosition] = wall.gameObject;
     }
 
-    public Vector3 GridToWorldPosition(Vector2Int gridPos) => transform.TransformPoint(new Vector3(gridPos.x * gridSpacing, 0f, gridPos.y * gridSpacing));
+    /// <summary>
+    /// Cell position in the grid's own space. Content parented under <see cref="CatParent"/> or
+    /// <see cref="HoleParent"/> uses this directly as its local position, so the parent's own Y is
+    /// the only thing deciding how high it sits.
+    /// </summary>
+    public Vector3 CellToLocalPosition(Vector2Int cell) => new Vector3(cell.x * gridSpacing, 0f, cell.y * gridSpacing);
+
+    /// <summary>Inverse of <see cref="CellToLocalPosition"/>, for reading content back off its transform.</summary>
+    public Vector2Int LocalPositionToCell(Vector3 localPosition) =>
+        new Vector2Int(Mathf.RoundToInt(localPosition.x / gridSpacing), Mathf.RoundToInt(localPosition.z / gridSpacing));
+
+    public Vector3 GridToWorldPosition(Vector2Int gridPos) => transform.TransformPoint(CellToLocalPosition(gridPos));
 
     public Vector2Int WorldToGridPosition(Vector3 worldPos)
     {

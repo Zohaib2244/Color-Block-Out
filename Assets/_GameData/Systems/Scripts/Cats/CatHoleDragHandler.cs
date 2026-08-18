@@ -37,8 +37,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         if (!Controller.CanPlaceHole(hole, candidate)) return;
 
         previewCell = candidate;
-        transform.DOKill();
-        transform.DOMove(Controller.GridToWorld(candidate, transform.position.y), moveDuration).SetEase(Ease.OutQuad);
+        MoveTo(previewCell);
     }
 
     public void OnTouchEnd()
@@ -48,7 +47,14 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         transform.DOKill();
 
         if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell)) return;
-        transform.DOMove(Controller != null ? Controller.GridToWorld(originalCell, transform.position.y) : transform.position, moveDuration).SetEase(Ease.OutQuad);
+        MoveTo(originalCell);
+    }
+
+    private void MoveTo(Vector2Int cell)
+    {
+        transform.DOKill();
+        if (Controller == null) return;
+        transform.DOLocalMove(Controller.CellToLocal(cell), moveDuration).SetEase(Ease.OutQuad);
     }
 
     private Vector3 GetWorldPosition(Vector2 screenPosition)

@@ -8,9 +8,6 @@ using UnityEngine;
 /// </summary>
 public static class CatLevelBuilder
 {
-    public const string CatsContainerName = "Cats";
-    public const string HolesContainerName = "Holes";
-
     /// <summary>Builds the grid, cats and holes of a level under <paramref name="parent"/>.</summary>
     public static CatLevelInstance Build(CatLevelData level, Transform parent, CatPuzzleConfig config = null)
     {
@@ -28,9 +25,7 @@ public static class CatLevelBuilder
 
         CatLevelInstance instance = root.AddComponent<CatLevelInstance>();
         GridManager grid = GridBuilder.Build(level.grid, root.transform, config);
-        Transform cats = CreateContainer(root.transform, CatsContainerName, config != null ? config.catHeight : 0.03f);
-        Transform holes = CreateContainer(root.transform, HolesContainerName, config != null ? config.holeHeight : 0.03f);
-        instance.Initialize(level, grid, cats, holes);
+        instance.Initialize(level, grid, grid.CatParent, grid.HoleParent);
 
         foreach (CatPlacement placement in level.cats) SpawnCat(placement, instance, config);
         foreach (CatHolePlacement placement in level.holes) SpawnHole(placement, instance, config);
@@ -70,15 +65,13 @@ public static class CatLevelBuilder
         return hole;
     }
 
+    /// <summary>Puts a cat on a cell. Height comes from the Cats parent, not from the cat.</summary>
     public static void PlaceCat(CatPiece cat, Vector2Int cell, GridManager grid, CatPuzzleConfig config = null)
     {
         if (cat == null) return;
-        config = CatPuzzleConfig.Resolve(config);
         cat.SetGridPosition(cell);
         if (grid == null) return;
-        Vector3 position = grid.GridToWorldPosition(cell);
-        position.y = grid.transform.position.y + (config != null ? config.catHeight : 0.03f);
-        cat.transform.position = position;
+        cat.transform.localPosition = grid.CellToLocalPosition(cell);
     }
 
     /// <summary>Writes the scene back into the level asset, including holes the designer dragged around.</summary>
@@ -91,7 +84,7 @@ public static class CatLevelBuilder
         foreach (CatPiece cat in instance.Cats)
         {
             if (cat == null) continue;
-            Vector2Int cell = instance.Grid != null ? instance.Grid.WorldToGridPosition(cat.transform.position) : cat.GridPosition;
+            Vector2Int cell = instance.Grid != null ? instance.Grid.LocalPositionToCell(cat.transform.localPosition) : cat.GridPosition;
             cat.SetGridPosition(cell);
             target.cats.Add(new CatPlacement { color = cat.Color, cell = cell });
         }
@@ -100,7 +93,7 @@ public static class CatLevelBuilder
         foreach (CatHole hole in instance.Holes)
         {
             if (hole == null) continue;
-            Vector2Int origin = instance.Grid != null ? instance.Grid.WorldToGridPosition(hole.transform.position) : hole.OriginCell;
+            Vector2Int origin = instance.Grid != null ? instance.Grid.LocalPositionToCell(hole.transform.localPosition) : hole.OriginCell;
             hole.SetOriginCell(origin);
             target.holes.Add(CatHoleBuilder.Capture(hole));
         }
@@ -109,16 +102,5 @@ public static class CatLevelBuilder
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(target);
 #endif
-    }
-
-    private static Transform CreateContainer(Transform parent, string name, float height)
-    {
-        GameObject container = new GameObject(name);
-        GridBuilder.RegisterCreated(container, $"Create {name}");
-        container.transform.SetParent(parent, false);
-        container.transform.localPosition = new Vector3(0f, height, 0f);
-        container.transform.localRotation = Quaternion.identity;
-        container.transform.localScale = Vector3.one;
-        return container.transform;
     }
 }

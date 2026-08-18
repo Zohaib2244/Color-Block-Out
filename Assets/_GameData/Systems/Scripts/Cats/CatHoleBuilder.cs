@@ -88,16 +88,16 @@ public static class CatHoleBuilder
         }
     }
 
-    /// <summary>Places the hole on a cell and keeps its logical origin in sync.</summary>
+    /// <summary>
+    /// Places the hole on a cell and keeps its logical origin in sync. Height comes from the
+    /// Holes parent, so the hole only ever moves in the grid plane.
+    /// </summary>
     public static void MoveTo(CatHole hole, Vector2Int origin, GridManager grid, CatPuzzleConfig config = null)
     {
         if (hole == null) return;
-        config = CatPuzzleConfig.Resolve(config);
         hole.SetOriginCell(origin);
         if (grid == null) return;
-        Vector3 position = grid.GridToWorldPosition(origin);
-        position.y = grid.transform.position.y + (config != null ? config.holeHeight : 0.03f);
-        hole.transform.position = position;
+        hole.transform.localPosition = grid.CellToLocalPosition(origin);
     }
 
     /// <summary>Shifts offsets so the lowest cell sits at (0,0), the shape's anchor.</summary>

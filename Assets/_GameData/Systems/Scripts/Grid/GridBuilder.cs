@@ -9,6 +9,8 @@ public static class GridBuilder
 {
     private const string CellsContainerName = "GridCells";
     private const string WallsContainerName = "Walls";
+    private const string CatsContainerName = "Cats";
+    private const string HolesContainerName = "Holes";
 
     private enum Side { North = 0, East = 1, South = 2, West = 3 }
 
@@ -33,8 +35,12 @@ public static class GridBuilder
             : Vector3.zero;
 
         GridManager manager = gridObject.AddComponent<GridManager>();
-        Transform cells = CreateContainer(gridObject.transform, CellsContainerName);
-        Transform walls = CreateContainer(gridObject.transform, WallsContainerName);
+        Transform cells = CreateContainer(gridObject.transform, CellsContainerName, 0f);
+        Transform walls = CreateContainer(gridObject.transform, WallsContainerName, 0f);
+
+        // Content parents belong to the grid, so cats and holes share its cell space.
+        Transform cats = CreateContainer(gridObject.transform, CatsContainerName, config != null ? config.catHeight : 0.03f);
+        Transform holes = CreateContainer(gridObject.transform, HolesContainerName, config != null ? config.holeHeight : 0.03f);
 
         for (int x = 0; x < data.gridWidth; x++)
             for (int z = 0; z < data.gridLength; z++)
@@ -44,6 +50,8 @@ public static class GridBuilder
 
         manager.CellParent = cells;
         manager.WallParent = walls;
+        manager.CatParent = cats;
+        manager.HoleParent = holes;
         manager.ApplyGridData(data);
         return manager;
     }
@@ -328,12 +336,12 @@ public static class GridBuilder
     #endregion
 
     #region Helpers
-    private static Transform CreateContainer(Transform parent, string name)
+    private static Transform CreateContainer(Transform parent, string name, float height)
     {
         GameObject container = new GameObject(name);
         RegisterCreated(container, $"Create {name}");
         container.transform.SetParent(parent, false);
-        container.transform.localPosition = Vector3.zero;
+        container.transform.localPosition = new Vector3(0f, height, 0f);
         container.transform.localRotation = Quaternion.identity;
         container.transform.localScale = Vector3.one;
         return container.transform;

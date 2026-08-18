@@ -88,6 +88,13 @@ public sealed class CatPuzzleController : MonoBehaviour
     #endregion
 
     #region Grid helpers
+    /// <summary>Cell position in grid space, which is what content parented under the grid uses.</summary>
+    public Vector3 CellToLocal(Vector2Int cell)
+    {
+        GridManager grid = GridManager;
+        return grid != null ? grid.CellToLocalPosition(cell) : new Vector3(cell.x, 0f, cell.y);
+    }
+
     public Vector3 GridToWorld(Vector2Int cell, float y)
     {
         GridManager grid = GridManager;
