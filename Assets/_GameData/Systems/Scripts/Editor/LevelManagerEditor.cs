@@ -1,91 +1,47 @@
-using UnityEngine;
-using UnityEditor;
 #if UNITY_EDITOR
-[CustomEditor(typeof(LevelManager))]
+using UnityEditor;
+using UnityEngine;
 
+/// <summary>
+/// Small inspector helper for the scene level manager. Level content itself is authored
+/// in the Cat Level Editor window; this only exposes the camera framing shortcuts.
+/// </summary>
+[CustomEditor(typeof(LevelManager))]
 public class LevelManagerEditor : Editor
 {
-    private string newLevelName = "LVL_";
-    private bool showConfigHelp = false;
-    private bool showRenameHelp = false;
-    private bool showCenterHelp = false;
-    
     public override void OnInspectorGUI()
     {
-        LevelManager levelManager = (LevelManager)target;
         DrawDefaultInspector();
-        
+
+        CatPuzzleController controller = CatPuzzleController.Instance != null ? CatPuzzleController.Instance : FindFirstObjectByType<CatPuzzleController>();
+        CatLevelData level = controller != null ? controller.CurrentLevel : null;
+
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Level Configuration", EditorStyles.boldLabel);
-        
-        // Help box toggle for configuration
-        showConfigHelp = EditorGUILayout.Foldout(showConfigHelp, "What does Configure Data do?");
-        if (showConfigHelp)
+        EditorGUILayout.LabelField("Active Level", EditorStyles.boldLabel);
+        if (level == null)
         {
-            EditorGUILayout.HelpBox("This button will:\n• Get the GridManager reference from children\n• Store the current camera position\n\nUse this after setting up your level layout but before saving.", MessageType.Info);
+            EditorGUILayout.HelpBox("No level is loaded. Open Cat Puzzle/Cat Level Editor to build one.", MessageType.Info);
+            if (GUILayout.Button("Open Cat Level Editor", GUILayout.Height(24))) CatLevelEditorWindow.ShowWindow();
+            return;
         }
-        
-        // Colored configure button
-        GUI.backgroundColor = new Color(0.4f, 0.8f, 1f); // Light blue
-        if (GUILayout.Button("Configure Data", GUILayout.Height(30)))
+
+        EditorGUILayout.ObjectField("Level Asset", level, typeof(CatLevelData), false);
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Capture Camera", GUILayout.Height(24)) && Camera.main != null)
         {
-            levelManager.ConfigureLevel();
+            Undo.RecordObject(level, "Capture Camera");
+            level.cameraPosition = Camera.main.transform.position;
+            level.cameraFOV = Camera.main.fieldOfView;
+            EditorUtility.SetDirty(level);
         }
-        GUI.backgroundColor = Color.white; // Reset color
-        
-        // CENTER POSITION SECTION
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Camera Positioning", EditorStyles.boldLabel);
-        
-        // Help box toggle for centering
-        showCenterHelp = EditorGUILayout.Foldout(showCenterHelp, "What does Move Camera To Position do?");
-        if (showCenterHelp)
+        if (GUILayout.Button("Move Camera To Level", GUILayout.Height(24)) && Camera.main != null)
         {
-            EditorGUILayout.HelpBox("This will:\n• Move The Camera To The Levels Camera position.", MessageType.Info);
+            Undo.RecordObject(Camera.main.transform, "Move Camera");
+            Camera.main.transform.position = level.cameraPosition;
+            Camera.main.fieldOfView = level.cameraFOV;
         }
-        
-        // Colored center button
-        GUI.backgroundColor = new Color(1f, 0.7f, 0.3f); // Orange
-        if (GUILayout.Button("Move Camera To Position", GUILayout.Height(30)))
-        {
-            levelManager.MoveCameraToPosition();
-            
-            // Ensure changes are saved
-            EditorUtility.SetDirty(levelManager.gameObject);
-            
-        }
-        GUI.backgroundColor = Color.white; // Reset color
-        
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Level Renaming", EditorStyles.boldLabel);
-        
-        // Help box toggle for renaming
-        showRenameHelp = EditorGUILayout.Foldout(showRenameHelp, "What does Rename Level do?");
-        if (showRenameHelp)
-        {
-            EditorGUILayout.HelpBox("This will rename:\n• This GameObject\n• The GridData ScriptableObject\n• The prefab asset (if this is a prefab instance)\n\nAll references will be maintained.", MessageType.Info);
-        }
-        
-        // Field for entering a new level name
-        newLevelName = EditorGUILayout.TextField("New Level Name", newLevelName);
-        
-        // Button to rename the level
-        GUI.backgroundColor = new Color(0.5f, 0.9f, 0.5f); // Light green
-        if (GUILayout.Button("Rename Level", GUILayout.Height(30)) && !string.IsNullOrEmpty(newLevelName))
-        {
-            string oldName = levelManager.gameObject.name;
-            levelManager.RenameLevel(newLevelName);
-            
-            // Make sure the object name change is reflected in the hierarchy
-            EditorUtility.SetDirty(levelManager.gameObject);
-            
-            EditorUtility.DisplayDialog("Level Renamed", 
-                $"Successfully renamed level from '{oldName}' to '{newLevelName}'!", 
-                "OK");
-                
-            newLevelName = ""; // Clear the field after renaming
-        }
-        GUI.backgroundColor = Color.white; // Reset color
+        EditorGUILayout.EndHorizontal();
     }
 }
 #endif

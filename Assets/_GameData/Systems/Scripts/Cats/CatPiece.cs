@@ -7,15 +7,18 @@ public sealed class CatPiece : MonoBehaviour
     [SerializeField] private Vector2Int gridPosition;
     [SerializeField] private bool collected;
 
+    [Tooltip("Renderers tinted by the cat's colour. Left empty, the first renderer found is used.")]
+    [SerializeField] private Renderer[] coloredRenderers;
+
     public BlockColorTypes Color => color;
     public Vector2Int GridPosition => gridPosition;
     public bool IsCollected => collected;
 
     public void Configure(BlockColorTypes newColor, Vector2Int position)
     {
-        color = newColor;
         gridPosition = position;
         collected = false;
+        SetColor(newColor);
     }
 
     public void SetGridPosition(Vector2Int position) => gridPosition = position;
@@ -23,8 +26,19 @@ public sealed class CatPiece : MonoBehaviour
     public void SetColor(BlockColorTypes newColor)
     {
         color = newColor;
-        Renderer renderer = GetComponentInChildren<Renderer>();
-        if (renderer != null) renderer.sharedMaterial = GameConstants.GetBlockColorMaterial(color);
+        Material material = GameConstants.GetBlockColorMaterial(color);
+        if (material == null) return;
+
+        if (coloredRenderers != null && coloredRenderers.Length > 0)
+        {
+            foreach (Renderer renderer in coloredRenderers)
+                if (renderer != null) renderer.sharedMaterial = material;
+            return;
+        }
+
+        Renderer fallback = GetComponent<Renderer>();
+        if (fallback == null) fallback = GetComponentInChildren<Renderer>();
+        if (fallback != null) fallback.sharedMaterial = material;
     }
 
     public void Collect()

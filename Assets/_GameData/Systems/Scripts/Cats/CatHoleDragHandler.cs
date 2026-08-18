@@ -1,63 +1,62 @@
-using UnityEngine;
 using DG.Tweening;
+using UnityEngine;
 
 /// <summary>
-/// Touch-facing drag behaviour for a single CatHole. Add a collider and this
-/// component to each hole prefab; CatHoleInputManager routes touches to it.
+/// Touch-facing drag behaviour for a hole. The whole shape moves as one piece and
+/// only settles on cells where every covered cell is free.
 /// </summary>
 [RequireComponent(typeof(CatHole))]
 public sealed class CatHoleDragHandler : MonoBehaviour
 {
-    [SerializeField] private CatPuzzleController controller;
     [SerializeField] private float moveDuration = 0.12f;
 
     private CatHole hole;
     private Vector2Int originalCell;
     private Vector2Int previewCell;
+    private Vector3 grabOffset;
     private bool dragging;
 
-    private void Awake()
-    {
-        hole = GetComponent<CatHole>();
-        if (controller == null) controller = GetComponentInParent<CatPuzzleController>();
-    }
+    private CatPuzzleController Controller => CatPuzzleController.Instance;
 
-    public void OnTouchBegin()
+    private void Awake() => hole = GetComponent<CatHole>();
+
+    public void OnTouchBegin(Vector2 screenPosition)
     {
-        if (controller == null || hole == null || !hole.IsActive) return;
-        originalCell = hole.GridPosition;
+        if (Controller == null || hole == null || !hole.IsActive) return;
+        originalCell = hole.OriginCell;
         previewCell = originalCell;
+        grabOffset = transform.position - GetWorldPosition(screenPosition);
         dragging = true;
     }
 
-    public void OnTouchMove(Touch touch)
+    public void OnTouchMove(Vector2 screenPosition)
     {
-        if (!dragging || controller == null || Camera.main == null) return;
-        Vector3 world = GetWorldPosition(touch.position);
-        Vector2Int candidate = controller.WorldToGrid(world);
-        if (candidate == previewCell || !controller.IsInside(candidate)) return;
-        if (controller.TryPreviewHoleDestination(hole, candidate))
-        {
-            previewCell = candidate;
-            transform.DOMove(controller.GridToWorld(candidate, transform.position.y), moveDuration).SetEase(Ease.OutQuad);
-        }
+        if (!dragging || Controller == null) return;
+        Vector2Int candidate = Controller.WorldToGrid(GetWorldPosition(screenPosition) + grabOffset);
+        if (candidate == previewCell) return;
+        if (!Controller.CanPlaceHole(hole, candidate)) return;
+
+        previewCell = candidate;
+        transform.DOKill();
+        transform.DOMove(Controller.GridToWorld(candidate, transform.position.y), moveDuration).SetEase(Ease.OutQuad);
     }
 
     public void OnTouchEnd()
     {
         if (!dragging) return;
         dragging = false;
-        if (previewCell == originalCell) return;
-        if (!controller.TryMoveHole(hole, previewCell))
-        {
-            transform.DOMove(controller.GridToWorld(originalCell, transform.position.y), moveDuration).SetEase(Ease.OutQuad);
-        }
+        transform.DOKill();
+
+        if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell)) return;
+        transform.DOMove(Controller != null ? Controller.GridToWorld(originalCell, transform.position.y) : transform.position, moveDuration).SetEase(Ease.OutQuad);
     }
 
     private Vector3 GetWorldPosition(Vector2 screenPosition)
     {
+        Camera camera = Camera.main;
+        if (camera == null) return transform.position;
         Plane plane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
-        Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+        Ray ray = camera.ScreenPointToRay(screenPosition);
         return plane.Raycast(ray, out float distance) ? ray.GetPoint(distance) : transform.position;
     }
 }

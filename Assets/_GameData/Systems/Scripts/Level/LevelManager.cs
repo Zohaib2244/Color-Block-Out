@@ -1,73 +1,74 @@
-using UnityEngine;
 using DG.Tweening;
+using UnityEngine;
 
-/// <summary>Level lifecycle for the cat puzzle.</summary>
+/// <summary>
+/// Scene-level presentation for whatever level the <see cref="CatPuzzleController"/>
+/// currently holds: the spawn/despawn tween, the timer and the completion hand-off.
+/// </summary>
 public sealed class LevelManager : MonoBehaviour
 {
     [SerializeField] private CatPuzzleController puzzle;
-    [SerializeField] private int levelTime = 60;
-    [SerializeField] private Vector3 cameraPosition;
-    [SerializeField] private float cameraFOV;
+    [SerializeField] private float spawnDuration = 0.75f;
     private bool timerStarted;
 
-    private void Start()
+    private void Awake()
     {
-        if (puzzle == null) puzzle = GetComponentInChildren<CatPuzzleController>();
-        if (puzzle != null) puzzle.PuzzleCompleted.AddListener(OnPuzzleCompleted);
+        if (puzzle == null) puzzle = CatPuzzleController.Instance;
+        if (puzzle == null) puzzle = FindFirstObjectByType<CatPuzzleController>();
+    }
+
+    private void OnEnable()
+    {
+        if (puzzle == null) return;
+        puzzle.LevelBound.AddListener(OnLevelBound);
+        puzzle.HoleMoved.AddListener(OnHoleMoved);
+        puzzle.PuzzleCompleted.AddListener(OnPuzzleCompleted);
+    }
+
+    private void OnDisable()
+    {
+        if (puzzle == null) return;
+        puzzle.LevelBound.RemoveListener(OnLevelBound);
+        puzzle.HoleMoved.RemoveListener(OnHoleMoved);
+        puzzle.PuzzleCompleted.RemoveListener(OnPuzzleCompleted);
+    }
+
+    /// <summary>The countdown starts on the player's first move, not on load.</summary>
+    private void OnHoleMoved(CatHole hole) => BeginLevelTimer();
+
+    private void OnLevelBound(CatLevelInstance level)
+    {
+        timerStarted = false;
         GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
-        SpawnLevel();
+        SpawnLevel(level);
     }
 
-    private void OnDestroy()
-    {
-        if (puzzle != null) puzzle.PuzzleCompleted.RemoveListener(OnPuzzleCompleted);
-    }
-
+    /// <summary>Starts the countdown on the player's first interaction.</summary>
     public void BeginLevelTimer()
     {
-        if (timerStarted || GameUIManager.Instance == null || GameUIManager.Instance.LevelScreen == null) return;
-        GameUIManager.Instance.LevelScreen.StartLevelTime(levelTime);
+        if (timerStarted || puzzle == null || puzzle.CurrentLevel == null) return;
+        if (GameUIManager.Instance == null || GameUIManager.Instance.LevelScreen == null) return;
+        GameUIManager.Instance.LevelScreen.StartLevelTime(puzzle.CurrentLevel.levelTime);
         timerStarted = true;
     }
 
     private void OnPuzzleCompleted()
     {
         if (GameUIManager.Instance != null && GameUIManager.Instance.LevelScreen != null) GameUIManager.Instance.LevelScreen.StopTimer();
-        DespawnLevel();
-        DOVirtual.DelayedCall(0.75f, () => GameManager.Instance.LevelCompleted());
+        DespawnLevel(puzzle != null ? puzzle.ActiveLevel : null);
+        DOVirtual.DelayedCall(spawnDuration, () => GameManager.Instance.LevelCompleted());
     }
 
-    private void SpawnLevel() { transform.localScale = Vector3.zero; transform.DOScale(Vector3.one, 0.75f).SetEase(Ease.OutBack); }
-    private void DespawnLevel() { transform.DOScale(Vector3.zero, 0.75f).SetEase(Ease.InBack); }
-    public (Vector3 position, float fov) GetCameraProperties() => (cameraPosition, cameraFOV);
-
-#if UNITY_EDITOR
-    [ContextMenu("Set Camera Properties")]
-    private void SetCameraProperties()
+    private void SpawnLevel(CatLevelInstance level)
     {
-        if (Camera.main == null) return;
-        cameraPosition = Camera.main.transform.position; cameraFOV = Camera.main.fieldOfView;
-        UnityEditor.EditorUtility.SetDirty(this);
+        if (level == null) return;
+        level.transform.localScale = Vector3.zero;
+        level.transform.DOScale(Vector3.one, spawnDuration).SetEase(Ease.OutBack);
     }
 
-    public void ConfigureLevel()
+    private void DespawnLevel(CatLevelInstance level)
     {
-        if (puzzle == null) puzzle = GetComponentInChildren<CatPuzzleController>();
-        if (puzzle != null && puzzle.GridManager != null) transform.position = puzzle.GridManager.GetGridCentrePosition();
-        SetCameraProperties();
-        UnityEditor.EditorUtility.SetDirty(this);
+        if (level == null) return;
+        level.transform.DOScale(Vector3.zero, spawnDuration).SetEase(Ease.InBack);
     }
-
-    public void RenameLevel(string newName)
-    {
-        if (string.IsNullOrWhiteSpace(newName)) return;
-        gameObject.name = newName;
-        UnityEditor.EditorUtility.SetDirty(gameObject);
-    }
-
-    public void MoveCameraToPosition()
-    {
-        if (Camera.main != null) { Camera.main.transform.position = cameraPosition; Camera.main.fieldOfView = cameraFOV; }
-    }
-#endif
 }

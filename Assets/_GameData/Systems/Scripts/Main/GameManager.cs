@@ -1,4 +1,3 @@
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,7 +10,6 @@ public class GameManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            //DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -19,44 +17,49 @@ public class GameManager : MonoBehaviour
         }
     }
     #endregion
+
     [SerializeField] private LevelData levelData;
-    public GameObject currentLevelPrefab;
     public LevelState currentLevelState = LevelState.None;
-    public int TotalLevels => levelData.levelPrefabs.Count;
     public UnityEvent onLevelLoaded;
+
+    public int TotalLevels => levelData != null ? levelData.Count : 0;
+    public CatLevelData CurrentLevel { get; private set; }
+
     void Start()
     {
         GameConstants.InitializeGame();
         onLevelLoaded.AddListener(ConfigureCamera);
     }
+
     public void LoadLevel(int levelIndex)
     {
-        if (levelIndex < 0 || levelIndex >= levelData.levelPrefabs.Count)
+        if (levelData == null || levelData.Count == 0)
         {
-            Debug.LogError("Invalid level index: " + levelIndex);
+            Debug.LogError("No level collection assigned to GameManager.");
             return;
         }
-        Destroy(currentLevelPrefab);
-        currentLevelPrefab = Instantiate(levelData.levelPrefabs[levelIndex % levelData.levelPrefabs.Count]);
+        if (CatPuzzleController.Instance == null)
+        {
+            Debug.LogError("No CatPuzzleController in the scene, a level cannot be spawned.");
+            return;
+        }
+
+        CurrentLevel = levelData.Get(levelIndex);
+        CatPuzzleController.Instance.LoadLevel(CurrentLevel);
         currentLevelState = LevelState.InProgress;
         onLevelLoaded?.Invoke();
         FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Start, levelIndex + 1);
     }
-    public void LoadNextLevel()
-    {
-        LoadLevel(GameConstants.CurrentLevelIndex % levelData.levelPrefabs.Count);
-    }
+
+    public void LoadNextLevel() => LoadLevel(GameConstants.CurrentLevelIndex);
+
     public void RetryLevel()
     {
-        if (currentLevelState == LevelState.InProgress || currentLevelState == LevelState.Failed)
-        {
-            currentLevelState = LevelState.InProgress;
-            GameUIManager.Instance.LevelScreen.StopTimer();
-            Destroy(currentLevelPrefab);
-            currentLevelPrefab = Instantiate(levelData.levelPrefabs[GameConstants.CurrentLevelIndex % levelData.levelPrefabs.Count]);
-            onLevelLoaded?.Invoke();
-        }
+        if (currentLevelState != LevelState.InProgress && currentLevelState != LevelState.Failed) return;
+        GameUIManager.Instance.LevelScreen.StopTimer();
+        LoadLevel(GameConstants.CurrentLevelIndex);
     }
+
     public void LevelFailed()
     {
         if (currentLevelState == LevelState.InProgress)
@@ -66,32 +69,29 @@ public class GameManager : MonoBehaviour
             FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Fail, GameConstants.CurrentLevelIndex + 1);
         }
     }
+
     public void LevelCompleted()
     {
-
         if (currentLevelState == LevelState.InProgress)
         {
-            Debug.Log("Level Completed!");
             currentLevelState = LevelState.Completed;
             GameConstants.CurrentLevelIndex++;
             GameUIManager.Instance.ShowScreen(ScreenType.LevelCompleted);
             FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Complete, GameConstants.CurrentLevelIndex + 1);
         }
     }
+
     public void UnloadAllLevels()
     {
-        if (currentLevelPrefab != null)
-        {
-            Destroy(currentLevelPrefab);
-            currentLevelPrefab = null;
-        }
+        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.ClearLevel();
+        CurrentLevel = null;
         currentLevelState = LevelState.None;
     }
 
     void ConfigureCamera()
     {
-        (Vector3 position, float fov) = currentLevelPrefab.GetComponent<LevelManager>().GetCameraProperties();
-        Camera.main.transform.position = position;
-        Camera.main.fieldOfView = fov;
+        if (CurrentLevel == null || Camera.main == null) return;
+        Camera.main.transform.position = CurrentLevel.cameraPosition;
+        Camera.main.fieldOfView = CurrentLevel.cameraFOV;
     }
 }

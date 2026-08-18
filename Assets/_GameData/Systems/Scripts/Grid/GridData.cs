@@ -1,114 +1,79 @@
 using UnityEngine;
-using System.IO;
 
+/// <summary>
+/// A reusable board layout. One GridData asset describes the playable shape of a
+/// board and can back any number of <see cref="CatLevelData"/> levels.
+/// </summary>
 [CreateAssetMenu(fileName = "New Grid Data", menuName = "Cat Puzzle/Grid Data")]
 public class GridData : ScriptableObject
 {
-    // Grid dimensions
     public int gridWidth = 10;
     public int gridLength = 10;
-    public float cellSize = 1.0f;
-    public Vector3 gridStartPosition = Vector3.zero;
-    [SerializeField] private bool dirtyFlag = false; // Used to track modifications
+    public float cellSize = 0.57f;
 
-    // Serializable arrays to store grid state
+    [HideInInspector] public Vector3 gridStartPosition = Vector3.zero;
+
     [System.Serializable]
     public class SerializableGridData
     {
         public bool[] occupiedCells;
         public bool[] wallCells;
     }
-    
+
     public SerializableGridData gridData;
-    
-    // Initialize arrays
+
     public void Initialize(int width, int length)
     {
-        gridWidth = width;
-        gridLength = length;
+        gridWidth = Mathf.Max(1, width);
+        gridLength = Mathf.Max(1, length);
         gridData = new SerializableGridData
         {
-            occupiedCells = new bool[width * length],
-            wallCells = new bool[width * length]
+            occupiedCells = new bool[gridWidth * gridLength],
+            wallCells = new bool[gridWidth * gridLength]
         };
-        
-        MarkDirty("Initialize called");
+        MarkDirty();
     }
-    
-    // Helper methods to convert between 2D and 1D indices
-    public int GetIndex(int x, int z)
-    {
-        return z * gridWidth + x;
-    }
-    
-    
 
-    // Mark data as dirty and ensure it gets saved
-    public void MarkDirty(string modificationReason)
+    public int GetIndex(int x, int z) => z * gridWidth + x;
+
+    public bool IsWithinGrid(int x, int z) => x >= 0 && x < gridWidth && z >= 0 && z < gridLength;
+
+    /// <summary>True for cells that are walls or outside the drawn board.</summary>
+    public bool IsWall(int x, int z)
     {
-        dirtyFlag = true;
-        
-        #if UNITY_EDITOR
-        // Request immediate save in editor
+        if (!IsWithinGrid(x, z)) return true;
+        if (gridData == null || gridData.wallCells == null) return false;
+        int index = GetIndex(x, z);
+        return index < gridData.wallCells.Length && gridData.wallCells[index];
+    }
+
+    /// <summary>True for cells a cat or hole may stand on.</summary>
+    public bool IsPlayable(int x, int z) => IsWithinGrid(x, z) && !IsWall(x, z);
+
+    public bool IsPlayable(Vector2Int cell) => IsPlayable(cell.x, cell.y);
+
+    public void SetWall(int x, int z, bool isWall)
+    {
+        EnsureArrays();
+        if (!IsWithinGrid(x, z)) return;
+        gridData.wallCells[GetIndex(x, z)] = isWall;
+    }
+
+    /// <summary>Rebuilds the backing arrays when they are missing or the size changed.</summary>
+    public void EnsureArrays()
+    {
+        int required = gridWidth * gridLength;
+        if (gridData == null) gridData = new SerializableGridData();
+        if (gridData.wallCells == null || gridData.wallCells.Length != required) gridData.wallCells = new bool[required];
+        if (gridData.occupiedCells == null || gridData.occupiedCells.Length != required) gridData.occupiedCells = new bool[required];
+    }
+
+    public void MarkDirty()
+    {
+#if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        #endif
+#endif
     }
-    
-    // Backup system to prevent data loss during play mode
-    #if UNITY_EDITOR
-    private void SaveDataToBackup()
-    {
-        try
-        {
-            // Only backup if we have meaningful data
-            if (gridData == null || (gridData.occupiedCells == null && gridData.wallCells == null))
-                return;
-                
-            string backupDir = "Assets/_3D Block Puzzle/Gameplay/Data/Backups";
-            if (!Directory.Exists(backupDir))
-            {
-                Directory.CreateDirectory(backupDir);
-            }
-            
-            string assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
-            string assetName = Path.GetFileNameWithoutExtension(assetPath);
-            string backupPath = $"{backupDir}/{assetName}_backup.json";
-            
-            // Create a serializable version of our data
-            string json = JsonUtility.ToJson(this, true);
-            File.WriteAllText(backupPath, json);
-            
-            Debug.Log($"GridData backup saved to {backupPath}");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Failed to backup GridData: {e.Message}");
-        }
-    }
-    #endif
-    
-    // Validate data when loading to catch potential issues
-    private void OnEnable()
-    {
-        ValidateData();
-    }
-    
-    public void ValidateData()
-    {
-        // Check if data structures match grid dimensions
-        if (gridData != null)
-        {
-            if (gridData.occupiedCells != null && gridData.occupiedCells.Length != gridWidth * gridLength)
-            {
-                Debug.LogWarning($"GridData: Occupied cells array size ({gridData.occupiedCells.Length}) " +
-                                $"doesn't match grid dimensions ({gridWidth}x{gridLength})");
-            }
 
-            if (gridData.wallCells != null && gridData.wallCells.Length != gridWidth * gridLength)
-            {
-                Debug.LogWarning($"GridData: Wall cells array size ({gridData.wallCells.Length}) " +
-                                $"doesn't match grid dimensions ({gridWidth}x{gridLength})");
-            }
-        }        
-    }
+    private void OnEnable() => EnsureArrays();
 }

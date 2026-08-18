@@ -5,6 +5,7 @@ using Voodoo.Utils;
 public static class GameConstants
 {
     private static List<BlockColor> blockColors = new List<BlockColor>();
+    private static List<BlockColor> gateColors = new List<BlockColor>();
     private static Material defaultWallMaterial;
     private static int currentLevelIndex = 0;
     public static bool inputEnabled = true;
@@ -37,27 +38,37 @@ public static class GameConstants
     }
     public static Material GetBlockColorMaterial(BlockColorTypes colorType)
     {
-        if (blockColors.Count == 0)
-        {
-            InitializeBlockColors();
-        }
+        if (blockColors.Count == 0) blockColors = LoadColors("Materials/BlockColors");
         return blockColors[(int)colorType].colorMaterial;
     }
 
-    static void InitializeBlockColors()
+    /// <summary>Material used for holes of a given colour.</summary>
+    public static Material GetGateColorMaterial(BlockColorTypes colorType)
+    {
+        if (gateColors.Count == 0) gateColors = LoadColors("Materials/GateColors");
+        return gateColors[(int)colorType].colorMaterial;
+    }
+
+    /// <summary>Tint for editor swatches and gizmos, taken from the hole material.</summary>
+    public static Color GetSwatchColor(BlockColorTypes colorType)
+    {
+        Material material = GetGateColorMaterial(colorType) ?? GetBlockColorMaterial(colorType);
+        return material != null ? material.color : Color.magenta;
+    }
+
+    static List<BlockColor> LoadColors(string resourceFolder)
     {
         int colorCount = EnumExtensions.Count<BlockColorTypes>();
-        // Initialize
-        blockColors = new List<BlockColor>(colorCount);
+        List<BlockColor> colors = new List<BlockColor>(colorCount);
         for (int i = 0; i < colorCount; i++)
         {
-            BlockColor color = new BlockColor
+            colors.Add(new BlockColor
             {
                 colorType = (BlockColorTypes)i,
-                colorMaterial = Resources.Load<Material>($"Materials/BlockColors/{(BlockColorTypes)i}")
-            };
-            blockColors.Add(color);
+                colorMaterial = Resources.Load<Material>($"{resourceFolder}/{(BlockColorTypes)i}")
+            });
         }
+        return colors;
     }
     public static void InitializeGame()
     {

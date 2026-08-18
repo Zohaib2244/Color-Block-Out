@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 22ddec454f66e504f8d0f8d5e59e5940, type: 3}
+  m_Script: {fileID: 11500000, guid: f7283c1378bc5ae459da0e475a12d1af, type: 3}
   m_Name: HoleConfiguration
   m_EditorClassIdentifier: 
   holePrefabs:
