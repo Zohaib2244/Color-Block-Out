@@ -2287,7 +2287,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 1124716245}
   panelRect: {fileID: 1124716244}
-  levelScreen: {fileID: 0}
+  levelScreen: {fileID: 1978369112673491188}
 --- !u!1 &1825827548
 GameObject:
   m_ObjectHideFlags: 0

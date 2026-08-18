@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
-    path: Assets/_3D Block Puzzle/Gameplay/Scenes/GameScene.unity
+    path: Assets/_GameData/Systems/Scenes/GameScene.unity
     guid: 6d16cb5e91dbb2448b413dd5b0f18acf
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
