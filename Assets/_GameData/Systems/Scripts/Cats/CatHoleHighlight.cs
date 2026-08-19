@@ -26,14 +26,6 @@ public sealed class CatHoleHighlight : MonoBehaviour
         if (visual == null) visual = transform.Find(VisualName);
     }
 
-    /// <summary>Reads the tuning values a level was built with. Safe to call before Awake.</summary>
-    public void Configure(float highlightScale, float highlightLift, float highlightDuration)
-    {
-        scale = highlightScale;
-        lift = highlightLift;
-        duration = highlightDuration;
-    }
-
     public void SetHighlighted(bool on)
     {
         if (visual == null) visual = transform.Find(VisualName);

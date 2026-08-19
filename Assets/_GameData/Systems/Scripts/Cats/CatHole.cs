@@ -17,6 +17,12 @@ public sealed class CatHole : MonoBehaviour
     [SerializeField] private List<Vector2Int> offsets = new List<Vector2Int> { Vector2Int.zero };
     [SerializeField] private bool active = true;
 
+    [Header("Exit")]
+    [Tooltip("Where the meshes slide to before the hole hides, relative to their resting position.")]
+    [SerializeField] private Vector3 exitOffset = new Vector3(0f, -0.6f, 0f);
+    [SerializeField] private float exitDuration = 0.45f;
+    [SerializeField] private Ease exitEase = Ease.InOutBounce;
+
     private readonly List<Renderer> rendererBuffer = new List<Renderer>();
 
     public int ColorId => colorId;
@@ -68,13 +74,13 @@ public sealed class CatHole : MonoBehaviour
     /// offset before the object hides; the hole stops counting as active immediately, so it
     /// blocks nothing while the animation plays.
     /// </summary>
-    public void Complete(CatPuzzleConfig config = null)
+    public void Complete()
     {
         if (!active) return;
         active = false;
 
         Transform visual = transform.Find(CatHoleHighlight.VisualName);
-        if (visual == null || config == null || !Application.isPlaying)
+        if (visual == null || !Application.isPlaying)
         {
             gameObject.SetActive(false);
             return;
@@ -82,9 +88,9 @@ public sealed class CatHole : MonoBehaviour
 
         visual.DOKill();
         Sequence exit = DOTween.Sequence();
-        exit.Append(visual.DOLocalMove(config.holeExitOffset, config.holeExitDuration).SetEase(config.holeExitEase));
+        exit.Append(visual.DOLocalMove(exitOffset, exitDuration).SetEase(exitEase));
         // Undo any highlight swell on the way out.
-        exit.Join(visual.DOScale(Vector3.one, config.holeExitDuration));
+        exit.Join(visual.DOScale(Vector3.one, exitDuration));
         exit.OnComplete(() =>
         {
             visual.localPosition = Vector3.zero;

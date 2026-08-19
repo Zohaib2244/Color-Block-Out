@@ -14,6 +14,15 @@ public sealed class CatPiece : MonoBehaviour
     [Tooltip("Renderers tinted by the cat's colour. Left empty, every renderer on the cat is used.")]
     [SerializeField] private Renderer[] coloredRenderers;
 
+    [Header("Collection")]
+    [Tooltip("Arc height of the hop into the hole.")]
+    [SerializeField] private float jumpPower = 0.25f;
+    [SerializeField] private float jumpDuration = 0.18f;
+
+    [Tooltip("How far below the hole surface the cat sinks as it shrinks away.")]
+    [SerializeField] private float sinkDepth = 0.15f;
+    [SerializeField] private float exitDuration = 0.22f;
+
     private readonly List<Renderer> rendererBuffer = new List<Renderer>();
 
     public int ColorId => colorId;
@@ -54,16 +63,17 @@ public sealed class CatPiece : MonoBehaviour
     }
 
     /// <summary>
-    /// Hops the cat to <paramref name="localTarget"/> inside the hole, then drops it to
-    /// <paramref name="sinkY"/> while shrinking it away. The cat counts as collected the moment
-    /// this starts, so it stops blocking before the animation has finished.
+    /// Hops the cat to <paramref name="localTarget"/> inside the hole, then drops it through the
+    /// hole surface while shrinking it away. <paramref name="surfaceY"/> is where that surface sits
+    /// in the cat's own space; how far past it the cat goes is this component's business. The cat
+    /// counts as collected the moment this starts, so it stops blocking before the animation ends.
     /// </summary>
-    public void CollectInto(Vector3 localTarget, float sinkY, CatPuzzleConfig config)
+    public void CollectInto(Vector3 localTarget, float surfaceY)
     {
         if (collected) return;
         collected = true;
 
-        if (config == null || !Application.isPlaying)
+        if (!Application.isPlaying)
         {
             gameObject.SetActive(false);
             return;
@@ -73,9 +83,9 @@ public sealed class CatPiece : MonoBehaviour
         transform.DOKill();
 
         Sequence exit = DOTween.Sequence();
-        exit.Append(transform.DOLocalJump(localTarget, config.catJumpPower, 1, config.catJumpDuration).SetEase(Ease.OutQuad));
-        exit.Append(transform.DOLocalMoveY(sinkY, config.catExitDuration).SetEase(Ease.InQuad));
-        exit.Join(transform.DOScale(Vector3.zero, config.catExitDuration).SetEase(Ease.InBack));
+        exit.Append(transform.DOLocalJump(localTarget, jumpPower, 1, jumpDuration).SetEase(Ease.OutQuad));
+        exit.Append(transform.DOLocalMoveY(surfaceY - sinkDepth, exitDuration).SetEase(Ease.InQuad));
+        exit.Join(transform.DOScale(Vector3.zero, exitDuration).SetEase(Ease.InBack));
         exit.OnComplete(() =>
         {
             // Restore the resting scale so the object is reusable if the level is rebuilt.

@@ -48,8 +48,8 @@ public class PauseScreen : MonoBehaviour
     public void Home()
     {
         AudioManager.Instance?.PlayButtonClick();
-        GameManager.Instance.currentLevelState = LevelState.None;
         previousScreenType = ScreenType.MainMenu;
+        // Despawning clears the level state too, so nothing needs resetting by hand.
         GameManager.Instance.UnloadAllLevels();
         Close();
     }

@@ -1,49 +1,47 @@
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 
+/// <summary>
+/// Loading and progression: which level is current, moving between them, and the screens that go
+/// with each outcome. It asks <see cref="LevelSpawner"/> to put a level in the scene and listens to
+/// <see cref="LevelManager"/> for how that level ended.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     #region Singleton
     public static GameManager Instance;
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
     #endregion
 
     [SerializeField] private LevelData levelData;
-    [SerializeField] private float levelCompleteDelay = 0.75f;
-    public LevelState currentLevelState = LevelState.None;
+    [SerializeField] private LevelSpawner spawner;
+    [SerializeField] private LevelManager levelManager;
     public UnityEvent onLevelLoaded;
 
     public int TotalLevels => levelData != null ? levelData.Count : 0;
     public CatLevelData CurrentLevel { get; private set; }
+    public LevelState CurrentLevelState => levelManager != null ? levelManager.State : LevelState.None;
 
-    void Start()
+    private void Start()
     {
         GameConstants.InitializeGame();
-        // Completion is game state, so it is owned here rather than by optional presentation.
-        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.PuzzleCompleted.AddListener(OnPuzzleCompleted);
+        if (spawner == null) spawner = LevelSpawner.Instance != null ? LevelSpawner.Instance : FindFirstObjectByType<LevelSpawner>();
+        if (levelManager == null) levelManager = LevelManager.Instance != null ? LevelManager.Instance : FindFirstObjectByType<LevelManager>();
+
+        if (levelManager == null) return;
+        levelManager.LevelCompleted.AddListener(OnLevelCompleted);
+        levelManager.LevelFailed.AddListener(OnLevelFailed);
     }
 
     private void OnDestroy()
     {
-        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.PuzzleCompleted.RemoveListener(OnPuzzleCompleted);
-    }
-
-    /// <summary>Held briefly so the level's despawn animation can play before the screen changes.</summary>
-    private void OnPuzzleCompleted()
-    {
-        if (currentLevelState != LevelState.InProgress) return;
-        DOVirtual.DelayedCall(levelCompleteDelay, LevelCompleted);
+        if (levelManager == null) return;
+        levelManager.LevelCompleted.RemoveListener(OnLevelCompleted);
+        levelManager.LevelFailed.RemoveListener(OnLevelFailed);
     }
 
     public void LoadLevel(int levelIndex)
@@ -53,15 +51,14 @@ public class GameManager : MonoBehaviour
             Debug.LogError("No level collection assigned to GameManager.");
             return;
         }
-        if (CatPuzzleController.Instance == null)
+        if (spawner == null)
         {
-            Debug.LogError("No CatPuzzleController in the scene, a level cannot be spawned.");
+            Debug.LogError("No LevelSpawner in the scene, a level cannot be built.");
             return;
         }
 
         CurrentLevel = levelData.Get(levelIndex);
-        CatPuzzleController.Instance.LoadLevel(CurrentLevel);
-        currentLevelState = LevelState.InProgress;
+        spawner.Spawn(CurrentLevel);
         if (GameUIManager.Instance != null) GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
         onLevelLoaded?.Invoke();
         FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Start, levelIndex + 1);
@@ -69,38 +66,24 @@ public class GameManager : MonoBehaviour
 
     public void LoadNextLevel() => LoadLevel(GameConstants.CurrentLevelIndex);
 
-    public void RetryLevel()
-    {
-        if (currentLevelState != LevelState.InProgress && currentLevelState != LevelState.Failed) return;
-        GameUIManager.Instance.LevelScreen.StopTimer();
-        LoadLevel(GameConstants.CurrentLevelIndex);
-    }
-
-    public void LevelFailed()
-    {
-        if (currentLevelState == LevelState.InProgress)
-        {
-            currentLevelState = LevelState.Failed;
-            GameUIManager.Instance.ShowScreen(ScreenType.GameOver);
-            FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Fail, GameConstants.CurrentLevelIndex + 1);
-        }
-    }
-
-    public void LevelCompleted()
-    {
-        if (currentLevelState == LevelState.InProgress)
-        {
-            currentLevelState = LevelState.Completed;
-            GameConstants.CurrentLevelIndex++;
-            GameUIManager.Instance.ShowScreen(ScreenType.LevelCompleted);
-            FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Complete, GameConstants.CurrentLevelIndex + 1);
-        }
-    }
+    public void RetryLevel() => LoadLevel(GameConstants.CurrentLevelIndex);
 
     public void UnloadAllLevels()
     {
-        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.ClearLevel();
+        if (spawner != null) spawner.Despawn();
         CurrentLevel = null;
-        currentLevelState = LevelState.None;
+    }
+
+    private void OnLevelCompleted()
+    {
+        GameConstants.CurrentLevelIndex++;
+        GameUIManager.Instance.ShowScreen(ScreenType.LevelCompleted);
+        FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Complete, GameConstants.CurrentLevelIndex + 1);
+    }
+
+    private void OnLevelFailed()
+    {
+        GameUIManager.Instance.ShowScreen(ScreenType.GameOver);
+        FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Fail, GameConstants.CurrentLevelIndex + 1);
     }
 }

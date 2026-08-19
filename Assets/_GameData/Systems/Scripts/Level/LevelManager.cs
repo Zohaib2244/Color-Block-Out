@@ -1,72 +1,119 @@
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Events;
 
 /// <summary>
-/// Scene-level presentation for whatever level the <see cref="CatPuzzleController"/>
-/// currently holds: the spawn/despawn tween, the timer and the completion hand-off.
+/// Owns the level that is currently being played and the state it is in. It is handed a finished
+/// level by <see cref="LevelSpawner"/>, watches the puzzle rules for the moment it is solved or
+/// run out of time, and reports that upward. <see cref="GameManager"/> decides what happens next.
 /// </summary>
 public sealed class LevelManager : MonoBehaviour
 {
+    public static LevelManager Instance { get; private set; }
+
     [SerializeField] private CatPuzzleController puzzle;
     [SerializeField] private float spawnDuration = 0.75f;
+
+    [Tooltip("Held after the puzzle is solved so the despawn animation can play.")]
+    [SerializeField] private float completeDelay = 0.75f;
+
+    public UnityEvent<CatLevelInstance> LevelStarted = new UnityEvent<CatLevelInstance>();
+    public UnityEvent LevelCompleted = new UnityEvent();
+    public UnityEvent LevelFailed = new UnityEvent();
+
     private bool timerStarted;
+
+    public CatLevelInstance ActiveLevel { get; private set; }
+    public LevelState State { get; private set; } = LevelState.None;
+    public CatLevelData CurrentLevel => ActiveLevel != null ? ActiveLevel.Source : null;
+    public bool IsPlaying => State == LevelState.InProgress;
 
     private void Awake()
     {
-        if (puzzle == null) puzzle = CatPuzzleController.Instance;
-        if (puzzle == null) puzzle = FindFirstObjectByType<CatPuzzleController>();
+        if (Instance != null && Instance != this) { Destroy(this); return; }
+        Instance = this;
+        if (puzzle == null) puzzle = CatPuzzleController.Instance != null ? CatPuzzleController.Instance : FindFirstObjectByType<CatPuzzleController>();
     }
 
     private void OnEnable()
     {
         if (puzzle == null) return;
-        puzzle.LevelBound.AddListener(OnLevelBound);
         puzzle.HoleMoved.AddListener(OnHoleMoved);
-        puzzle.PuzzleCompleted.AddListener(OnPuzzleCompleted);
+        puzzle.PuzzleCompleted.AddListener(OnPuzzleSolved);
     }
 
     private void OnDisable()
     {
         if (puzzle == null) return;
-        puzzle.LevelBound.RemoveListener(OnLevelBound);
         puzzle.HoleMoved.RemoveListener(OnHoleMoved);
-        puzzle.PuzzleCompleted.RemoveListener(OnPuzzleCompleted);
+        puzzle.PuzzleCompleted.RemoveListener(OnPuzzleSolved);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    /// <summary>Takes ownership of a freshly spawned level.</summary>
+    public void BeginLevel(CatLevelInstance instance)
+    {
+        if (instance == null) return;
+        ActiveLevel = instance;
+        State = LevelState.InProgress;
+        timerStarted = false;
+
+        instance.transform.localScale = Vector3.zero;
+        instance.transform.DOScale(Vector3.one, spawnDuration).SetEase(Ease.OutBack);
+        LevelStarted.Invoke(instance);
+    }
+
+    /// <summary>Drops the current level without judging it, for a reload or a return to menu.</summary>
+    public void EndLevel()
+    {
+        StopTimer();
+        ActiveLevel = null;
+        State = LevelState.None;
+        timerStarted = false;
     }
 
     /// <summary>The countdown starts on the player's first move, not on load.</summary>
-    private void OnHoleMoved(CatHole hole) => BeginLevelTimer();
+    private void OnHoleMoved(CatHole hole) => BeginTimer();
 
-    private void OnLevelBound(CatLevelInstance level)
+    public void BeginTimer()
     {
-        timerStarted = false;
-        SpawnLevel(level);
-    }
-
-    /// <summary>Starts the countdown on the player's first interaction.</summary>
-    public void BeginLevelTimer()
-    {
-        if (timerStarted || puzzle == null || puzzle.CurrentLevel == null) return;
+        if (timerStarted || !IsPlaying || CurrentLevel == null) return;
         if (GameUIManager.Instance == null || GameUIManager.Instance.LevelScreen == null) return;
-        GameUIManager.Instance.LevelScreen.StartLevelTime(puzzle.CurrentLevel.levelTime);
+        GameUIManager.Instance.LevelScreen.StartLevelTime(CurrentLevel.levelTime);
         timerStarted = true;
     }
 
-    private void OnPuzzleCompleted()
+    private void OnPuzzleSolved()
     {
-        if (GameUIManager.Instance != null && GameUIManager.Instance.LevelScreen != null) GameUIManager.Instance.LevelScreen.StopTimer();
-        DespawnLevel(puzzle != null ? puzzle.ActiveLevel : null);
+        if (!IsPlaying) return;
+        State = LevelState.Completed;
+        StopTimer();
+        Despawn();
+        DOVirtual.DelayedCall(completeDelay, () => LevelCompleted.Invoke());
     }
 
-    private void SpawnLevel(CatLevelInstance level)
+    /// <summary>Called when the countdown runs out.</summary>
+    public void Fail()
     {
-        if (level == null) return;
-        level.transform.localScale = Vector3.zero;
-        level.transform.DOScale(Vector3.one, spawnDuration).SetEase(Ease.OutBack);
+        if (!IsPlaying) return;
+        State = LevelState.Failed;
+        StopTimer();
+        LevelFailed.Invoke();
     }
 
-    private void DespawnLevel(CatLevelInstance level)
+    private void Despawn()
     {
-        if (level == null) return;
-        level.transform.DOScale(Vector3.zero, spawnDuration).SetEase(Ease.InBack);
+        if (ActiveLevel == null) return;
+        ActiveLevel.transform.DOScale(Vector3.zero, spawnDuration).SetEase(Ease.InBack);
+    }
+
+    private void StopTimer()
+    {
+        if (GameUIManager.Instance != null && GameUIManager.Instance.LevelScreen != null)
+            GameUIManager.Instance.LevelScreen.StopTimer();
     }
 }

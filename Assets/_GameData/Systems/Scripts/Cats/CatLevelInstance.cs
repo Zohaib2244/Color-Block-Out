@@ -55,15 +55,9 @@ public sealed class CatLevelInstance : MonoBehaviour
     public void Forget(CatPiece cat) => cats.Remove(cat);
     public void Forget(CatHole hole) => holes.Remove(hole);
 
-    private void Start()
+    private void Awake()
     {
         if (grid == null) grid = GetComponentInChildren<GridManager>(true);
         if (cats.Count == 0 && holes.Count == 0) RefreshContents();
-        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.BindLevel(this);
-    }
-
-    private void OnDestroy()
-    {
-        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.UnbindLevel(this);
     }
 }

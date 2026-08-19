@@ -42,11 +42,6 @@ public sealed class GridCreatorTool : EditorWindow
     private void OnEnable()
     {
         if (config == null) config = CatPuzzleAssetCreator.FindConfig();
-        if (config != null)
-        {
-            catParentHeight = config.defaultCatParentHeight;
-            holeParentHeight = config.defaultHoleParentHeight;
-        }
         EnsureCells();
     }
 

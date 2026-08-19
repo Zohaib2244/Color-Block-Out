@@ -23,17 +23,26 @@ public static class CatHoleBuilder
         if (placement == null || grid == null) return null;
         List<Vector2Int> offsets = Normalise(placement.offsets);
 
+        // A root prefab lets the exit and highlight settings be authored once; without one the
+        // components fall back to their script defaults.
+        GameObject rootPrefab = config != null && config.holeConfiguration != null ? config.holeConfiguration.holeRootPrefab : null;
+        GameObject root = rootPrefab != null ? GridBuilder.InstantiatePrefab(rootPrefab, parent) : new GameObject("Hole");
+        if (rootPrefab == null)
+        {
+            GridBuilder.RegisterCreated(root, "Create Hole");
+            root.transform.SetParent(parent, false);
+        }
+
         string colorName = config != null && config.palette != null ? config.palette.GetName(placement.colorId) : placement.colorId.ToString();
-        GameObject root = new GameObject($"Hole_{colorName}_{placement.origin.x}_{placement.origin.y}");
-        GridBuilder.RegisterCreated(root, "Create Hole");
-        root.transform.SetParent(parent, false);
+        root.name = $"Hole_{colorName}_{placement.origin.x}_{placement.origin.y}";
         root.transform.localRotation = Quaternion.identity;
         root.transform.localScale = Vector3.one;
 
-        CatHole hole = root.AddComponent<CatHole>();
+        CatHole hole = root.GetComponent<CatHole>();
+        if (hole == null) hole = root.AddComponent<CatHole>();
         hole.Configure(placement.colorId, placement.origin, offsets);
-        root.AddComponent<CatHoleHighlight>();
-        root.AddComponent<CatHoleDragHandler>();
+        if (root.GetComponent<CatHoleHighlight>() == null) root.AddComponent<CatHoleHighlight>();
+        if (root.GetComponent<CatHoleDragHandler>() == null) root.AddComponent<CatHoleDragHandler>();
 
         BuildPieces(hole, grid, config);
         MoveTo(hole, placement.origin, grid);
@@ -60,11 +69,7 @@ public static class CatHoleBuilder
         // Meshes hang off a Visual child so highlight tweens never fight the root's grid snapping.
         Transform visual = CreateVisualRoot(hole.transform);
         CatHoleHighlight highlight = hole.GetComponent<CatHoleHighlight>();
-        if (highlight != null)
-        {
-            highlight.SetVisual(visual);
-            if (config != null) highlight.Configure(config.highlightScale, config.highlightLift, config.highlightDuration);
-        }
+        if (highlight != null) highlight.SetVisual(visual);
 
         float spacing = grid != null ? grid.GetCellSize() : 1f;
         HashSet<Vector2Int> shape = new HashSet<Vector2Int>(hole.Offsets);

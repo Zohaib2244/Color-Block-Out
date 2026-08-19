@@ -18,6 +18,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private GridData gridAsset;
     private CatLevelData levelAsset;
     private CatPuzzleController controller;
+    private LevelSpawner spawner;
     private CatLevelInstance instance;
 
     private Tool tool = Tool.Holes;
@@ -168,11 +169,12 @@ public sealed class CatLevelEditorWindow : EditorWindow
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.LabelField("Scene", EditorStyles.boldLabel);
 
-        controller = (CatPuzzleController)EditorGUILayout.ObjectField("Controller", controller, typeof(CatPuzzleController), true);
-        if (controller == null)
+        spawner = (LevelSpawner)EditorGUILayout.ObjectField("Spawner", spawner, typeof(LevelSpawner), true);
+        controller = (CatPuzzleController)EditorGUILayout.ObjectField("Rules", controller, typeof(CatPuzzleController), true);
+        if (spawner == null)
         {
-            EditorGUILayout.HelpBox("The scene needs one CatPuzzleController. Levels bind themselves to it when they spawn.", MessageType.Warning);
-            if (GUILayout.Button("Create Puzzle Controller", GUILayout.Height(24))) Defer(CreateController);
+            EditorGUILayout.HelpBox("The scene needs a LevelSpawner to build levels under, plus a CatPuzzleController for the rules and a LevelManager to own the level.", MessageType.Warning);
+            if (GUILayout.Button("Create Puzzle Rig", GUILayout.Height(24))) Defer(CreateRig);
             EditorGUILayout.EndVertical();
             return;
         }
@@ -420,7 +422,8 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private void RefreshSceneReferences()
     {
         if (controller == null) controller = FindFirstObjectByType<CatPuzzleController>();
-        instance = controller != null ? controller.LevelRoot.GetComponentInChildren<CatLevelInstance>(true) : null;
+        if (spawner == null) spawner = FindFirstObjectByType<LevelSpawner>();
+        instance = spawner != null ? spawner.LevelRoot.GetComponentInChildren<CatLevelInstance>(true) : null;
         if (instance != null && instance.Source != null)
         {
             if (levelAsset == null) levelAsset = instance.Source;
@@ -428,22 +431,31 @@ public sealed class CatLevelEditorWindow : EditorWindow
         }
     }
 
-    private void CreateController()
+    /// <summary>Builds the whole scene rig: rules, level ownership and spawning, wired together.</summary>
+    private void CreateRig()
     {
-        GameObject controllerObject = new GameObject("Cat Puzzle Controller");
-        Undo.RegisterCreatedObjectUndo(controllerObject, "Create Cat Puzzle Controller");
-        controller = controllerObject.AddComponent<CatPuzzleController>();
-        controllerObject.AddComponent<CatHoleInputManager>();
+        GameObject rig = new GameObject("Cat Puzzle");
+        Undo.RegisterCreatedObjectUndo(rig, "Create Cat Puzzle Rig");
+        controller = rig.AddComponent<CatPuzzleController>();
+        rig.AddComponent<CatHoleInputManager>();
+        LevelManager levelManager = rig.AddComponent<LevelManager>();
+        spawner = rig.AddComponent<LevelSpawner>();
 
         GameObject root = new GameObject("Level Root");
         Undo.RegisterCreatedObjectUndo(root, "Create Level Root");
-        root.transform.SetParent(controllerObject.transform, false);
+        root.transform.SetParent(rig.transform, false);
 
-        SerializedObject serialized = new SerializedObject(controller);
+        SerializedObject serialized = new SerializedObject(spawner);
         serialized.FindProperty("levelRoot").objectReferenceValue = root.transform;
         // Nothing is loaded implicitly any more, so wire the config while we are here.
         serialized.FindProperty("config").objectReferenceValue = config;
+        serialized.FindProperty("levelManager").objectReferenceValue = levelManager;
+        serialized.FindProperty("puzzle").objectReferenceValue = controller;
         serialized.ApplyModifiedProperties();
+
+        SerializedObject managerSerialized = new SerializedObject(levelManager);
+        managerSerialized.FindProperty("puzzle").objectReferenceValue = controller;
+        managerSerialized.ApplyModifiedProperties();
         MarkSceneDirty();
     }
 
@@ -465,13 +477,13 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void BuildScene()
     {
-        if (levelAsset == null || controller == null) { EditorUtility.DisplayDialog("Cat Level Editor", "A level asset and a scene controller are both needed.", "OK"); return; }
+        if (levelAsset == null || spawner == null) { EditorUtility.DisplayDialog("Cat Level Editor", "A level asset and a scene LevelSpawner are both needed.", "OK"); return; }
         if (levelAsset.grid == null) levelAsset.grid = gridAsset;
         if (levelAsset.grid == null) { EditorUtility.DisplayDialog("Cat Level Editor", "Assign a GridData asset to this level first.", "OK"); return; }
 
         ClearScene();
-        instance = CatLevelBuilder.Build(levelAsset, controller.LevelRoot, config);
-        if (instance != null) controller.BindLevel(instance);
+        instance = CatLevelBuilder.Build(levelAsset, spawner.LevelRoot, config);
+        if (instance != null && controller != null) controller.SetLevel(instance);
         gridAsset = levelAsset.grid;
         selection.Clear();
         MarkSceneDirty();
@@ -479,10 +491,10 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void ClearScene()
     {
-        if (controller == null) return;
-        Transform root = controller.LevelRoot;
+        if (spawner == null) return;
+        Transform root = spawner.LevelRoot;
         for (int i = root.childCount - 1; i >= 0; i--) Undo.DestroyObjectImmediate(root.GetChild(i).gameObject);
-        controller.UnbindLevel(instance);
+        if (controller != null) controller.ClearLevel();
         instance = null;
         MarkSceneDirty();
     }

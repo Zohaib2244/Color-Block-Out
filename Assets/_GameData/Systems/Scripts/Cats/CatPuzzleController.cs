@@ -4,29 +4,24 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// The single scene-level rules object for the cat puzzle. Levels are spawned as
-/// <see cref="CatLevelInstance"/> objects that bind themselves here, so the controller
-/// outlives every level and nothing in a level asset points back at the scene.
+/// The rules of the cat puzzle: what a hole is allowed to do and what happens to the cats it
+/// reaches. It owns no lifecycle — <see cref="LevelSpawner"/> builds a level and
+/// <see cref="LevelManager"/> holds it; this only ever operates on the level it is handed.
 /// </summary>
 public sealed class CatPuzzleController : MonoBehaviour
 {
     public static CatPuzzleController Instance { get; private set; }
 
-    [SerializeField] private Transform levelRoot;
-    [SerializeField] private CatPuzzleConfig config;
     [SerializeField] private CatLevelInstance activeLevel;
 
     public UnityEvent<CatPiece, CatHole> CatCollected = new UnityEvent<CatPiece, CatHole>();
     public UnityEvent<CatHole> HoleMoved = new UnityEvent<CatHole>();
     public UnityEvent<CatHole> HoleCompleted = new UnityEvent<CatHole>();
-    public UnityEvent<CatLevelInstance> LevelBound = new UnityEvent<CatLevelInstance>();
     public UnityEvent PuzzleCompleted = new UnityEvent();
 
     public CatLevelInstance ActiveLevel => activeLevel;
     public CatLevelData CurrentLevel => activeLevel != null ? activeLevel.Source : null;
     public GridManager GridManager => activeLevel != null ? activeLevel.Grid : null;
-    public CatPuzzleConfig Config => config;
-    public Transform LevelRoot => levelRoot != null ? levelRoot : transform;
 
     private IReadOnlyList<CatPiece> Cats => activeLevel != null ? activeLevel.Cats : System.Array.Empty<CatPiece>();
     private IReadOnlyList<CatHole> Holes => activeLevel != null ? activeLevel.Holes : System.Array.Empty<CatHole>();
@@ -47,49 +42,14 @@ public sealed class CatPuzzleController : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    private void Start()
+    /// <summary>The level these rules apply to. Set by the spawner as a level comes up.</summary>
+    public void SetLevel(CatLevelInstance instance)
     {
-        // A level built in the editor is already sitting under the root; adopt it and
-        // announce it so presentation behaves the same as a level loaded at runtime.
-        if (activeLevel == null) activeLevel = LevelRoot.GetComponentInChildren<CatLevelInstance>(true);
-        if (activeLevel == null) return;
-        activeLevel.RefreshContents();
-        // Tints live in property blocks, which a scene reload drops. Restore them.
-        CatLevelBuilder.ApplyColors(activeLevel, Config);
-        LevelBound.Invoke(activeLevel);
-    }
-
-    #region Level lifecycle
-    /// <summary>Clears whatever is loaded and spawns the given level asset.</summary>
-    public CatLevelInstance LoadLevel(CatLevelData level)
-    {
-        ClearLevel();
-        if (level == null) return null;
-        CatLevelInstance instance = CatLevelBuilder.Build(level, LevelRoot, Config);
-        BindLevel(instance);
-        return instance;
-    }
-
-    /// <summary>Called by a level as it comes to life. The controller keeps only one at a time.</summary>
-    public void BindLevel(CatLevelInstance instance)
-    {
-        if (instance == null || activeLevel == instance) return;
         activeLevel = instance;
-        activeLevel.RefreshContents();
-        LevelBound.Invoke(activeLevel);
+        if (activeLevel != null) activeLevel.RefreshContents();
     }
 
-    public void UnbindLevel(CatLevelInstance instance)
-    {
-        if (activeLevel == instance) activeLevel = null;
-    }
-
-    public void ClearLevel()
-    {
-        activeLevel = null;
-        GridBuilder.DestroyChildren(LevelRoot);
-    }
-    #endregion
+    public void ClearLevel() => activeLevel = null;
 
     #region Grid helpers
     /// <summary>Cell position in grid space, which is what content parented under the grid uses.</summary>
@@ -233,7 +193,7 @@ public sealed class CatPuzzleController : MonoBehaviour
             taken.Add(exit);
 
             cat.SetGridPosition(exit);
-            cat.CollectInto(CellToLocal(exit), SinkDepth(), Config);
+            cat.CollectInto(CellToLocal(exit), HoleSurfaceY());
             collectedAny = true;
             CatCollected.Invoke(cat, hole);
         }
@@ -244,7 +204,7 @@ public sealed class CatPuzzleController : MonoBehaviour
         {
             foreach (CatHole sameColor in Holes.Where(candidate => candidate != null && candidate.IsActive && candidate.ColorId == hole.ColorId).ToArray())
             {
-                sameColor.Complete(Config);
+                sameColor.Complete();
                 HoleCompleted.Invoke(sameColor);
             }
         }
@@ -268,12 +228,11 @@ public sealed class CatPuzzleController : MonoBehaviour
         return best;
     }
 
-    /// <summary>How far a cat drops, in the Cats parent's space, to fall through the hole surface.</summary>
-    private float SinkDepth()
+    /// <summary>Where the hole surface sits in the Cats parent's space, which cats fall through.</summary>
+    private float HoleSurfaceY()
     {
         GridData data = GridManager != null ? GridManager.SavedGridData : null;
-        float surface = data != null ? data.holeParentHeight - data.catParentHeight : 0f;
-        return surface - (Config != null ? Config.catSinkDepth : 0.15f);
+        return data != null ? data.holeParentHeight - data.catParentHeight : 0f;
     }
     #endregion
 }
