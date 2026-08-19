@@ -1,15 +1,20 @@
 using System.Collections.Generic;
-using DG.Tweening;
 using UnityEngine;
 
 /// <summary>
-/// Touch-facing drag behaviour for a hole. The whole shape moves as one piece and
-/// only settles on cells where every covered cell is free.
+/// Touch-facing drag behaviour for a hole. The logical position still moves a whole cell at a
+/// time, but the transform is never teleported there: it eases toward the cell it belongs on
+/// every frame, so the shape trails the finger instead of snapping between cells.
 /// </summary>
 [RequireComponent(typeof(CatHole))]
 public sealed class CatHoleDragHandler : MonoBehaviour
 {
-    [SerializeField] private float moveDuration = 0.12f;
+    [Header("Follow")]
+    [Tooltip("Roughly how long the shape takes to catch up to its cell. Higher is looser.")]
+    [SerializeField] private float followSmoothTime = 0.07f;
+
+    [Tooltip("Upper bound on follow speed, in cells per second, so a long slide cannot overshoot wildly.")]
+    [SerializeField] private float maxFollowSpeed = 60f;
 
     private readonly List<Vector2Int> path = new List<Vector2Int>();
     private CatHole hole;
@@ -17,7 +22,10 @@ public sealed class CatHoleDragHandler : MonoBehaviour
     private Vector2Int originalCell;
     private Vector2Int previewCell;
     private Vector3 grabOffset;
+    private Vector3 targetLocalPosition;
+    private Vector3 followVelocity;
     private bool dragging;
+    private bool following;
 
     private CatPuzzleController Controller => CatPuzzleController.Instance;
 
@@ -27,6 +35,20 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         highlight = GetComponent<CatHoleHighlight>();
     }
 
+    private void Update()
+    {
+        if (!following) return;
+
+        transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetLocalPosition,
+            ref followVelocity, followSmoothTime, maxFollowSpeed);
+
+        // Settle exactly on the cell once the easing has effectively arrived.
+        if ((transform.localPosition - targetLocalPosition).sqrMagnitude > 0.0000001f) return;
+        transform.localPosition = targetLocalPosition;
+        followVelocity = Vector3.zero;
+        if (!dragging) following = false;
+    }
+
     public void OnTouchBegin(Vector2 screenPosition)
     {
         if (Controller == null || hole == null || !hole.IsActive) return;
@@ -34,6 +56,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         previewCell = originalCell;
         grabOffset = transform.position - GetWorldPosition(screenPosition);
         dragging = true;
+        FollowCell(previewCell);
         if (highlight != null) highlight.SetHighlighted(true);
     }
 
@@ -48,7 +71,7 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         if (reachable == previewCell) return;
 
         previewCell = reachable;
-        MoveTo(previewCell);
+        FollowCell(previewCell);
 
         // Every cell passed through counts, so a fast drag cannot skip over a cat.
         foreach (Vector2Int step in path) Controller.CollectCatsUnder(hole, step);
@@ -58,21 +81,26 @@ public sealed class CatHoleDragHandler : MonoBehaviour
     {
         if (!dragging) return;
         dragging = false;
-        transform.DOKill();
 
         // The hole may have been completed mid-drag. Leave its exit animation alone.
-        if (hole == null || !hole.IsActive) return;
+        if (hole == null || !hole.IsActive) { following = false; return; }
 
         if (highlight != null) highlight.SetHighlighted(false);
-        if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell)) return;
-        MoveTo(originalCell);
+
+        // Commit the logical move without snapping the transform, so the easing finishes the trip.
+        if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell, false))
+        {
+            FollowCell(previewCell);
+            return;
+        }
+        FollowCell(originalCell);
     }
 
-    private void MoveTo(Vector2Int cell)
+    private void FollowCell(Vector2Int cell)
     {
-        transform.DOKill();
         if (Controller == null) return;
-        transform.DOLocalMove(Controller.CellToLocal(cell), moveDuration).SetEase(Ease.OutQuad);
+        targetLocalPosition = Controller.CellToLocal(cell);
+        following = true;
     }
 
     private Vector3 GetWorldPosition(Vector2 screenPosition)

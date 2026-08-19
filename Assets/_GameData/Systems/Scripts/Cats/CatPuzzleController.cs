@@ -151,11 +151,16 @@ public sealed class CatPuzzleController : MonoBehaviour
         return current;
     }
 
-    /// <summary>Moves a hole and resolves any cats it now sits on.</summary>
-    public bool TryMoveHole(CatHole hole, Vector2Int origin)
+    /// <summary>
+    /// Moves a hole and resolves any cats it now sits on. A drag passes false for
+    /// <paramref name="snapToCell"/> because it is already easing the transform there itself;
+    /// snapping would undo that and put the jump back.
+    /// </summary>
+    public bool TryMoveHole(CatHole hole, Vector2Int origin, bool snapToCell = true)
     {
         if (!CanPlaceHole(hole, origin)) return false;
-        CatHoleBuilder.MoveTo(hole, origin, GridManager);
+        if (snapToCell) CatHoleBuilder.MoveTo(hole, origin, GridManager);
+        else hole.SetOriginCell(origin);
         HoleMoved.Invoke(hole);
         ResolveHole(hole);
         return true;
