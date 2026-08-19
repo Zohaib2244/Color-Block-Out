@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -19,6 +20,7 @@ public class GameManager : MonoBehaviour
     #endregion
 
     [SerializeField] private LevelData levelData;
+    [SerializeField] private float levelCompleteDelay = 0.75f;
     public LevelState currentLevelState = LevelState.None;
     public UnityEvent onLevelLoaded;
 
@@ -29,6 +31,20 @@ public class GameManager : MonoBehaviour
     {
         GameConstants.InitializeGame();
         onLevelLoaded.AddListener(ConfigureCamera);
+        // Completion is game state, so it is owned here rather than by optional presentation.
+        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.PuzzleCompleted.AddListener(OnPuzzleCompleted);
+    }
+
+    private void OnDestroy()
+    {
+        if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.PuzzleCompleted.RemoveListener(OnPuzzleCompleted);
+    }
+
+    /// <summary>Held briefly so the level's despawn animation can play before the screen changes.</summary>
+    private void OnPuzzleCompleted()
+    {
+        if (currentLevelState != LevelState.InProgress) return;
+        DOVirtual.DelayedCall(levelCompleteDelay, LevelCompleted);
     }
 
     public void LoadLevel(int levelIndex)
@@ -47,6 +63,7 @@ public class GameManager : MonoBehaviour
         CurrentLevel = levelData.Get(levelIndex);
         CatPuzzleController.Instance.LoadLevel(CurrentLevel);
         currentLevelState = LevelState.InProgress;
+        if (GameUIManager.Instance != null) GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
         onLevelLoaded?.Invoke();
         FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Start, levelIndex + 1);
     }

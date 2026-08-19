@@ -39,7 +39,6 @@ public sealed class LevelManager : MonoBehaviour
     private void OnLevelBound(CatLevelInstance level)
     {
         timerStarted = false;
-        GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
         SpawnLevel(level);
     }
 
@@ -56,7 +55,6 @@ public sealed class LevelManager : MonoBehaviour
     {
         if (GameUIManager.Instance != null && GameUIManager.Instance.LevelScreen != null) GameUIManager.Instance.LevelScreen.StopTimer();
         DespawnLevel(puzzle != null ? puzzle.ActiveLevel : null);
-        DOVirtual.DelayedCall(spawnDuration, () => GameManager.Instance.LevelCompleted());
     }
 
     private void SpawnLevel(CatLevelInstance level)
