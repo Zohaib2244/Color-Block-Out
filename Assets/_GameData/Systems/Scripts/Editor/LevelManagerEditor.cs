@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// Small inspector helper for the scene level manager. Level content itself is authored
-/// in the Cat Level Editor window; this only exposes the camera framing shortcuts.
+/// in the Cat Level Editor window; this only reports what is currently loaded.
 /// </summary>
 [CustomEditor(typeof(LevelManager))]
 public class LevelManagerEditor : Editor
@@ -26,22 +26,7 @@ public class LevelManagerEditor : Editor
         }
 
         EditorGUILayout.ObjectField("Level Asset", level, typeof(CatLevelData), false);
-
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Capture Camera", GUILayout.Height(24)) && Camera.main != null)
-        {
-            Undo.RecordObject(level, "Capture Camera");
-            level.cameraPosition = Camera.main.transform.position;
-            level.cameraFOV = Camera.main.fieldOfView;
-            EditorUtility.SetDirty(level);
-        }
-        if (GUILayout.Button("Move Camera To Level", GUILayout.Height(24)) && Camera.main != null)
-        {
-            Undo.RecordObject(Camera.main.transform, "Move Camera");
-            Camera.main.transform.position = level.cameraPosition;
-            Camera.main.fieldOfView = level.cameraFOV;
-        }
-        EditorGUILayout.EndHorizontal();
+        if (GUILayout.Button("Open Cat Level Editor", GUILayout.Height(24))) CatLevelEditorWindow.ShowWindow();
     }
 }
 #endif

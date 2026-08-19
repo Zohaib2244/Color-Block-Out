@@ -242,7 +242,7 @@ public sealed class CatPuzzleController : MonoBehaviour
         {
             foreach (CatHole sameColor in Holes.Where(candidate => candidate != null && candidate.IsActive && candidate.Color == hole.Color).ToArray())
             {
-                sameColor.Complete();
+                sameColor.Complete(Config);
                 HoleCompleted.Invoke(sameColor);
             }
         }

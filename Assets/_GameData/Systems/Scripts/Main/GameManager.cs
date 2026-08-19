@@ -30,7 +30,6 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         GameConstants.InitializeGame();
-        onLevelLoaded.AddListener(ConfigureCamera);
         // Completion is game state, so it is owned here rather than by optional presentation.
         if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.PuzzleCompleted.AddListener(OnPuzzleCompleted);
     }
@@ -103,12 +102,5 @@ public class GameManager : MonoBehaviour
         if (CatPuzzleController.Instance != null) CatPuzzleController.Instance.ClearLevel();
         CurrentLevel = null;
         currentLevelState = LevelState.None;
-    }
-
-    void ConfigureCamera()
-    {
-        if (CurrentLevel == null || Camera.main == null) return;
-        Camera.main.transform.position = CurrentLevel.cameraPosition;
-        Camera.main.fieldOfView = CurrentLevel.cameraFOV;
     }
 }

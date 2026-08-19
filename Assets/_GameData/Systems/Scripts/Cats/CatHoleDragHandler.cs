@@ -59,8 +59,11 @@ public sealed class CatHoleDragHandler : MonoBehaviour
         if (!dragging) return;
         dragging = false;
         transform.DOKill();
-        if (highlight != null) highlight.SetHighlighted(false);
 
+        // The hole may have been completed mid-drag. Leave its exit animation alone.
+        if (hole == null || !hole.IsActive) return;
+
+        if (highlight != null) highlight.SetHighlighted(false);
         if (previewCell != originalCell && Controller != null && Controller.TryMoveHole(hole, previewCell)) return;
         MoveTo(originalCell);
     }

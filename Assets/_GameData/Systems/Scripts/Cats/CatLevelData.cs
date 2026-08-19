@@ -48,8 +48,6 @@ public sealed class CatLevelData : ScriptableObject
 
     [Header("Presentation")]
     public int levelTime = 60;
-    public Vector3 cameraPosition = new Vector3(0f, 10f, -6f);
-    public float cameraFOV = 60f;
 
     [Header("Content")]
     public List<CatPlacement> cats = new List<CatPlacement>();

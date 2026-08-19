@@ -19,8 +19,8 @@ public sealed class GridCreatorTool : EditorWindow
     private int gridWidth = 10;
     private int gridLength = 10;
     private float cellSize = 0.57f;
-    private float catParentHeight = 0.03f;
-    private float holeParentHeight = 0.03f;
+    private float catParentHeight = 0.178f;
+    private float holeParentHeight = 0.08f;
 
     private bool[,] blockedCells;
     private Vector2 scroll;

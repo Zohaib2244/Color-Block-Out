@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>
@@ -46,10 +47,33 @@ public sealed class CatHole : MonoBehaviour
         return false;
     }
 
-    public void Complete()
+    /// <summary>
+    /// Retires the hole once its colour is cleared. The meshes slide away to the configured
+    /// offset before the object hides; the hole stops counting as active immediately, so it
+    /// blocks nothing while the animation plays.
+    /// </summary>
+    public void Complete(CatPuzzleConfig config = null)
     {
         if (!active) return;
         active = false;
-        gameObject.SetActive(false);
+
+        Transform visual = transform.Find(CatHoleHighlight.VisualName);
+        if (visual == null || config == null || !Application.isPlaying)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        visual.DOKill();
+        Sequence exit = DOTween.Sequence();
+        exit.Append(visual.DOLocalMove(config.holeExitOffset, config.holeExitDuration).SetEase(config.holeExitEase));
+        // Undo any highlight swell on the way out.
+        exit.Join(visual.DOScale(Vector3.one, config.holeExitDuration));
+        exit.OnComplete(() =>
+        {
+            visual.localPosition = Vector3.zero;
+            visual.localScale = Vector3.one;
+            gameObject.SetActive(false);
+        });
     }
 }

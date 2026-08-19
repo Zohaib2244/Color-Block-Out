@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>
@@ -38,6 +39,12 @@ public sealed class CatPuzzleConfig : ScriptableObject
     [Tooltip("How far below the hole surface a cat sinks as it shrinks away.")]
     public float catSinkDepth = 0.15f;
     public float catExitDuration = 0.22f;
+
+    [Header("Hole Exit")]
+    [Tooltip("Where a finished hole slides to before it hides, relative to its resting position.")]
+    public Vector3 holeExitOffset = new Vector3(0f, -0.6f, 0f);
+    public float holeExitDuration = 0.45f;
+    public Ease holeExitEase = Ease.InOutBounce;
 
     [Header("Hole Highlight")]
     [Tooltip("Scale multiplier applied to a hole's meshes while it is being dragged.")]

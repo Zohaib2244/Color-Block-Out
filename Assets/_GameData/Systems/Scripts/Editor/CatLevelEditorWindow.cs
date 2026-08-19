@@ -147,25 +147,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         EditorGUI.BeginChangeCheck();
         levelAsset.levelName = EditorGUILayout.TextField("Level Name", levelAsset.levelName);
         levelAsset.levelTime = EditorGUILayout.IntField("Level Time", levelAsset.levelTime);
-        levelAsset.cameraPosition = EditorGUILayout.Vector3Field("Camera Position", levelAsset.cameraPosition);
-        levelAsset.cameraFOV = EditorGUILayout.FloatField("Camera FOV", levelAsset.cameraFOV);
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(levelAsset);
-
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Capture Camera") && Camera.main != null)
-        {
-            Undo.RecordObject(levelAsset, "Capture Camera");
-            levelAsset.cameraPosition = Camera.main.transform.position;
-            levelAsset.cameraFOV = Camera.main.fieldOfView;
-            EditorUtility.SetDirty(levelAsset);
-        }
-        if (GUILayout.Button("Move Camera To Level") && Camera.main != null)
-        {
-            Undo.RecordObject(Camera.main.transform, "Move Camera");
-            Camera.main.transform.position = levelAsset.cameraPosition;
-            Camera.main.fieldOfView = levelAsset.cameraFOV;
-        }
-        EditorGUILayout.EndHorizontal();
         EditorGUILayout.EndVertical();
     }
 
