@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -24,13 +23,16 @@ public sealed class GridManager : MonoBehaviour
     public Vector3 GridStartPosition => transform.position;
 
     private bool[,] wallCells;
-    private readonly Dictionary<Vector2Int, GameObject> wallRegistry = new Dictionary<Vector2Int, GameObject>();
 
     private void Awake()
     {
-        if (savedGridData != null) LoadGridData();
-        else InitializeGridFromChildren();
-        BuildWallRegistry();
+        // GridBuilder calls ApplyGridData as it builds, so this only matters for a grid that was
+        // saved into the scene and is coming back with the level already assembled.
+        if (wallCells == null)
+        {
+            if (savedGridData != null) LoadGridData();
+            else InitializeGridFromChildren();
+        }
     }
 
     public int GetGridWidth() => gridWidth;
@@ -85,14 +87,6 @@ public sealed class GridManager : MonoBehaviour
                 wallCells[x, z] = !interiorCells[x, z];
     }
 
-    private void BuildWallRegistry()
-    {
-        wallRegistry.Clear();
-        if (WallParent == null) return;
-        foreach (WallData wall in WallParent.GetComponentsInChildren<WallData>(true))
-            wallRegistry[wall.wallGridPosition] = wall.gameObject;
-    }
-
     /// <summary>
     /// Cell position in the grid's own space. Content parented under <see cref="CatParent"/> or
     /// <see cref="HoleParent"/> uses this directly as its local position, so the parent's own Y is
@@ -134,12 +128,11 @@ public sealed class GridManager : MonoBehaviour
     {
         savedGridData = data;
         LoadGridData();
-        BuildWallRegistry();
     }
 
 #if UNITY_EDITOR
     /// <summary>Writes the current wall layout to a new GridData asset and adopts it.</summary>
-    public GridData SaveGridDataToAsset(string assetName, string folder = "Assets/_GameData/Systems/Scriptable Objects/GridData")
+    public GridData SaveGridDataToAsset(string assetName, string folder = "Assets/_GameData/Systems/Data/Grids")
     {
         EnsureArrays();
         CreateFolderTree(folder);

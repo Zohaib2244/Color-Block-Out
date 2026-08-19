@@ -9,10 +9,14 @@ using UnityEngine;
 public static class CatLevelBuilder
 {
     /// <summary>Builds the grid, cats and holes of a level under <paramref name="parent"/>.</summary>
-    public static CatLevelInstance Build(CatLevelData level, Transform parent, CatPuzzleConfig config = null)
+    public static CatLevelInstance Build(CatLevelData level, Transform parent, CatPuzzleConfig config)
     {
         if (level == null) return null;
-        config = CatPuzzleConfig.Resolve(config);
+        if (config == null)
+        {
+            Debug.LogError($"No CatPuzzleConfig supplied, level '{level.name}' cannot be built. Assign one on the CatPuzzleController.");
+            return null;
+        }
         if (level.grid == null)
         {
             Debug.LogError($"Level '{level.name}' has no GridData assigned.");
@@ -35,9 +39,8 @@ public static class CatLevelBuilder
     }
 
     /// <summary>Adds one cat to a level that is already in the scene.</summary>
-    public static CatPiece SpawnCat(CatPlacement placement, CatLevelInstance instance, CatPuzzleConfig config = null)
+    public static CatPiece SpawnCat(CatPlacement placement, CatLevelInstance instance, CatPuzzleConfig config)
     {
-        config = CatPuzzleConfig.Resolve(config);
         if (placement == null || instance == null) return null;
         if (config == null || config.catPrefab == null)
         {
@@ -48,17 +51,30 @@ public static class CatLevelBuilder
         GameObject catObject = GridBuilder.InstantiatePrefab(config.catPrefab, instance.CatRoot);
         CatPiece cat = catObject.GetComponent<CatPiece>();
         if (cat == null) cat = catObject.AddComponent<CatPiece>();
-        cat.Configure(placement.color, placement.cell);
-        catObject.name = $"Cat_{placement.color}_{placement.cell.x}_{placement.cell.y}";
-        PlaceCat(cat, placement.cell, instance.Grid, config);
+        cat.Configure(placement.colorId, placement.cell, config.palette);
+        catObject.name = $"Cat_{ColorName(config, placement.colorId)}_{placement.cell.x}_{placement.cell.y}";
+        PlaceCat(cat, placement.cell, instance.Grid);
         instance.Register(cat);
         return cat;
     }
 
-    /// <summary>Adds one hole to a level that is already in the scene.</summary>
-    public static CatHole SpawnHole(CatHolePlacement placement, CatLevelInstance instance, CatPuzzleConfig config = null)
+    public static string ColorName(CatPuzzleConfig config, int colorId) =>
+        config != null && config.palette != null ? config.palette.GetName(colorId) : colorId.ToString();
+
+    /// <summary>
+    /// Re-tints everything in a level. Colour tints live in material property blocks, which are
+    /// not saved with the scene, so a level that was built earlier and then reloaded needs this.
+    /// </summary>
+    public static void ApplyColors(CatLevelInstance instance, CatPuzzleConfig config)
     {
-        config = CatPuzzleConfig.Resolve(config);
+        if (instance == null || config == null || config.palette == null) return;
+        foreach (CatPiece cat in instance.Cats) if (cat != null) cat.ApplyColor(config.palette);
+        foreach (CatHole hole in instance.Holes) if (hole != null) hole.ApplyColor(config.palette);
+    }
+
+    /// <summary>Adds one hole to a level that is already in the scene.</summary>
+    public static CatHole SpawnHole(CatHolePlacement placement, CatLevelInstance instance, CatPuzzleConfig config)
+    {
         if (placement == null || instance == null) return null;
         CatHole hole = CatHoleBuilder.Build(placement, instance.Grid, instance.HoleRoot, config);
         instance.Register(hole);
@@ -66,7 +82,7 @@ public static class CatLevelBuilder
     }
 
     /// <summary>Puts a cat on a cell. Height comes from the Cats parent, not from the cat.</summary>
-    public static void PlaceCat(CatPiece cat, Vector2Int cell, GridManager grid, CatPuzzleConfig config = null)
+    public static void PlaceCat(CatPiece cat, Vector2Int cell, GridManager grid)
     {
         if (cat == null) return;
         cat.SetGridPosition(cell);
@@ -86,7 +102,7 @@ public static class CatLevelBuilder
             if (cat == null) continue;
             Vector2Int cell = instance.Grid != null ? instance.Grid.LocalPositionToCell(cat.transform.localPosition) : cat.GridPosition;
             cat.SetGridPosition(cell);
-            target.cats.Add(new CatPlacement { color = cat.Color, cell = cell });
+            target.cats.Add(new CatPlacement { colorId = cat.ColorId, cell = cell });
         }
 
         target.holes = new List<CatHolePlacement>();

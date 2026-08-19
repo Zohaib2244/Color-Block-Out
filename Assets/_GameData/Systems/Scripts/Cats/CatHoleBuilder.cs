@@ -18,33 +18,32 @@ public static class CatHoleBuilder
     };
 
     /// <summary>Spawns the hole described by <paramref name="placement"/> under <paramref name="parent"/>.</summary>
-    public static CatHole Build(CatHolePlacement placement, GridManager grid, Transform parent, CatPuzzleConfig config = null)
+    public static CatHole Build(CatHolePlacement placement, GridManager grid, Transform parent, CatPuzzleConfig config)
     {
         if (placement == null || grid == null) return null;
-        config = CatPuzzleConfig.Resolve(config);
         List<Vector2Int> offsets = Normalise(placement.offsets);
 
-        GameObject root = new GameObject($"Hole_{placement.color}_{placement.origin.x}_{placement.origin.y}");
+        string colorName = config != null && config.palette != null ? config.palette.GetName(placement.colorId) : placement.colorId.ToString();
+        GameObject root = new GameObject($"Hole_{colorName}_{placement.origin.x}_{placement.origin.y}");
         GridBuilder.RegisterCreated(root, "Create Hole");
         root.transform.SetParent(parent, false);
         root.transform.localRotation = Quaternion.identity;
         root.transform.localScale = Vector3.one;
 
         CatHole hole = root.AddComponent<CatHole>();
-        hole.Configure(placement.color, placement.origin, offsets);
+        hole.Configure(placement.colorId, placement.origin, offsets);
         root.AddComponent<CatHoleHighlight>();
         root.AddComponent<CatHoleDragHandler>();
 
         BuildPieces(hole, grid, config);
-        MoveTo(hole, placement.origin, grid, config);
+        MoveTo(hole, placement.origin, grid);
         return hole;
     }
 
     /// <summary>Rebuilds the piece meshes and colliders for a hole that already exists.</summary>
-    public static void BuildPieces(CatHole hole, GridManager grid, CatPuzzleConfig config = null)
+    public static void BuildPieces(CatHole hole, GridManager grid, CatPuzzleConfig config)
     {
         if (hole == null) return;
-        config = CatPuzzleConfig.Resolve(config);
         CatHoleConfiguration holeConfiguration = config != null ? config.holeConfiguration : null;
         if (holeConfiguration == null)
         {
@@ -69,7 +68,6 @@ public static class CatHoleBuilder
 
         float spacing = grid != null ? grid.GetCellSize() : 1f;
         HashSet<Vector2Int> shape = new HashSet<Vector2Int>(hole.Offsets);
-        Material material = GameConstants.GetGateColorMaterial(hole.Color);
 
         foreach (Vector2Int offset in hole.Offsets)
         {
@@ -87,22 +85,20 @@ public static class CatHoleBuilder
             piece.transform.localPosition = new Vector3(offset.x * spacing, 0f, offset.y * spacing);
             piece.transform.localRotation = Quaternion.Euler(0f, GetQuarterTurns(data, connections) * 90f, 0f);
 
-            if (material != null)
-                foreach (MeshRenderer renderer in piece.GetComponentsInChildren<MeshRenderer>(true))
-                    renderer.sharedMaterial = material;
-
             // One collider per covered cell keeps the whole shape draggable from any piece.
             BoxCollider collider = hole.gameObject.AddComponent<BoxCollider>();
             collider.center = new Vector3(offset.x * spacing, 0f, offset.y * spacing);
             collider.size = new Vector3(spacing, spacing * 0.5f, spacing);
         }
+
+        hole.ApplyColor(config != null ? config.palette : null);
     }
 
     /// <summary>
     /// Places the hole on a cell and keeps its logical origin in sync. Height comes from the
     /// Holes parent, so the hole only ever moves in the grid plane.
     /// </summary>
-    public static void MoveTo(CatHole hole, Vector2Int origin, GridManager grid, CatPuzzleConfig config = null)
+    public static void MoveTo(CatHole hole, Vector2Int origin, GridManager grid)
     {
         if (hole == null) return;
         hole.SetOriginCell(origin);
@@ -133,7 +129,7 @@ public static class CatHoleBuilder
     }
 
     /// <summary>Splits a painted selection into separate placements, one per connected island.</summary>
-    public static List<CatHolePlacement> SplitIntoPlacements(IEnumerable<Vector2Int> cells, BlockColorTypes color)
+    public static List<CatHolePlacement> SplitIntoPlacements(IEnumerable<Vector2Int> cells, int colorId)
     {
         List<CatHolePlacement> placements = new List<CatHolePlacement>();
         HashSet<Vector2Int> remaining = new HashSet<Vector2Int>(cells);
@@ -160,7 +156,7 @@ public static class CatHoleBuilder
             Vector2Int origin = new Vector2Int(island.Min(cell => cell.x), island.Min(cell => cell.y));
             placements.Add(new CatHolePlacement
             {
-                color = color,
+                colorId = colorId,
                 origin = origin,
                 offsets = Normalise(island)
             });
@@ -207,7 +203,7 @@ public static class CatHoleBuilder
     /// <summary>Reads a hole back out of the scene, picking up any move the designer made.</summary>
     public static CatHolePlacement Capture(CatHole hole) => hole == null ? null : new CatHolePlacement
     {
-        color = hole.Color,
+        colorId = hole.ColorId,
         origin = hole.OriginCell,
         offsets = new List<Vector2Int>(hole.Offsets)
     };

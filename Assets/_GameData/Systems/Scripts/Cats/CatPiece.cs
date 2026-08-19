@@ -1,45 +1,56 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>Logical representation of a single 1x1 cat.</summary>
 public sealed class CatPiece : MonoBehaviour
 {
-    [SerializeField] private BlockColorTypes color;
+    [FormerlySerializedAs("color")]
+    [SerializeField] private int colorId;
     [SerializeField] private Vector2Int gridPosition;
     [SerializeField] private bool collected;
 
-    [Tooltip("Renderers tinted by the cat's colour. Left empty, the first renderer found is used.")]
+    [Tooltip("Renderers tinted by the cat's colour. Left empty, every renderer on the cat is used.")]
     [SerializeField] private Renderer[] coloredRenderers;
 
-    public BlockColorTypes Color => color;
+    private readonly List<Renderer> rendererBuffer = new List<Renderer>();
+
+    public int ColorId => colorId;
     public Vector2Int GridPosition => gridPosition;
     public bool IsCollected => collected;
 
-    public void Configure(BlockColorTypes newColor, Vector2Int position)
+    public void Configure(int newColorId, Vector2Int position, CatColorPalette palette)
     {
         gridPosition = position;
         collected = false;
-        SetColor(newColor);
+        SetColor(newColorId, palette);
     }
 
     public void SetGridPosition(Vector2Int position) => gridPosition = position;
 
-    public void SetColor(BlockColorTypes newColor)
+    public void SetColor(int newColorId, CatColorPalette palette)
     {
-        color = newColor;
-        Material material = GameConstants.GetBlockColorMaterial(color);
-        if (material == null) return;
+        colorId = newColorId;
+        ApplyColor(palette);
+    }
 
-        if (coloredRenderers != null && coloredRenderers.Length > 0)
-        {
-            foreach (Renderer renderer in coloredRenderers)
-                if (renderer != null) renderer.sharedMaterial = material;
-            return;
-        }
+    /// <summary>
+    /// Re-tints the cat. Needed after a scene reload as well as on build, because the tint lives in
+    /// a material property block and those are not saved with the scene.
+    /// </summary>
+    public void ApplyColor(CatColorPalette palette)
+    {
+        if (palette == null) return;
+        palette.PaintCat(Renderers(), colorId);
+    }
 
-        Renderer fallback = GetComponent<Renderer>();
-        if (fallback == null) fallback = GetComponentInChildren<Renderer>();
-        if (fallback != null) fallback.sharedMaterial = material;
+    private List<Renderer> Renderers()
+    {
+        rendererBuffer.Clear();
+        if (coloredRenderers != null && coloredRenderers.Length > 0) rendererBuffer.AddRange(coloredRenderers);
+        else GetComponentsInChildren(true, rendererBuffer);
+        return rendererBuffer;
     }
 
     /// <summary>

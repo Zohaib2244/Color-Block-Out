@@ -41,7 +41,7 @@ public sealed class GridCreatorTool : EditorWindow
 
     private void OnEnable()
     {
-        config = CatPuzzleConfig.Resolve(config);
+        if (config == null) config = CatPuzzleAssetCreator.FindConfig();
         if (config != null)
         {
             catParentHeight = config.defaultCatParentHeight;
@@ -72,6 +72,7 @@ public sealed class GridCreatorTool : EditorWindow
         if (EditorGUI.EndChangeCheck() && gridAsset != null) LoadFromAsset(gridAsset);
 
         gridName = EditorGUILayout.TextField("Grid Name", gridName);
+        EditorGUILayout.LabelField(" ", $"Saved to {CatPuzzleAssetCreator.GridFolder}", EditorStyles.miniLabel);
         EditorGUILayout.HelpBox("One grid can back many levels. Draw the playable shape here, then build levels on it in the Cat Level Editor.", MessageType.None);
         EditorGUILayout.EndVertical();
     }
@@ -232,9 +233,10 @@ public sealed class GridCreatorTool : EditorWindow
 
         if (target == null)
         {
-            string path = EditorUtility.SaveFilePanelInProject("Save Grid", gridName, "asset",
-                "Choose where to save this grid.", "Assets/_GameData/Systems/Scriptable Objects/GridData");
-            if (string.IsNullOrEmpty(path)) return;
+            // Grids are filed automatically; the name field is the only decision.
+            CatPuzzleAssetCreator.EnsureFolder(CatPuzzleAssetCreator.GridFolder);
+            string safeName = string.IsNullOrWhiteSpace(gridName) ? "New Grid" : gridName.Trim();
+            string path = AssetDatabase.GenerateUniqueAssetPath($"{CatPuzzleAssetCreator.GridFolder}/{safeName}.asset");
             target = CreateInstance<GridData>();
             AssetDatabase.CreateAsset(target, path);
             gridName = System.IO.Path.GetFileNameWithoutExtension(path);
@@ -254,6 +256,32 @@ public sealed class GridCreatorTool : EditorWindow
         gridAsset = target;
         Selection.activeObject = target;
         Debug.Log($"Saved grid '{target.name}' ({gridWidth}x{gridLength}).", target);
+        ReportAffectedLevels(target);
+    }
+
+    /// <summary>
+    /// A grid backs many levels, so reshaping one can strand content that was authored on the old
+    /// shape. Re-check every level built on this grid and say which ones broke.
+    /// </summary>
+    private void ReportAffectedLevels(GridData grid)
+    {
+        CatColorPalette palette = config != null ? config.palette : null;
+        List<string> broken = new List<string>();
+
+        foreach (string guid in AssetDatabase.FindAssets("t:CatLevelData"))
+        {
+            CatLevelData level = AssetDatabase.LoadAssetAtPath<CatLevelData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (level == null || level.grid != grid) continue;
+
+            List<CatLevelValidator.Issue> issues = CatLevelValidator.Validate(level, palette);
+            if (CatLevelValidator.HasErrors(issues)) broken.Add($"• {level.DisplayName}\n{CatLevelValidator.Describe(issues)}");
+        }
+
+        if (broken.Count == 0) return;
+        string report = string.Join("\n", broken);
+        Debug.LogError($"Saving grid '{grid.name}' broke {broken.Count} level(s) built on it:\n{report}", grid);
+        EditorUtility.DisplayDialog("Grid Creator",
+            $"{broken.Count} level(s) built on this grid no longer fit it. Details are in the console.\n\nOpen each in the Cat Level Editor and fix the flagged cells.", "OK");
     }
 
     private void BuildPreview()

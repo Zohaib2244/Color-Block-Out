@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// A movable hole made of one or more connected cells. The transform sits on
@@ -10,24 +11,39 @@ using UnityEngine;
 /// </summary>
 public sealed class CatHole : MonoBehaviour
 {
-    [SerializeField] private BlockColorTypes color;
+    [FormerlySerializedAs("color")]
+    [SerializeField] private int colorId;
     [SerializeField] private Vector2Int originCell;
     [SerializeField] private List<Vector2Int> offsets = new List<Vector2Int> { Vector2Int.zero };
     [SerializeField] private bool active = true;
 
-    public BlockColorTypes Color => color;
+    private readonly List<Renderer> rendererBuffer = new List<Renderer>();
+
+    public int ColorId => colorId;
     public Vector2Int OriginCell => originCell;
     public IReadOnlyList<Vector2Int> Offsets => offsets;
     public bool IsActive => active;
     public int CellCount => offsets.Count;
 
-    public void Configure(BlockColorTypes newColor, Vector2Int origin, IEnumerable<Vector2Int> shapeOffsets)
+    public void Configure(int newColorId, Vector2Int origin, IEnumerable<Vector2Int> shapeOffsets)
     {
-        color = newColor;
+        colorId = newColorId;
         originCell = origin;
         offsets = new List<Vector2Int>(shapeOffsets);
         if (offsets.Count == 0) offsets.Add(Vector2Int.zero);
         active = true;
+    }
+
+    /// <summary>
+    /// Re-tints every piece. Needed after a scene reload as well as on build, because the tint
+    /// lives in a material property block and those are not saved with the scene.
+    /// </summary>
+    public void ApplyColor(CatColorPalette palette)
+    {
+        if (palette == null) return;
+        rendererBuffer.Clear();
+        GetComponentsInChildren(true, rendererBuffer);
+        palette.PaintHole(rendererBuffer, colorId);
     }
 
     public void SetOriginCell(Vector2Int cell) => originCell = cell;

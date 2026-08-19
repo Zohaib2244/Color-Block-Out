@@ -1,14 +1,11 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Voodoo.Utils;
 
 public static class GameConstants
 {
-    private static List<BlockColor> blockColors = new List<BlockColor>();
-    private static List<BlockColor> gateColors = new List<BlockColor>();
-    private static Material defaultWallMaterial;
     private static int currentLevelIndex = 0;
     public static bool inputEnabled = true;
+
     public static int highestUnlockedLevelIndex
     {
         get { return PlayerPrefs.GetInt("HighestUnlockedLevelIndex", 0); }
@@ -21,55 +18,11 @@ public static class GameConstants
         set
         {
             currentLevelIndex = value;
-            // Update the highest unlocked level if needed
-            if (value > highestUnlockedLevelIndex && value < GameManager.Instance.TotalLevels)
-            {
-                highestUnlockedLevelIndex = value;
-            }
+            int totalLevels = GameManager.Instance != null ? GameManager.Instance.TotalLevels : 0;
+            if (value > highestUnlockedLevelIndex && value < totalLevels) highestUnlockedLevelIndex = value;
         }
     }
-    public static Material GetDefaultWallMaterial()
-    {
-        if (defaultWallMaterial == null)
-        {
-            defaultWallMaterial = Resources.Load<Material>("Materials/DefaultWall");
-        }
-        return defaultWallMaterial;
-    }
-    public static Material GetBlockColorMaterial(BlockColorTypes colorType)
-    {
-        if (blockColors.Count == 0) blockColors = LoadColors("Materials/BlockColors");
-        return blockColors[(int)colorType].colorMaterial;
-    }
 
-    /// <summary>Material used for holes of a given colour.</summary>
-    public static Material GetGateColorMaterial(BlockColorTypes colorType)
-    {
-        if (gateColors.Count == 0) gateColors = LoadColors("Materials/GateColors");
-        return gateColors[(int)colorType].colorMaterial;
-    }
-
-    /// <summary>Tint for editor swatches and gizmos, taken from the hole material.</summary>
-    public static Color GetSwatchColor(BlockColorTypes colorType)
-    {
-        Material material = GetGateColorMaterial(colorType) ?? GetBlockColorMaterial(colorType);
-        return material != null ? material.color : Color.magenta;
-    }
-
-    static List<BlockColor> LoadColors(string resourceFolder)
-    {
-        int colorCount = EnumExtensions.Count<BlockColorTypes>();
-        List<BlockColor> colors = new List<BlockColor>(colorCount);
-        for (int i = 0; i < colorCount; i++)
-        {
-            colors.Add(new BlockColor
-            {
-                colorType = (BlockColorTypes)i,
-                colorMaterial = Resources.Load<Material>($"{resourceFolder}/{(BlockColorTypes)i}")
-            });
-        }
-        return colors;
-    }
     public static void InitializeGame()
     {
         Application.targetFrameRate = 60;

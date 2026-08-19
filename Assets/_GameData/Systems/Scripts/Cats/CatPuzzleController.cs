@@ -25,7 +25,7 @@ public sealed class CatPuzzleController : MonoBehaviour
     public CatLevelInstance ActiveLevel => activeLevel;
     public CatLevelData CurrentLevel => activeLevel != null ? activeLevel.Source : null;
     public GridManager GridManager => activeLevel != null ? activeLevel.Grid : null;
-    public CatPuzzleConfig Config => config != null ? config : CatPuzzleConfig.Instance;
+    public CatPuzzleConfig Config => config;
     public Transform LevelRoot => levelRoot != null ? levelRoot : transform;
 
     private IReadOnlyList<CatPiece> Cats => activeLevel != null ? activeLevel.Cats : System.Array.Empty<CatPiece>();
@@ -54,6 +54,8 @@ public sealed class CatPuzzleController : MonoBehaviour
         if (activeLevel == null) activeLevel = LevelRoot.GetComponentInChildren<CatLevelInstance>(true);
         if (activeLevel == null) return;
         activeLevel.RefreshContents();
+        // Tints live in property blocks, which a scene reload drops. Restore them.
+        CatLevelBuilder.ApplyColors(activeLevel, Config);
         LevelBound.Invoke(activeLevel);
     }
 
@@ -143,7 +145,7 @@ public sealed class CatPuzzleController : MonoBehaviour
         foreach (CatPiece cat in Cats)
         {
             if (cat == null || cat.IsCollected || cat.GridPosition != cell) continue;
-            if (cat.Color != hole.Color) return true;
+            if (cat.ColorId != hole.ColorId) return true;
         }
         return false;
     }
@@ -193,7 +195,7 @@ public sealed class CatPuzzleController : MonoBehaviour
     public bool TryMoveHole(CatHole hole, Vector2Int origin)
     {
         if (!CanPlaceHole(hole, origin)) return false;
-        CatHoleBuilder.MoveTo(hole, origin, GridManager, Config);
+        CatHoleBuilder.MoveTo(hole, origin, GridManager);
         HoleMoved.Invoke(hole);
         ResolveHole(hole);
         return true;
@@ -223,7 +225,7 @@ public sealed class CatPuzzleController : MonoBehaviour
         bool collectedAny = false;
         foreach (CatPiece cat in Cats.ToArray())
         {
-            if (cat == null || cat.IsCollected || cat.Color != hole.Color) continue;
+            if (cat == null || cat.IsCollected || cat.ColorId != hole.ColorId) continue;
             if (!holeCells.Contains(cat.GridPosition)) continue;
 
             taken.Remove(cat.GridPosition);
@@ -237,10 +239,10 @@ public sealed class CatPuzzleController : MonoBehaviour
         }
         if (!collectedAny) return;
 
-        bool colorComplete = Cats.All(cat => cat == null || cat.Color != hole.Color || cat.IsCollected);
+        bool colorComplete = Cats.All(cat => cat == null || cat.ColorId != hole.ColorId || cat.IsCollected);
         if (colorComplete)
         {
-            foreach (CatHole sameColor in Holes.Where(candidate => candidate != null && candidate.IsActive && candidate.Color == hole.Color).ToArray())
+            foreach (CatHole sameColor in Holes.Where(candidate => candidate != null && candidate.IsActive && candidate.ColorId == hole.ColorId).ToArray())
             {
                 sameColor.Complete(Config);
                 HoleCompleted.Invoke(sameColor);

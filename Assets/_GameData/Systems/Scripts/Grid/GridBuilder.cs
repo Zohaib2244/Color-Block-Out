@@ -19,10 +19,9 @@ public static class GridBuilder
     /// When <paramref name="centreOnParent"/> is true the board is offset so the parent
     /// sits at the middle of the board, which keeps scale tweens looking correct.
     /// </summary>
-    public static GridManager Build(GridData data, Transform parent, CatPuzzleConfig config = null, bool centreOnParent = true)
+    public static GridManager Build(GridData data, Transform parent, CatPuzzleConfig config, bool centreOnParent = true)
     {
         if (data == null) return null;
-        config = CatPuzzleConfig.Resolve(config);
         data.EnsureArrays();
 
         GameObject gridObject = new GameObject("Grid");

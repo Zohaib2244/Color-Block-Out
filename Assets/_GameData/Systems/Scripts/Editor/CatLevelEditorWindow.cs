@@ -21,12 +21,17 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private CatLevelInstance instance;
 
     private Tool tool = Tool.Holes;
-    private BlockColorTypes selectedColor = BlockColorTypes.Red;
+    private string newLevelName = "Level_1";
+    private int selectedColorId;
     private readonly HashSet<Vector2Int> selection = new HashSet<Vector2Int>();
     private Vector2 scroll;
     private float cellSize = 26f;
     private bool showCoordinates;
+    private bool showIssues = true;
     private readonly List<System.Action> deferred = new List<System.Action>();
+    private List<CatLevelValidator.Issue> issues = new List<CatLevelValidator.Issue>();
+
+    private CatColorPalette Palette => config != null ? config.palette : null;
 
     private static readonly Color WallColor = new Color(0.16f, 0.16f, 0.18f);
     private static readonly Color EmptyColor = new Color(0.34f, 0.36f, 0.38f);
@@ -42,11 +47,16 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        config = CatPuzzleConfig.Resolve(config);
+        if (config == null) config = CatPuzzleAssetCreator.FindConfig();
         RefreshSceneReferences();
     }
 
-    private void OnFocus() => RefreshSceneReferences();
+    private void OnFocus()
+    {
+        RefreshSceneReferences();
+        // Tints are property blocks and do not survive a scene reload, so restore them on return.
+        CatLevelBuilder.ApplyColors(instance, config);
+    }
 
     /// <summary>
     /// Anything that adds or removes scene objects runs on the next layout pass. Doing it
@@ -78,7 +88,42 @@ public sealed class CatLevelEditorWindow : EditorWindow
         DrawLevelSettings();
         DrawTools();
         DrawBoard();
+        DrawIssues();
         DrawContentList();
+    }
+
+    private void DrawIssues()
+    {
+        if (levelAsset == null) return;
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginHorizontal();
+        showIssues = EditorGUILayout.Foldout(showIssues, $"Validation — {issues.Count} issue(s)", true);
+        if (GUILayout.Button("Validate", GUILayout.Width(80f))) Defer(Validate);
+        EditorGUILayout.EndHorizontal();
+
+        if (showIssues)
+        {
+            if (issues.Count == 0) EditorGUILayout.HelpBox("No problems found. Validate again after editing.", MessageType.Info);
+            foreach (CatLevelValidator.Issue issue in issues)
+                EditorGUILayout.HelpBox(issue.message, issue.severity == CatLevelValidator.Severity.Error ? MessageType.Error : MessageType.Warning);
+        }
+        EditorGUILayout.EndVertical();
+    }
+
+    /// <summary>Captures the scene into a scratch copy first, so what is checked is what would save.</summary>
+    private void Validate()
+    {
+        if (levelAsset == null) return;
+        if (instance != null)
+        {
+            CatLevelData snapshot = CreateInstance<CatLevelData>();
+            snapshot.grid = levelAsset.grid != null ? levelAsset.grid : gridAsset;
+            CatLevelBuilder.Capture(instance, snapshot);
+            issues = CatLevelValidator.Validate(snapshot, Palette);
+            DestroyImmediate(snapshot);
+        }
+        else issues = CatLevelValidator.Validate(levelAsset, Palette);
+        Repaint();
     }
 
     #region Sections
@@ -102,6 +147,9 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
         gridAsset = (GridData)EditorGUILayout.ObjectField("Grid Asset", gridAsset, typeof(GridData), false);
         if (gridAsset != null) EditorGUILayout.LabelField("Board", $"{gridAsset.gridWidth} x {gridAsset.gridLength}, cell {gridAsset.cellSize}");
+
+        newLevelName = EditorGUILayout.TextField("New Level Name", newLevelName);
+        EditorGUILayout.LabelField(" ", $"Saved to {CatPuzzleAssetCreator.LevelFolder}", EditorStyles.miniLabel);
 
         EditorGUILayout.BeginHorizontal();
         using (new EditorGUI.DisabledScope(gridAsset == null))
@@ -187,29 +235,53 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void DrawColorSwatches()
     {
-        BlockColorTypes[] colors = (BlockColorTypes[])System.Enum.GetValues(typeof(BlockColorTypes));
+        CatColorPalette palette = Palette;
+        if (palette == null || palette.Count == 0)
+        {
+            EditorGUILayout.HelpBox("The puzzle config has no colour palette, or the palette is empty. Add colours to it to paint with them.", MessageType.Warning);
+            if (palette != null && GUILayout.Button("Select Palette")) Selection.activeObject = palette;
+            return;
+        }
+
+        List<int> ids = palette.Ids();
+        if (!ids.Contains(selectedColorId)) selectedColorId = palette.DefaultId;
+
         int perRow = 5;
-        for (int i = 0; i < colors.Length; i += perRow)
+        for (int i = 0; i < ids.Count; i += perRow)
         {
             EditorGUILayout.BeginHorizontal();
-            for (int j = i; j < Mathf.Min(i + perRow, colors.Length); j++)
+            for (int j = i; j < Mathf.Min(i + perRow, ids.Count); j++)
             {
-                BlockColorTypes color = colors[j];
-                bool isSelected = selectedColor == color;
-                GUI.backgroundColor = GameConstants.GetSwatchColor(color);
+                int id = ids[j];
+                bool isSelected = selectedColorId == id;
+                GUI.backgroundColor = palette.GetColor(id);
                 GUIStyle style = new GUIStyle(GUI.skin.button) { fontStyle = isSelected ? FontStyle.Bold : FontStyle.Normal };
                 style.normal.textColor = isSelected ? Color.white : Color.black;
-                if (GUILayout.Button(isSelected ? $"[{color}]" : color.ToString(), style, GUILayout.Height(24))) selectedColor = color;
+                string label = palette.GetName(id);
+                if (GUILayout.Button(isSelected ? $"[{label}]" : label, style, GUILayout.Height(24))) selectedColorId = id;
             }
             GUI.backgroundColor = Color.white;
             EditorGUILayout.EndHorizontal();
         }
     }
 
+    private Color SwatchOf(int colorId)
+    {
+        CatColorPalette palette = Palette;
+        return palette != null ? palette.GetColor(colorId) : Color.magenta;
+    }
+
+    private string ColorName(int colorId)
+    {
+        CatColorPalette palette = Palette;
+        return palette != null ? palette.GetName(colorId) : colorId.ToString();
+    }
+
     private void DrawContentList()
     {
         if (instance == null) return;
-        instance.RefreshContents();
+        // Only on Layout: this walks the hierarchy, and doing it on every repaint is wasteful.
+        if (Event.current.type == EventType.Layout) instance.RefreshContents();
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.LabelField($"Contents — {instance.Cats.Count(cat => cat != null)} cats, {instance.Holes.Count(hole => hole != null)} holes", EditorStyles.boldLabel);
@@ -219,8 +291,8 @@ public sealed class CatLevelEditorWindow : EditorWindow
             if (hole == null) continue;
             EditorGUILayout.BeginHorizontal();
             Rect swatch = GUILayoutUtility.GetRect(16f, 16f, GUILayout.Width(16f));
-            EditorGUI.DrawRect(swatch, GameConstants.GetSwatchColor(hole.Color));
-            EditorGUILayout.LabelField($"{hole.Color} hole · {hole.CellCount} cells · at {hole.OriginCell}");
+            EditorGUI.DrawRect(swatch, SwatchOf(hole.ColorId));
+            EditorGUILayout.LabelField($"{ColorName(hole.ColorId)} hole · {hole.CellCount} cells · at {hole.OriginCell}");
             if (GUILayout.Button("Select", GUILayout.Width(60f))) Selection.activeGameObject = hole.gameObject;
             if (GUILayout.Button("X", GUILayout.Width(24f)))
             {
@@ -288,7 +360,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void DrawHoleCell(Rect rect, Rect board, Vector2Int cell, int height, CatHole hole, Dictionary<Vector2Int, CatHole> holesByCell)
     {
-        Color color = GameConstants.GetSwatchColor(hole.Color);
+        Color color = SwatchOf(hole.ColorId);
         EditorGUI.DrawRect(new Rect(rect.x + 1f, rect.y + 1f, rect.width - 2f, rect.height - 2f), new Color(color.r, color.g, color.b, 0.75f));
 
         // Outline only the sides that leave this hole, so the drawn shape reads at a glance.
@@ -312,7 +384,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     {
         float inset = rect.width * 0.22f;
         Rect body = new Rect(rect.x + inset, rect.y + inset, rect.width - inset * 2f, rect.height - inset * 2f);
-        Handles.color = GameConstants.GetSwatchColor(cat.Color);
+        Handles.color = SwatchOf(cat.ColorId);
         Handles.DrawSolidDisc(body.center, Vector3.forward, body.width * 0.5f);
         Handles.color = Color.black;
         Handles.DrawWireDisc(body.center, Vector3.forward, body.width * 0.5f);
@@ -369,15 +441,18 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
         SerializedObject serialized = new SerializedObject(controller);
         serialized.FindProperty("levelRoot").objectReferenceValue = root.transform;
+        // Nothing is loaded implicitly any more, so wire the config while we are here.
+        serialized.FindProperty("config").objectReferenceValue = config;
         serialized.ApplyModifiedProperties();
         MarkSceneDirty();
     }
 
     private void CreateLevelAsset()
     {
-        string path = EditorUtility.SaveFilePanelInProject("Create Cat Level", "New Cat Level", "asset",
-            "Choose where to save this level.", "Assets/_GameData/Systems/Scriptable Objects/Levels");
-        if (string.IsNullOrEmpty(path)) return;
+        // Levels are filed automatically; the name field is the only decision.
+        CatPuzzleAssetCreator.EnsureFolder(CatPuzzleAssetCreator.LevelFolder);
+        string safeName = string.IsNullOrWhiteSpace(newLevelName) ? "New Cat Level" : newLevelName.Trim();
+        string path = AssetDatabase.GenerateUniqueAssetPath($"{CatPuzzleAssetCreator.LevelFolder}/{safeName}.asset");
 
         levelAsset = CreateInstance<CatLevelData>();
         levelAsset.levelName = System.IO.Path.GetFileNameWithoutExtension(path);
@@ -423,7 +498,15 @@ public sealed class CatLevelEditorWindow : EditorWindow
         levelAsset.grid = gridAsset;
         EditorUtility.SetDirty(levelAsset);
         AssetDatabase.SaveAssets();
-        Debug.Log($"Saved '{levelAsset.DisplayName}': {levelAsset.cats.Count} cats, {levelAsset.holes.Count} holes.", levelAsset);
+
+        issues = CatLevelValidator.Validate(levelAsset, Palette);
+        string summary = $"Saved '{levelAsset.DisplayName}': {levelAsset.cats.Count} cats, {levelAsset.holes.Count} holes.";
+        if (CatLevelValidator.HasErrors(issues))
+        {
+            showIssues = true;
+            Debug.LogError($"{summary}\nThe level has problems that will break it:\n{CatLevelValidator.Describe(issues)}", levelAsset);
+        }
+        else Debug.Log(summary, levelAsset);
     }
 
     /// <summary>Re-snaps everything the designer dragged around back onto whole cells.</summary>
@@ -436,13 +519,13 @@ public sealed class CatLevelEditorWindow : EditorWindow
         {
             if (cat == null) continue;
             Undo.RecordObject(cat.transform, "Snap Cat");
-            CatLevelBuilder.PlaceCat(cat, instance.Grid.LocalPositionToCell(cat.transform.localPosition), instance.Grid, config);
+            CatLevelBuilder.PlaceCat(cat, instance.Grid.LocalPositionToCell(cat.transform.localPosition), instance.Grid);
         }
         foreach (CatHole hole in instance.Holes)
         {
             if (hole == null) continue;
             Undo.RecordObject(hole.transform, "Snap Hole");
-            CatHoleBuilder.MoveTo(hole, instance.Grid.LocalPositionToCell(hole.transform.localPosition), instance.Grid, config);
+            CatHoleBuilder.MoveTo(hole, instance.Grid.LocalPositionToCell(hole.transform.localPosition), instance.Grid);
         }
         MarkSceneDirty();
     }
@@ -451,16 +534,19 @@ public sealed class CatLevelEditorWindow : EditorWindow
     {
         if (!EnsureSceneLevel() || !gridAsset.IsPlayable(cell)) return;
 
+        // The instance keeps serialized lists of its content, so undo has to cover it too.
+        Undo.RecordObject(instance, "Edit Cat Level");
+
         CatPiece existing = MapCats().TryGetValue(cell, out CatPiece found) ? found : null;
         if (existing != null)
         {
             Undo.RecordObject(existing, "Recolour Cat");
-            existing.Configure(selectedColor, cell);
-            existing.name = $"Cat_{selectedColor}_{cell.x}_{cell.y}";
+            existing.Configure(selectedColorId, cell, Palette);
+            existing.name = $"Cat_{ColorName(selectedColorId)}_{cell.x}_{cell.y}";
         }
         else
         {
-            CatLevelBuilder.SpawnCat(new CatPlacement { color = selectedColor, cell = cell }, instance, config);
+            CatLevelBuilder.SpawnCat(new CatPlacement { colorId = selectedColorId, cell = cell }, instance, config);
         }
         MarkSceneDirty();
     }
@@ -468,7 +554,8 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private void CreateHolesFromSelection()
     {
         if (!EnsureSceneLevel() || selection.Count == 0) return;
-        foreach (CatHolePlacement placement in CatHoleBuilder.SplitIntoPlacements(selection, selectedColor))
+        Undo.RecordObject(instance, "Create Holes");
+        foreach (CatHolePlacement placement in CatHoleBuilder.SplitIntoPlacements(selection, selectedColorId))
             CatLevelBuilder.SpawnHole(placement, instance, config);
         selection.Clear();
         MarkSceneDirty();
@@ -477,6 +564,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private void EraseAt(Vector2Int cell)
     {
         if (instance == null) return;
+        Undo.RecordObject(instance, "Erase Cell");
         if (MapCats().TryGetValue(cell, out CatPiece cat) && cat != null) Undo.DestroyObjectImmediate(cat.gameObject);
         else if (MapHoles().TryGetValue(cell, out CatHole hole) && hole != null) Undo.DestroyObjectImmediate(hole.gameObject);
         selection.Remove(cell);

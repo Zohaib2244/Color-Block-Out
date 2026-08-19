@@ -23,7 +23,6 @@ public class GridData : ScriptableObject
     [System.Serializable]
     public class SerializableGridData
     {
-        public bool[] occupiedCells;
         public bool[] wallCells;
     }
 
@@ -33,11 +32,7 @@ public class GridData : ScriptableObject
     {
         gridWidth = Mathf.Max(1, width);
         gridLength = Mathf.Max(1, length);
-        gridData = new SerializableGridData
-        {
-            occupiedCells = new bool[gridWidth * gridLength],
-            wallCells = new bool[gridWidth * gridLength]
-        };
+        gridData = new SerializableGridData { wallCells = new bool[gridWidth * gridLength] };
         MarkDirty();
     }
 
@@ -72,7 +67,6 @@ public class GridData : ScriptableObject
         int required = gridWidth * gridLength;
         if (gridData == null) gridData = new SerializableGridData();
         if (gridData.wallCells == null || gridData.wallCells.Length != required) gridData.wallCells = new bool[required];
-        if (gridData.occupiedCells == null || gridData.occupiedCells.Length != required) gridData.occupiedCells = new bool[required];
     }
 
     public void MarkDirty()

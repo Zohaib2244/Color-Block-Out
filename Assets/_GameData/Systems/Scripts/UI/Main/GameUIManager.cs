@@ -38,41 +38,32 @@ public class GameUIManager : MonoBehaviour
         // First handle the background transition
         SwitchBackground(bgIndex);
 
+        // Close every other screen first. Returning early from inside the loop used to leave any
+        // screen listed after the target one still showing.
+        UISCreens target = null;
         foreach (var screen in uiScreens)
         {
-            if (screen.screenType == screenType)
-            {
-                if (screen.screenTransform.gameObject.activeSelf)
-                    return;
-
-                screen.screenTransform.gameObject.SetActive(true);
-                if (screen.showOverlay)
-                {
-                    overlayCanvasGroup.gameObject.SetActive(true);
-                    overlayCanvasGroup.alpha = 0f;
-                    overlayCanvasGroup.DOFade(1f, 0.2f);
-                }
-                else
-                {
-                    if (overlayCanvasGroup.gameObject.activeSelf)
-                    {
-                        overlayCanvasGroup.DOFade(0f, 0.2f).OnComplete(() =>
-                        {
-                            overlayCanvasGroup.gameObject.SetActive(false);
-                        });
-                    }
-                    else
-                    {
-                        overlayCanvasGroup.gameObject.SetActive(false);
-                    }
-                }
-                onComplete?.Invoke();
-            }
-            else
-            {
-                screen.screenTransform.gameObject.SetActive(false);
-            }
+            if (screen.screenType == screenType) target = screen;
+            else screen.screenTransform.gameObject.SetActive(false);
         }
+        if (target == null || target.screenTransform.gameObject.activeSelf) return;
+
+        target.screenTransform.gameObject.SetActive(true);
+        if (target.showOverlay)
+        {
+            overlayCanvasGroup.gameObject.SetActive(true);
+            overlayCanvasGroup.alpha = 0f;
+            overlayCanvasGroup.DOFade(1f, 0.2f);
+        }
+        else if (overlayCanvasGroup.gameObject.activeSelf)
+        {
+            overlayCanvasGroup.DOFade(0f, 0.2f).OnComplete(() => overlayCanvasGroup.gameObject.SetActive(false));
+        }
+        else
+        {
+            overlayCanvasGroup.gameObject.SetActive(false);
+        }
+        onComplete?.Invoke();
     }
     
     private void SwitchBackground(int bgIndex)

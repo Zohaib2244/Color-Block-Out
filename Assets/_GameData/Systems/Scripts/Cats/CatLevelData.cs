@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum CatHoleType
 {
@@ -15,14 +16,16 @@ public enum CatHoleType
 [Serializable]
 public sealed class CatPlacement
 {
-    public BlockColorTypes color;
+    [FormerlySerializedAs("color")]
+    public int colorId;
     public Vector2Int cell;
 }
 
 [Serializable]
 public sealed class CatHolePlacement
 {
-    public BlockColorTypes color;
+    [FormerlySerializedAs("color")]
+    public int colorId;
 
     /// <summary>Grid cell the hole's anchor sits on.</summary>
     public Vector2Int origin;
