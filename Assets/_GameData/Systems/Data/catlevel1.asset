@@ -15,7 +15,45 @@ MonoBehaviour:
   levelName: catlevel1
   grid: {fileID: 11400000, guid: 4d56c8f0455338342a2aeeca5716be82, type: 2}
   levelTime: 60
-  cameraPosition: {x: 0, y: 10, z: -6}
+  cameraPosition: {x: 0, y: 9, z: -1.83}
   cameraFOV: 60
-  cats: []
-  holes: []
+  cats:
+  - color: 0
+    cell: {x: 2, y: 7}
+  - color: 0
+    cell: {x: 2, y: 4}
+  - color: 0
+    cell: {x: 4, y: 7}
+  - color: 2
+    cell: {x: 2, y: 1}
+  - color: 2
+    cell: {x: 7, y: 1}
+  - color: 3
+    cell: {x: 7, y: 8}
+  - color: 3
+    cell: {x: 1, y: 6}
+  - color: 3
+    cell: {x: 2, y: 6}
+  - color: 3
+    cell: {x: 6, y: 7}
+  holes:
+  - color: 0
+    origin: {x: 5, y: 1}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+  - color: 3
+    origin: {x: 4, y: 2}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+  - color: 2
+    origin: {x: 3, y: 6}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 0, y: 2}
