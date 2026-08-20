@@ -1,0 +1,664 @@
+/*
+  "Chunky Blocks + Accent Border" — the same design system AVN Hub uses
+  (see AVN Hub's CLAUDE.md / styles/globals.css). Dark (ember) is the
+  default; [data-theme="light"] overrides below. Sticker/stamp cards:
+  rounded corners, a solid 1.5px border, and a hard offset shadow with
+  no blur — never a soft box-shadow.
+*/
+:root {
+  --bg-page: #13100c;
+  --bg-card: #1e1a14;
+  --bg-nested: #1a1610;
+  --border: #3d3220;
+  --shadow: #070604;
+  --text-primary: #e8dfc8;
+  --text-muted: #9f9887;
+  --text-muted-dim: #8b8475;
+  --accent-orange: #ff6b2b;
+  --accent-cyan: #00b4c8;
+  --badge-text: #13100c;
+  --status-up: #1c6b30;
+  --status-down: #c84a12;
+
+  color-scheme: dark;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+[data-theme="light"] {
+  --bg-page: #d8cfbc;
+  --bg-card: #f5f0e6;
+  --bg-nested: #faf6f0;
+  --border: #7a6a52;
+  --shadow: #a89878;
+  --text-primary: #1c1810;
+  --text-muted: #9a8870;
+  --text-muted-dim: #b0a090;
+  --accent-orange: #e05a18;
+  --accent-cyan: #00768a;
+  --badge-text: #f5f0e6;
+  --status-up: #1a5e28;
+  --status-down: #c84a12;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 12px;
+  padding: 12px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--shadow);
+  flex-wrap: wrap;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.app-header h1 {
+  font-family: "DotGothic16", monospace;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tabs button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── sticker chip buttons/inputs/selects ──────────────────────── */
+
+button {
+  background: var(--bg-nested);
+  border: 1.5px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  box-shadow: 2px 2px 0 var(--shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent-orange);
+  box-shadow: 3px 3px 0 var(--shadow);
+  transform: translate(-1px, -1px);
+}
+
+button:active:not(:disabled) {
+  box-shadow: 1px 1px 0 var(--shadow);
+  transform: translate(1px, 1px);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: 2px 2px 0 var(--shadow);
+  transform: none;
+}
+
+button.primary {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: var(--badge-text);
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  border-color: var(--accent-orange);
+}
+
+.tabs button.active,
+.mode-toggle button.active {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+input,
+select {
+  background: var(--bg-nested);
+  border: 1.5px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+input[type="number"] {
+  width: 5.5rem;
+}
+
+input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ─── layout ────────────────────────────────────────────────────── */
+
+.app-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.screen {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 6px;
+}
+
+.sidebar-header h2 {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.sidebar-footer {
+  padding: 10px 14px;
+  border-top: 1.5px solid var(--border);
+}
+
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.library-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.library-list li.active {
+  background: color-mix(in srgb, var(--accent-orange) 14%, transparent);
+}
+
+.library-list li.empty {
+  padding: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.library-item {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
+.library-item:hover {
+  background: var(--bg-nested);
+  border: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.danger-link {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+.danger-link:hover {
+  color: var(--status-down);
+  border: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.preset-list {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--bg-nested);
+  border: 1.5px solid var(--border);
+}
+
+.preset-list li.empty {
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+}
+
+.preset-list-item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.78rem;
+  min-width: 0;
+}
+
+.preset-list-item-body span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-main {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  min-width: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.field-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+/* ─── color picker ──────────────────────────────────────────────── */
+
+.color-field {
+  gap: 6px;
+}
+
+.color-picker {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.color-chip {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  box-shadow: 2px 2px 0 var(--shadow);
+  cursor: pointer;
+}
+
+.color-chip:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  transform: translate(-1px, -1px);
+}
+
+.color-chip.active {
+  border-color: var(--text-primary);
+  border-width: 2.5px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  max-width: 62rem;
+  line-height: 1.55;
+  margin: 4px 0 14px;
+}
+
+.hint code {
+  color: var(--text-primary);
+  background: var(--bg-nested);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.canvas-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.canvas-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 15rem;
+  flex: 1 1 15rem;
+}
+
+.canvas-wrap {
+  display: inline-block;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--bg-nested);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.grid-canvas-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+canvas.grid-canvas {
+  display: block;
+  touch-action: none;
+}
+
+.grid-coord {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border);
+  padding-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-coord span {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.grid-coord span.grid-coord-idle {
+  letter-spacing: 0.1em;
+}
+
+/* ─── zoom ──────────────────────────────────────────────────────── */
+
+.zoom-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.zoom-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-control input[type="range"] {
+  width: 7rem;
+  padding: 0;
+  accent-color: var(--accent-orange);
+  background: transparent;
+  border: none;
+}
+
+.zoom-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.4rem;
+}
+
+/* ─── legend ────────────────────────────────────────────────────── */
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+}
+
+.legend-glyph {
+  display: block;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+
+/* ─── inspector ─────────────────────────────────────────────────── */
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-nested);
+  border: 1.5px solid var(--accent-orange);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.inspector-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inspector-header h3 {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-orange);
+  margin: 0;
+}
+
+.inspector-header span {
+  font-size: 0.7rem;
+}
+
+.inspector label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.inspector-hint {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.inspector-actions {
+  display: flex;
+  gap: 8px;
+}
+
+button.destructive {
+  border-color: var(--status-down);
+  color: var(--status-down);
+}
+
+button.destructive:hover:not(:disabled) {
+  background: var(--status-down);
+  border-color: var(--status-down);
+  color: var(--badge-text);
+}
+
+.stat-line {
+  margin: 0;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value {
+  font-family: "DotGothic16", monospace;
+  font-size: 1.05rem;
+  color: var(--accent-cyan);
+}
+
+.issues {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 46rem;
+}
+
+.issues li {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+}
+
+.issues li.error {
+  color: var(--status-down);
+  border-color: var(--status-down);
+  background: color-mix(in srgb, var(--status-down) 10%, transparent);
+}
+
+.issues li.warning {
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
+  background: color-mix(in srgb, var(--accent-orange) 10%, transparent);
+}
