@@ -283,24 +283,6 @@ canvas.grid-canvas {
   cursor: pointer;
 }
 
-.hole-config-table {
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-
-.hole-config-table th,
-.hole-config-table td {
-  border: 1px solid var(--border);
-  padding: 0.4rem 0.7rem;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.hole-config-table th:first-child,
-.hole-config-table td:first-child {
-  text-align: left;
-}
-
 .issues {
   list-style: none;
   padding: 0;

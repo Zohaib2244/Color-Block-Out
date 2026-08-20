@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
-import { loadHoleConfig } from "../holeConfig/holeConfigStore";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
 import { classifyHoleShape, openingsForHole } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
@@ -39,7 +38,6 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
 
   useEffect(() => setGrids(listGrids()), [gridsVersion]);
 
-  const holeConfig = useMemo(() => loadHoleConfig(), []);
   const grid = useMemo(() => grids.find((g) => g.id === draft.gridId), [grids, draft.gridId]);
   const playableMask = useMemo(
     () => (grid ? computePlayableMask(grid.width, grid.length, grid.wallToggles) : []),
@@ -102,7 +100,7 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
       if (mode === "cats") {
         cats = [...cats, ...cells.map((c) => ({ color: selectedColor, x: c.x, z: c.z }))];
       } else if (mode === "holes-shape") {
-        const classified = classifyHoleShape(cells, holeConfig);
+        const classified = classifyHoleShape(cells);
         holes = [
           ...holes,
           ...cells.map((c) => {
@@ -331,7 +329,7 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
 
                   const hole = draft.holes.find((h) => h.x === cell.x && h.z === cell.z);
                   if (hole) {
-                    const openings = openingsForHole(hole.holeType, hole.rotationQuarterTurns, holeConfig);
+                    const openings = openingsForHole(hole.holeType, hole.rotationQuarterTurns);
                     drawHole(ctx, rect, BLOCK_COLOR_HEX[hole.color], openings);
                   }
                   const cat = draft.cats.find((c) => c.x === cell.x && c.z === cell.z);

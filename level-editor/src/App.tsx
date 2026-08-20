@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { GridDesigner } from "./ui/GridDesigner";
 import { LevelEditor } from "./ui/LevelEditor";
-import { HoleConfigPanel } from "./ui/HoleConfigPanel";
 
-type Tab = "grids" | "levels" | "hole-config";
+type Tab = "grids" | "levels";
 
 function App() {
   const [tab, setTab] = useState<Tab>("grids");
@@ -20,9 +19,6 @@ function App() {
           <button className={tab === "levels" ? "active" : ""} onClick={() => setTab("levels")}>
             Level Editor
           </button>
-          <button className={tab === "hole-config" ? "active" : ""} onClick={() => setTab("hole-config")}>
-            Hole Config
-          </button>
         </nav>
       </header>
 
@@ -34,9 +30,6 @@ function App() {
           gridsVersion={gridsVersion}
           onGridsChanged={() => setGridsVersion((v) => v + 1)}
         />
-      </div>
-      <div className="app-body" style={{ display: tab === "hole-config" ? "contents" : "none" }}>
-        <HoleConfigPanel />
       </div>
     </div>
   );

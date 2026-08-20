@@ -24,7 +24,6 @@ directly.
 | --- | --- | --- |
 | `GridCreatorTool` (`Cat Puzzle/Grid Creator`) | **Grid Designer** tab | Define board width/length, toggle wall cells, save a reusable grid. |
 | `CatLevelEditorWindow` (`Cat Puzzle/Cat Level Editor`) | **Level Editor** tab | Pick a saved grid, place Cats and Holes on top of it. |
-| `CatHoleConfiguration` asset | **Hole Config** tab | Enter your project's `defaultOpenings` per hole type so rotation solving matches your prefabs. |
 
 ### Grid Designer
 
@@ -45,9 +44,9 @@ Two ways to place holes, matching `CatLevelEditorWindow`:
 - **Holes (shape)** — select a connected run of cells; each cell's
   `HoleType` (`Isolated`/`EndCap`/`Straight`/`Corner`/`OneSide`/`Middle`) is
   derived purely from how many of its 4 neighbors are also selected, and
-  its `rotationQuarterTurns` is solved by rotating the hole type's
-  configured `defaultOpenings` (see Hole Config below) until it matches the
-  actual open neighbors — the same algorithm as
+  its `rotationQuarterTurns` is solved by rotating the hole type's default
+  openings (`DEFAULT_HOLE_OPENINGS` in `src/level/holeShape.ts`) until it
+  matches the actual open neighbors — the same algorithm as
   `CatLevelEditorWindow.GetHoleType`/`GetRotation`.
 - **Holes (manual)** — place a single hole with an explicit type and
   rotation.
@@ -58,13 +57,11 @@ rotation solving is easy to spot at a glance. Inline validation flags
 overlapping placements, placements off the playable area, and cat/hole
 colors that don't have a match.
 
-### Hole Config
-
-`CatHolePrefabData.defaultOpenings` is authored per-prefab in your
-project's `CatHoleConfiguration` asset and isn't derivable from code — this
-tab lets you enter it once (checkbox grid, one row per hole type) so the
-rotation solver matches your actual prefabs. It ships with placeholder
-defaults; edit and save before relying on exported rotations.
+`DEFAULT_HOLE_OPENINGS` is a placeholder — the real per-prefab values live
+in your project's `CatHoleConfiguration` asset
+(`CatHolePrefabData.defaultOpenings`), authored in Unity and not derivable
+from code. If your prefabs use different default openings, edit that
+constant to match so exported rotations line up with them.
 
 ## Data model
 

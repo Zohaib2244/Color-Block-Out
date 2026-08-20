@@ -9,13 +9,23 @@
  * neighbors.
  */
 import { DIRECTIONS, DIRECTION_OFFSET, cellKey } from "../types";
-import type {
-  Direction,
-  GridCell,
-  HoleOpeningsConfig,
-  HoleType,
-  RotationQuarterTurns,
-} from "../types";
+import type { Direction, GridCell, HoleOpeningsConfig, HoleType, RotationQuarterTurns } from "../types";
+
+/**
+ * Directions each hole type is open on at rotation 0. Mirrors
+ * `CatHoleConfiguration`'s `CatHolePrefabData.defaultOpenings` in Unity —
+ * authored per-prefab there, so these are placeholder values; if your
+ * project's actual prefabs use different default openings, update this
+ * table to match so exported rotations line up with your hole prefabs.
+ */
+export const DEFAULT_HOLE_OPENINGS: HoleOpeningsConfig = {
+  Isolated: [],
+  EndCap: ["Up"],
+  Straight: ["Up", "Down"],
+  Corner: ["Up", "Right"],
+  OneSide: ["Up", "Right", "Down"],
+  Middle: ["Up", "Right", "Down", "Left"],
+};
 
 export function classifyHoleCell(cell: GridCell, shape: Set<string>): { holeType: HoleType; openings: Direction[] } {
   const openings = DIRECTIONS.filter((dir) => {
@@ -44,13 +54,9 @@ function rotateDirection(direction: Direction, quarterTurns: number): Direction 
   return DIRECTIONS[(index + quarterTurns) % 4];
 }
 
-/** Rotates a hole type's configured default openings by a given rotation, for rendering/inspection. */
-export function openingsForHole(
-  holeType: HoleType,
-  rotationQuarterTurns: RotationQuarterTurns,
-  config: HoleOpeningsConfig
-): Direction[] {
-  return (config[holeType] ?? []).map((d) => rotateDirection(d, rotationQuarterTurns));
+/** Rotates a hole type's default openings by a given rotation, for rendering/inspection. */
+export function openingsForHole(holeType: HoleType, rotationQuarterTurns: RotationQuarterTurns): Direction[] {
+  return DEFAULT_HOLE_OPENINGS[holeType].map((d) => rotateDirection(d, rotationQuarterTurns));
 }
 
 /** Finds the 0-3 rotation of `defaultOpenings` that matches `actualOpenings`. */
@@ -69,14 +75,13 @@ export function solveRotation(
 }
 
 export function classifyHoleShape(
-  cells: GridCell[],
-  config: HoleOpeningsConfig
+  cells: GridCell[]
 ): Map<string, { holeType: HoleType; rotationQuarterTurns: RotationQuarterTurns }> {
   const shape = new Set(cells.map((c) => cellKey(c.x, c.z)));
   const result = new Map<string, { holeType: HoleType; rotationQuarterTurns: RotationQuarterTurns }>();
   for (const cell of cells) {
     const { holeType, openings } = classifyHoleCell(cell, shape);
-    const rotationQuarterTurns = solveRotation(openings, config[holeType] ?? []);
+    const rotationQuarterTurns = solveRotation(openings, DEFAULT_HOLE_OPENINGS[holeType]);
     result.set(cellKey(cell.x, cell.z), { holeType, rotationQuarterTurns });
   }
   return result;
