@@ -1,0 +1,215 @@
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+/// <summary>
+/// Turns a set of connected cells into a hole object. Each cell picks the piece
+/// prefab that matches how it connects to its neighbours (Isolated, End Cap,
+/// Straight, Corner, One Side or Middle) and is rotated to line the openings up.
+/// </summary>
+public static class CatHoleBuilder
+{
+    private static readonly Vector2Int[] Steps =
+    {
+        Vector2Int.up,    // Direction.Up
+        Vector2Int.right, // Direction.Right
+        Vector2Int.down,  // Direction.Down
+        Vector2Int.left   // Direction.Left
+    };
+
+    /// <summary>Spawns the hole described by <paramref name="placement"/> under <paramref name="parent"/>.</summary>
+    public static CatHole Build(CatHolePlacement placement, GridManager grid, Transform parent, CatPuzzleConfig config)
+    {
+        if (placement == null || grid == null) return null;
+        List<Vector2Int> offsets = Normalise(placement.offsets);
+
+        // A root prefab lets the exit and highlight settings be authored once; without one the
+        // components fall back to their script defaults.
+        GameObject rootPrefab = config != null && config.holeConfiguration != null ? config.holeConfiguration.holeRootPrefab : null;
+        GameObject root = rootPrefab != null ? GridBuilder.InstantiatePrefab(rootPrefab, parent) : new GameObject("Hole");
+        if (rootPrefab == null)
+        {
+            GridBuilder.RegisterCreated(root, "Create Hole");
+            root.transform.SetParent(parent, false);
+        }
+
+        string colorName = config != null && config.palette != null ? config.palette.GetName(placement.colorId) : placement.colorId.ToString();
+        root.name = $"Hole_{colorName}_{placement.origin.x}_{placement.origin.y}";
+        root.transform.localRotation = Quaternion.identity;
+        root.transform.localScale = Vector3.one;
+
+        CatHole hole = root.GetComponent<CatHole>();
+        if (hole == null) hole = root.AddComponent<CatHole>();
+        hole.Configure(placement.colorId, placement.origin, offsets);
+        if (root.GetComponent<CatHoleHighlight>() == null) root.AddComponent<CatHoleHighlight>();
+        if (root.GetComponent<CatHoleDragHandler>() == null) root.AddComponent<CatHoleDragHandler>();
+
+        BuildPieces(hole, grid, config);
+        MoveTo(hole, placement.origin, grid);
+        return hole;
+    }
+
+    /// <summary>Rebuilds the piece meshes and colliders for a hole that already exists.</summary>
+    public static void BuildPieces(CatHole hole, GridManager grid, CatPuzzleConfig config)
+    {
+        if (hole == null) return;
+        CatHoleConfiguration holeConfiguration = config != null ? config.holeConfiguration : null;
+        if (holeConfiguration == null)
+        {
+            Debug.LogError("CatPuzzleConfig has no CatHoleConfiguration assigned, holes cannot be built.");
+            return;
+        }
+
+        GridBuilder.DestroyChildren(hole.transform);
+        foreach (BoxCollider existing in hole.GetComponents<BoxCollider>())
+        {
+            if (Application.isPlaying) Object.Destroy(existing); else Object.DestroyImmediate(existing);
+        }
+
+        // Meshes hang off a Visual child so highlight tweens never fight the root's grid snapping.
+        Transform visual = CreateVisualRoot(hole.transform);
+        CatHoleHighlight highlight = hole.GetComponent<CatHoleHighlight>();
+        if (highlight != null) highlight.SetVisual(visual);
+
+        float spacing = grid != null ? grid.GetCellSize() : 1f;
+        HashSet<Vector2Int> shape = new HashSet<Vector2Int>(hole.Offsets);
+
+        foreach (Vector2Int offset in hole.Offsets)
+        {
+            List<Direction> connections = GetConnections(offset, shape);
+            CatHoleType type = GetHoleType(connections);
+            CatHolePrefabData data = holeConfiguration.GetData(type);
+            if (data == null || data.prefab == null)
+            {
+                Debug.LogWarning($"No prefab configured for hole type {type}.");
+                continue;
+            }
+
+            GameObject piece = GridBuilder.InstantiatePrefab(data.prefab, visual);
+            piece.name = $"{type}_{offset.x}_{offset.y}";
+            piece.transform.localPosition = new Vector3(offset.x * spacing, 0f, offset.y * spacing);
+            piece.transform.localRotation = Quaternion.Euler(0f, GetQuarterTurns(data, connections) * 90f, 0f);
+
+            // One collider per covered cell keeps the whole shape draggable from any piece.
+            BoxCollider collider = hole.gameObject.AddComponent<BoxCollider>();
+            collider.center = new Vector3(offset.x * spacing, 0f, offset.y * spacing);
+            collider.size = new Vector3(spacing, spacing * 0.5f, spacing);
+        }
+
+        hole.ApplyColor(config != null ? config.palette : null);
+    }
+
+    /// <summary>
+    /// Places the hole on a cell and keeps its logical origin in sync. Height comes from the
+    /// Holes parent, so the hole only ever moves in the grid plane.
+    /// </summary>
+    public static void MoveTo(CatHole hole, Vector2Int origin, GridManager grid)
+    {
+        if (hole == null) return;
+        hole.SetOriginCell(origin);
+        if (grid == null) return;
+        hole.transform.localPosition = grid.CellToLocalPosition(origin);
+    }
+
+    private static Transform CreateVisualRoot(Transform parent)
+    {
+        GameObject visual = new GameObject(CatHoleHighlight.VisualName);
+        GridBuilder.RegisterCreated(visual, "Create Hole Visual");
+        visual.transform.SetParent(parent, false);
+        visual.transform.localPosition = Vector3.zero;
+        visual.transform.localRotation = Quaternion.identity;
+        visual.transform.localScale = Vector3.one;
+        return visual.transform;
+    }
+
+    /// <summary>Shifts offsets so the lowest cell sits at (0,0), the shape's anchor.</summary>
+    public static List<Vector2Int> Normalise(IEnumerable<Vector2Int> cells)
+    {
+        List<Vector2Int> list = cells != null ? cells.Distinct().ToList() : new List<Vector2Int>();
+        if (list.Count == 0) return new List<Vector2Int> { Vector2Int.zero };
+        int minX = list.Min(cell => cell.x);
+        int minY = list.Min(cell => cell.y);
+        Vector2Int anchor = new Vector2Int(minX, minY);
+        return list.Select(cell => cell - anchor).OrderBy(cell => cell.y).ThenBy(cell => cell.x).ToList();
+    }
+
+    /// <summary>Splits a painted selection into separate placements, one per connected island.</summary>
+    public static List<CatHolePlacement> SplitIntoPlacements(IEnumerable<Vector2Int> cells, int colorId)
+    {
+        List<CatHolePlacement> placements = new List<CatHolePlacement>();
+        HashSet<Vector2Int> remaining = new HashSet<Vector2Int>(cells);
+
+        while (remaining.Count > 0)
+        {
+            Vector2Int seed = remaining.First();
+            List<Vector2Int> island = new List<Vector2Int>();
+            Queue<Vector2Int> pending = new Queue<Vector2Int>();
+            pending.Enqueue(seed);
+            remaining.Remove(seed);
+
+            while (pending.Count > 0)
+            {
+                Vector2Int current = pending.Dequeue();
+                island.Add(current);
+                foreach (Vector2Int step in Steps)
+                {
+                    Vector2Int neighbour = current + step;
+                    if (remaining.Remove(neighbour)) pending.Enqueue(neighbour);
+                }
+            }
+
+            Vector2Int origin = new Vector2Int(island.Min(cell => cell.x), island.Min(cell => cell.y));
+            placements.Add(new CatHolePlacement
+            {
+                colorId = colorId,
+                origin = origin,
+                offsets = Normalise(island)
+            });
+        }
+        return placements;
+    }
+
+    public static List<Direction> GetConnections(Vector2Int cell, ICollection<Vector2Int> shape)
+    {
+        List<Direction> connections = new List<Direction>();
+        for (int i = 0; i < Steps.Length; i++)
+            if (shape.Contains(cell + Steps[i])) connections.Add((Direction)i);
+        return connections;
+    }
+
+    public static CatHoleType GetHoleType(List<Direction> connections)
+    {
+        switch (connections.Count)
+        {
+            case 0: return CatHoleType.Isolated;
+            case 1: return CatHoleType.EndCap;
+            case 2:
+                bool opposite = (connections.Contains(Direction.Up) && connections.Contains(Direction.Down))
+                             || (connections.Contains(Direction.Left) && connections.Contains(Direction.Right));
+                return opposite ? CatHoleType.Straight : CatHoleType.Corner;
+            case 3: return CatHoleType.OneSide;
+            default: return CatHoleType.Middle;
+        }
+    }
+
+    /// <summary>Finds the clockwise quarter turn that lines the prefab openings up with the real neighbours.</summary>
+    public static int GetQuarterTurns(CatHolePrefabData data, List<Direction> connections)
+    {
+        if (data == null || data.defaultOpenings == null || connections.Count == 0 || connections.Count >= 4) return 0;
+        HashSet<Direction> actual = new HashSet<Direction>(connections);
+        for (int turns = 0; turns < 4; turns++)
+        {
+            HashSet<Direction> rotated = new HashSet<Direction>(data.defaultOpenings.Select(direction => (Direction)(((int)direction + turns) % 4)));
+            if (rotated.SetEquals(actual)) return turns;
+        }
+        return 0;
+    }
+
+    /// <summary>Reads a hole back out of the scene, picking up any move the designer made.</summary>
+    public static CatHolePlacement Capture(CatHole hole) => hole == null ? null : new CatHolePlacement
+    {
+        colorId = hole.ColorId,
+        origin = hole.OriginCell,
+        offsets = new List<Vector2Int>(hole.Offsets)
+    };
+}

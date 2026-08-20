@@ -1,97 +1,89 @@
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 
+/// <summary>
+/// Loading and progression: which level is current, moving between them, and the screens that go
+/// with each outcome. It asks <see cref="LevelSpawner"/> to put a level in the scene and listens to
+/// <see cref="LevelManager"/> for how that level ended.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     #region Singleton
     public static GameManager Instance;
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            //DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
     #endregion
+
     [SerializeField] private LevelData levelData;
-    public GameObject currentLevelPrefab;
-    public LevelState currentLevelState = LevelState.None;
-    public int TotalLevels => levelData.levelPrefabs.Count;
+    [SerializeField] private LevelSpawner spawner;
+    [SerializeField] private LevelManager levelManager;
     public UnityEvent onLevelLoaded;
-    void Start()
+
+    public int TotalLevels => levelData != null ? levelData.Count : 0;
+    public CatLevelData CurrentLevel { get; private set; }
+    public LevelState CurrentLevelState => levelManager != null ? levelManager.State : LevelState.None;
+
+    private void Start()
     {
         GameConstants.InitializeGame();
-        onLevelLoaded.AddListener(ConfigureCamera);
+        if (spawner == null) spawner = LevelSpawner.Instance != null ? LevelSpawner.Instance : FindFirstObjectByType<LevelSpawner>();
+        if (levelManager == null) levelManager = LevelManager.Instance != null ? LevelManager.Instance : FindFirstObjectByType<LevelManager>();
+
+        if (levelManager == null) return;
+        levelManager.LevelCompleted.AddListener(OnLevelCompleted);
+        levelManager.LevelFailed.AddListener(OnLevelFailed);
     }
+
+    private void OnDestroy()
+    {
+        if (levelManager == null) return;
+        levelManager.LevelCompleted.RemoveListener(OnLevelCompleted);
+        levelManager.LevelFailed.RemoveListener(OnLevelFailed);
+    }
+
     public void LoadLevel(int levelIndex)
     {
-        if (levelIndex < 0 || levelIndex >= levelData.levelPrefabs.Count)
+        if (levelData == null || levelData.Count == 0)
         {
-            Debug.LogError("Invalid level index: " + levelIndex);
+            Debug.LogError("No level collection assigned to GameManager.");
             return;
         }
-        Destroy(currentLevelPrefab);
-        currentLevelPrefab = Instantiate(levelData.levelPrefabs[levelIndex % levelData.levelPrefabs.Count]);
-        currentLevelState = LevelState.InProgress;
+        if (spawner == null)
+        {
+            Debug.LogError("No LevelSpawner in the scene, a level cannot be built.");
+            return;
+        }
+
+        CurrentLevel = levelData.Get(levelIndex);
+        spawner.Spawn(CurrentLevel);
+        if (GameUIManager.Instance != null) GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
         onLevelLoaded?.Invoke();
         FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Start, levelIndex + 1);
     }
-    public void LoadNextLevel()
-    {
-        LoadLevel(GameConstants.CurrentLevelIndex % levelData.levelPrefabs.Count);
-    }
-    public void RetryLevel()
-    {
-        if (currentLevelState == LevelState.InProgress || currentLevelState == LevelState.Failed)
-        {
-            currentLevelState = LevelState.InProgress;
-            GameUIManager.Instance.LevelScreen.StopTimer();
-            Destroy(currentLevelPrefab);
-            currentLevelPrefab = Instantiate(levelData.levelPrefabs[GameConstants.CurrentLevelIndex % levelData.levelPrefabs.Count]);
-            onLevelLoaded?.Invoke();
-        }
-    }
-    public void LevelFailed()
-    {
-        if (currentLevelState == LevelState.InProgress)
-        {
-            currentLevelState = LevelState.Failed;
-            GameUIManager.Instance.ShowScreen(ScreenType.GameOver);
-            FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Fail, GameConstants.CurrentLevelIndex + 1);
-        }
-    }
-    public void LevelCompleted()
-    {
 
-        if (currentLevelState == LevelState.InProgress)
-        {
-            Debug.Log("Level Completed!");
-            currentLevelState = LevelState.Completed;
-            GameConstants.CurrentLevelIndex++;
-            GameUIManager.Instance.ShowScreen(ScreenType.LevelCompleted);
-            FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Complete, GameConstants.CurrentLevelIndex + 1);
-        }
-    }
+    public void LoadNextLevel() => LoadLevel(GameConstants.CurrentLevelIndex);
+
+    public void RetryLevel() => LoadLevel(GameConstants.CurrentLevelIndex);
+
     public void UnloadAllLevels()
     {
-        if (currentLevelPrefab != null)
-        {
-            Destroy(currentLevelPrefab);
-            currentLevelPrefab = null;
-        }
-        currentLevelState = LevelState.None;
+        if (spawner != null) spawner.Despawn();
+        CurrentLevel = null;
     }
 
-    void ConfigureCamera()
+    private void OnLevelCompleted()
     {
-        (Vector3 position, float fov) = currentLevelPrefab.GetComponent<LevelManager>().GetCameraProperties();
-        Camera.main.transform.position = position;
-        Camera.main.fieldOfView = fov;
+        GameConstants.CurrentLevelIndex++;
+        GameUIManager.Instance.ShowScreen(ScreenType.LevelCompleted);
+        FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Complete, GameConstants.CurrentLevelIndex + 1);
+    }
+
+    private void OnLevelFailed()
+    {
+        GameUIManager.Instance.ShowScreen(ScreenType.GameOver);
+        FirebaseHandler.LogLevelEvent(FirebaseHandler.LevelState.Fail, GameConstants.CurrentLevelIndex + 1);
     }
 }

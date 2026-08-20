@@ -114,7 +114,7 @@ public class LevelScreen : MonoBehaviour
         // Stop the timer
         DOTween.Kill("LevelTimer");
 
-        GameManager.Instance.LevelFailed();
+        if (LevelManager.Instance != null) LevelManager.Instance.Fail();
     }
     public void PauseTimer()
     {

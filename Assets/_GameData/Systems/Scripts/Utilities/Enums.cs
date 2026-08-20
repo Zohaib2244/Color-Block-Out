@@ -1,23 +1,5 @@
 using System;
 
-public enum BlockColorTypes
-{
-    Red,
-    Orange,
-    Yellow,
-    Blue,
-    Cyan,
-    Green,
-    Purple,
-    Pink,
-    Teal
-}
-public enum BlockState
-{
-    Idle,
-    Moving,
-}
-
 public static class EnumExtensions
 {
     //* Returns the number of values in any enum

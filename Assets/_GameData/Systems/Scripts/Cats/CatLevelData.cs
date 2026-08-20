@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum CatHoleType
 {
@@ -15,38 +16,45 @@ public enum CatHoleType
 [Serializable]
 public sealed class CatPlacement
 {
-    public BlockColorTypes color;
-    public Vector2Int gridPosition;
+    [FormerlySerializedAs("color")]
+    public int colorId;
+    public Vector2Int cell;
 }
 
 [Serializable]
 public sealed class CatHolePlacement
 {
-    public BlockColorTypes color;
-    public Vector2Int gridPosition;
-    public CatHoleType holeType;
-    [Range(0, 3)] public int rotationQuarterTurns;
+    [FormerlySerializedAs("color")]
+    public int colorId;
 
-    /// <summary>
-    /// Identifies which connected hole shape this cell belongs to -- every
-    /// cell drawn in the same gesture (see CatLevelEditorWindow) shares one
-    /// id and one <see cref="capacity"/>, since a hole's cat cap applies to
-    /// the whole shape, not to each cell individually. Blank means "its own
-    /// one-cell shape" (also how older level assets without this field read).
-    /// </summary>
-    public string holeGroupId;
+    /// <summary>Grid cell the hole's anchor sits on.</summary>
+    public Vector2Int origin;
 
-    /// <summary>How many cats this hole's whole connected shape can swallow before it's spent. Minimum 1.</summary>
-    [Min(1)] public int capacity = 1;
+    /// <summary>Cells the hole covers, relative to <see cref="origin"/>. Always contains (0,0).</summary>
+    public List<Vector2Int> offsets = new List<Vector2Int> { Vector2Int.zero };
+
+    public IEnumerable<Vector2Int> Cells()
+    {
+        for (int i = 0; i < offsets.Count; i++) yield return origin + offsets[i];
+    }
 }
 
+/// <summary>
+/// One playable level. The board shape comes from a shared <see cref="GridData"/>
+/// asset, so many levels can be authored on top of the same grid.
+/// </summary>
 [CreateAssetMenu(fileName = "New Cat Level", menuName = "Cat Puzzle/Level")]
 public sealed class CatLevelData : ScriptableObject
 {
     public string levelName;
     public GridData grid;
-    public GameObject catPrefab;
-    public CatHoleConfiguration holeConfiguration;
+
+    [Header("Presentation")]
+    public int levelTime = 60;
+
+    [Header("Content")]
     public List<CatPlacement> cats = new List<CatPlacement>();
     public List<CatHolePlacement> holes = new List<CatHolePlacement>();
+
+    public string DisplayName => string.IsNullOrEmpty(levelName) ? name : levelName;
 }

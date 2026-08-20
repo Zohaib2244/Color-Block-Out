@@ -12,6 +12,10 @@ public sealed class CatHolePrefabData
 [CreateAssetMenu(fileName = "CatHoleConfiguration", menuName = "Cat Puzzle/Hole Configuration")]
 public sealed class CatHoleConfiguration : ScriptableObject
 {
+    [Tooltip("Optional. Prefab used for the hole root, carrying the tuned CatHole exit and " +
+             "CatHoleHighlight settings. Without one, holes are built with the script defaults.")]
+    public GameObject holeRootPrefab;
+
     public CatHolePrefabData[] holePrefabs = new CatHolePrefabData[6];
 
     public GameObject GetPrefab(CatHoleType type)

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e1e363e1e7a5d34cb5bbef41d424a9e, type: 3}
+  m_Name: CatPuzzleConfig
+  m_EditorClassIdentifier: Assembly-CSharp::CatPuzzleConfig
+  palette: {fileID: 11400000, guid: 44882020f941d474bba5b275e1716992, type: 2}
+  cellPrefab: {fileID: 7213934350657495362, guid: d9c64cd617262c54195f09f4f71d8c75,
+    type: 3}
+  straightWallPrefab: {fileID: 9042015500247193137, guid: 798f69a2910ba2143830c3a1a3b979be,
+    type: 3}
+  wallEndPrefab: {fileID: 8226419235237542158, guid: 835d3a4f46e557c4b901317705419925,
+    type: 3}
+  cornerWallPrefab: {fileID: 1887646972528988384, guid: 7275fb8591f6c48449905a6c09a9dbcf,
+    type: 3}
+  cellMaterialA: {fileID: 2100000, guid: 55d828cdbc997e041818443aa684256d, type: 2}
+  cellMaterialB: {fileID: 2100000, guid: 709e710309651cc449860bc154e2fa7c, type: 2}
+  wallHeight: 0.17
+  straightWallThickness: 0.35
+  wallOffset: 0.4
+  cornerWallHeight: 0.225
+  cornerWallOffset: 0.17
+  interiorCornerOffset: 0.13
+  catPrefab: {fileID: 5511372133153427065, guid: b9a5ff152a7505d478370ed1b90acc52,
+    type: 3}
+  holeConfiguration: {fileID: 11400000, guid: feddebdf9580e2846a83d7ea117f98b7, type: 2}
