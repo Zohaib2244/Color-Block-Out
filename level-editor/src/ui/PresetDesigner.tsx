@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { getCanvasPalette } from "../canvasPalette";
 import { createPreset, deletePreset, listPresets } from "../level/holePresetLibrary";
-import { buildPresetCells, openingsForHole } from "../level/holeShape";
+import { buildPresetCells } from "../level/holeShape";
 import { useTheme } from "../theme";
 import { cellKey } from "../types";
 import type { GridCell, HoleShapePreset } from "../types";
 import { GridCanvas } from "./GridCanvas";
-import { drawHole } from "./drawShapes";
+import { drawHoleGroup } from "./drawShapes";
 
 const SANDBOX_SIZE = 9;
 const SANDBOX_CELL_PX = 44;
@@ -146,7 +146,8 @@ function PresetPreview({
 }) {
   const width = Math.max(1, ...preset.cells.map((c) => c.dx + 1));
   const length = Math.max(1, ...preset.cells.map((c) => c.dz + 1));
-  const byCell = new Map(preset.cells.map((c) => [cellKey(c.dx, c.dz), c]));
+  const occupied = new Set(preset.cells.map((c) => cellKey(c.dx, c.dz)));
+  const shape = preset.cells.map((c) => ({ x: c.dx, z: c.dz }));
 
   return (
     <GridCanvas
@@ -155,19 +156,10 @@ function PresetPreview({
       cellPx={PREVIEW_CELL_PX}
       showLabels={false}
       renderCell={(ctx, cell, rect) => {
-        const previewCell = byCell.get(cellKey(cell.x, cell.z));
-        ctx.fillStyle = previewCell ? floorHex : inertHex;
+        ctx.fillStyle = occupied.has(cellKey(cell.x, cell.z)) ? floorHex : inertHex;
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-        if (previewCell) {
-          drawHole(
-            ctx,
-            rect,
-            color,
-            openingsForHole(previewCell.holeType, previewCell.rotationQuarterTurns),
-            voidHex
-          );
-        }
       }}
+      renderOverlay={(ctx, cellRect) => drawHoleGroup(ctx, shape, cellRect, color, voidHex)}
     />
   );
 }

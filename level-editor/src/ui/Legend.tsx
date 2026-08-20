@@ -1,7 +1,7 @@
 import { getCanvasPalette } from "../canvasPalette";
 import { useTheme } from "../theme";
 import { GridCanvas } from "./GridCanvas";
-import { drawCat, drawHole } from "./drawShapes";
+import { drawCat, drawHoleGroup } from "./drawShapes";
 
 /** A flat color chip — for grid states whose meaning is just "this fill color". */
 export function SwatchLegend({ items }: { items: { color: string; label: string }[] }) {
@@ -35,8 +35,8 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
             renderCell={(ctx, _cell, rect) => {
               ctx.fillStyle = palette.floor;
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-              drawCat(ctx, rect, accentHex, palette.holeVoid);
             }}
+            renderOverlay={(ctx, cellRect) => drawCat(ctx, cellRect(0, 0), accentHex, palette.holeVoid)}
           />
         </span>
         Cat — solid, with ears
@@ -44,18 +44,30 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
       <li>
         <span className="legend-glyph">
           <GridCanvas
-            width={1}
+            width={2}
             length={1}
             cellPx={30}
             showLabels={false}
             renderCell={(ctx, _cell, rect) => {
               ctx.fillStyle = palette.floor;
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-              drawHole(ctx, rect, accentHex, [], palette.holeVoid, 2);
             }}
+            renderOverlay={(ctx, cellRect) =>
+              drawHoleGroup(
+                ctx,
+                [
+                  { x: 0, z: 0 },
+                  { x: 1, z: 0 },
+                ],
+                cellRect,
+                accentHex,
+                palette.holeVoid,
+                3
+              )
+            }
           />
         </span>
-        Hole — dark socket, number = cat capacity
+        Hole — one outline per hole, however many cells; the number is its cat capacity
       </li>
     </ul>
   );

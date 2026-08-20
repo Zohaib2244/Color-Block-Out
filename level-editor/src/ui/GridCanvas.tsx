@@ -18,6 +18,15 @@ export interface GridCanvasProps {
   onPaintDrag?: (cell: GridCell) => void;
   /** Draw a single cell's fill/content. Gridlines, crosshair and hover are drawn by GridCanvas. */
   renderCell: (ctx: CanvasRenderingContext2D, cell: GridCell, rect: { x: number; y: number; width: number; height: number }) => void;
+  /**
+   * Drawn on top of the cells and gridlines, with a lookup for any cell's
+   * rect. Needed for shapes that span several cells and must be one
+   * continuous form (a multi-cell hole), which per-cell drawing can't express.
+   */
+  renderOverlay?: (
+    ctx: CanvasRenderingContext2D,
+    cellRect: (x: number, z: number) => { x: number; y: number; width: number; height: number }
+  ) => void;
   /** Cells the pointer may interact with; others still render but ignore paint/hover. Defaults to all cells. */
   isInteractive?: (cell: GridCell) => boolean;
 }
@@ -35,6 +44,7 @@ export function GridCanvas({
   onPaintStart,
   onPaintDrag,
   renderCell,
+  renderOverlay,
   isInteractive,
 }: GridCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -94,12 +104,17 @@ export function GridCanvas({
     const gridY = margin;
     const gridW = width * cellPx;
     const gridH = length * cellPx;
+    const cellRect = (x: number, z: number) => ({
+      x: gridX + x * cellPx,
+      y: gridY + (length - 1 - z) * cellPx,
+      width: cellPx,
+      height: cellPx,
+    });
 
     // ── cell fills ────────────────────────────────────────────────
     for (let x = 0; x < width; x++) {
       for (let z = 0; z < length; z++) {
-        const row = length - 1 - z;
-        renderCell(ctx, { x, z }, { x: gridX + x * cellPx, y: gridY + row * cellPx, width: cellPx, height: cellPx });
+        renderCell(ctx, { x, z }, cellRect(x, z));
       }
     }
 
@@ -136,6 +151,9 @@ export function GridCanvas({
       ctx.stroke();
     }
 
+    // ── pieces, on top of the gridlines so nothing cuts through them ──
+    renderOverlay?.(ctx, cellRect);
+
     // ── axis labels ───────────────────────────────────────────────
     if (showLabels) {
       const labelStep = cellPx < 18 ? MAJOR_EVERY : 1;
@@ -168,6 +186,7 @@ export function GridCanvas({
     canvasHeight,
     showLabels,
     renderCell,
+    renderOverlay,
     hovered,
     isInteractive,
     palette,

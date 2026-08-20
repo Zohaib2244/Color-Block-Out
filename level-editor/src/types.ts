@@ -65,14 +65,25 @@ export interface CatPlacement {
   z: number;
 }
 
-export interface HolePlacement {
-  color: BlockColor;
+/** One grid cell of a hole. `holeType`/`rotation` pick the Unity prefab for that cell. */
+export interface HoleCell {
   x: number;
   z: number;
   holeType: HoleType;
   rotationQuarterTurns: RotationQuarterTurns;
+}
+
+/**
+ * ONE hole: a connected run of cells sharing a single color and a single
+ * capacity. The whole shape is the hole — not each cell — so capacity is
+ * stored once here rather than repeated per cell.
+ */
+export interface HolePlacement {
+  id: string;
+  color: BlockColor;
   /** How many cats this hole can swallow before it's full. Minimum 1. */
   capacity: number;
+  cells: HoleCell[];
 }
 
 export interface SavedLevel {

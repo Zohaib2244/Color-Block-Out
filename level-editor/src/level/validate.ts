@@ -27,18 +27,22 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
     }
     addOccupant(cat.x, cat.z, `${cat.color} cat`);
   }
+
   for (const hole of level.holes) {
-    if (!isPlayable(hole.x, hole.z)) {
-      issues.push({ severity: "error", message: `${hole.color} hole at (${hole.x}, ${hole.z}) is not on a playable cell.` });
-    }
     if (!Number.isInteger(hole.capacity) || hole.capacity < 1) {
       issues.push({
         severity: "error",
-        message: `${hole.color} hole at (${hole.x}, ${hole.z}) has an invalid capacity (${hole.capacity}); must be a whole number of 1 or more.`,
+        message: `A ${hole.color} hole has an invalid capacity (${hole.capacity}); must be a whole number of 1 or more.`,
       });
     }
-    addOccupant(hole.x, hole.z, `${hole.color} hole`);
+    for (const cell of hole.cells) {
+      if (!isPlayable(cell.x, cell.z)) {
+        issues.push({ severity: "error", message: `${hole.color} hole covers (${cell.x}, ${cell.z}), which is not a playable cell.` });
+      }
+      addOccupant(cell.x, cell.z, `${hole.color} hole`);
+    }
   }
+
   for (const [key, labels] of occupied) {
     if (labels.length > 1) {
       issues.push({ severity: "error", message: `Multiple placements on cell (${key}): ${labels.join(", ")}.` });

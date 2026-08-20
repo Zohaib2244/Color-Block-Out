@@ -67,38 +67,53 @@ playable mask, not the raw wall toggles, since that's what
 
 ### Level Editor
 
-Two ways to place holes, matching `CatLevelEditorWindow`:
+Everything is **direct manipulation** — pick a color from the swatch row
+(it drives both the cats and the holes you place next), then click the
+grid. There is no select-then-commit step except when drawing a hole
+outline, which genuinely needs the whole shape before it can become a hole.
 
-- **Holes (shape)** — select a connected run of cells; each cell's
-  `HoleType` (`Isolated`/`EndCap`/`Straight`/`Corner`/`OneSide`/`Middle`) is
-  derived purely from how many of its 4 neighbors are also selected, and
-  its `rotationQuarterTurns` is solved by rotating the hole type's default
+- **Cats** — click a cell to drop a cat, click it again to take it away;
+  drag to place or clear a run of them.
+- **Holes (shape)** — drag out the outline of a tunnel, then **Create
+  Hole**. Each cell's `HoleType`
+  (`Isolated`/`EndCap`/`Straight`/`Corner`/`OneSide`/`Middle`) is derived
+  purely from how many of its 4 neighbors are in the shape, and its
+  `rotationQuarterTurns` is solved by rotating the hole type's default
   openings (`DEFAULT_HOLE_OPENINGS` in `src/level/holeShape.ts`) until it
-  matches the actual open neighbors — the same algorithm as
+  matches — the same algorithm as
   `CatLevelEditorWindow.GetHoleType`/`GetRotation`.
-- **Holes (manual)** — place a single hole with an explicit type and
-  rotation.
-- **Holes (preset)** — pick a saved shape from the Hole Presets tab, click a
-  single anchor cell, choose a placement rotation (0/90/180/270), and Stamp
-  Preset places every cell of the shape relative to that anchor.
+- **Holes (single)** — click to cut a one-cell hole with an explicit type
+  and rotation; click it again to remove it.
+- **Holes (preset)** — click to stamp a saved shape from the Hole Presets
+  tab, using that cell as its anchor and the chosen placement rotation.
 
-Every hole also carries a **cat capacity** — how many cats it can swallow
-before it's full — set by the `Cat Capacity` field and applied to every
-hole placed by that action. It's drawn as the number inside the hole.
+Clicking any cell of a placed hole removes (or replaces) the **whole**
+hole, since a hole is one unit rather than a pile of cells.
+
+### A hole is one shape, not N cells
+
+A connected tunnel is **one** hole: `{ color, capacity, cells[] }`. Capacity
+belongs to the whole shape, so a 4-cell tunnel with capacity 5 holds five
+cats in total — it is not four separate holes of five. That's why the
+canvas draws one continuous outline around the entire shape with the
+capacity printed once, rather than one boxed number per cell.
+
+The outline is built by filling the union of the shape's cells in the rim
+color and then filling an inset copy of the same union in the void color;
+stroking would draw a line across every internal cell boundary and shatter
+one hole back into N tiles. Because each cell's region is inset slightly,
+two *separate* holes that happen to sit side by side still render with a
+visible seam between them, so adjacent holes stay distinguishable.
 
 Cats and holes are deliberately drawn as visual opposites so they can't be
 confused even when they share a color: a **cat** is a solid filled creature
 sitting on the floor (round head, pointed ears, two eyes), while a **hole**
-is a dark socket cut *into* the floor, ringed in its color, with a tunnel
-stub running to the cell edge for each open side — so a connected shape
-reads as one continuous tunnel and mis-solved rotations are obvious at a
-glance.
+is a dark recess cut *into* it, ringed in its color.
 
 Inline validation flags overlapping placements, placements off the playable
-area, invalid capacities, colors with no counterpart, and — now that
-capacity exists — any color whose total hole capacity is **less** than its
-cat count (an error: those cats could never be collected) or **more** than
-it (a warning: unused slots).
+area, invalid capacities, colors with no counterpart, and any color whose
+total hole capacity is **less** than its cat count (an error: those cats
+could never be collected) or **more** than it (a warning: unused slots).
 
 `DEFAULT_HOLE_OPENINGS` is a placeholder — the real per-prefab values live
 in your project's `CatHoleConfiguration` asset
@@ -123,11 +138,11 @@ project library — grids are reusable across many levels, same as
 `GridData` assets in Unity, and presets are reusable across all of them). A
 level can be exported to a standalone JSON file and re-imported later.
 
-### Level JSON schema (`formatVersion: 2`)
+### Level JSON schema (`formatVersion: 3`)
 
 ```ts
 interface LevelJson {
-  formatVersion: 2;
+  formatVersion: 3;
   levelName: string;
   grid: {
     id: string;
@@ -138,23 +153,36 @@ interface LevelJson {
     playableCells: boolean[];
   };
   cats: Array<{ color: BlockColor; x: number; z: number }>;
+  // ONE entry per hole — a connected shape, not a single cell
   holes: Array<{
+    id: string;
     color: BlockColor;
-    x: number;
-    z: number;
-    holeType: "Isolated" | "EndCap" | "Straight" | "Corner" | "OneSide" | "Middle";
-    rotationQuarterTurns: 0 | 1 | 2 | 3;
-    // how many cats this hole can swallow before it's full; >= 1
+    // how many cats this whole shape can swallow before it's full; >= 1
     capacity: number;
+    cells: Array<{
+      x: number;
+      z: number;
+      holeType: "Isolated" | "EndCap" | "Straight" | "Corner" | "OneSide" | "Middle";
+      rotationQuarterTurns: 0 | 1 | 2 | 3;
+    }>;
   }>;
 }
 ```
 
-**v2** added `capacity`. v1 files still import — their holes are migrated to
-`capacity: 1`, which is what the original one-cat-per-hole behaviour
-amounted to. `capacity` has no counterpart in the Unity code yet
-(`CatHole`/`CatPuzzleController` still collect exactly one cat per hole);
-it's authored here ahead of the Unity-side implementation.
+Format history:
+
+- **v1** — holes were a flat list of single cells.
+- **v2** — added `capacity` to each of those cells.
+- **v3** — a hole is one shape, because capacity belongs to the whole tunnel
+  rather than to each cell of it.
+
+v1/v2 files still import: their loose cells are regrouped into
+orthogonally-connected same-color shapes, and each shape takes the largest
+capacity found among its cells (1 for v1, which had no capacity at all).
+
+`capacity` has no counterpart in the Unity code yet — `CatHole` /
+`CatPuzzleController.ResolveHole` still collect exactly one cat per hole —
+so it's authored here ahead of the Unity-side implementation.
 
 `BlockColor` is one of `Red | Orange | Yellow | Blue | Cyan | Green |
 Purple | Pink | Teal`, matching `BlockColorTypes` in
@@ -166,8 +194,9 @@ There is no Unity-side importer yet — no editor script converts this JSON
 back into `GridData`/`CatLevelData` assets, and no runtime JSON loader
 exists in-game. The schema above was designed so that step is a mechanical
 field mapping later: `playableCells` inverts directly into
-`GridData.wallCells`, and `cats`/`holes` map 1:1 onto `CatPlacement`/
-`CatHolePlacement` — the one genuinely new piece being `capacity`, which
-needs a matching field on `CatHolePlacement`/`CatHole` and a change to
-`CatPuzzleController.ResolveHole` (which today collects a single cat and
-completes the hole).
+`GridData.wallCells`, `cats` map 1:1 onto `CatPlacement`, and each hole's
+`cells[]` map 1:1 onto `CatHolePlacement`. The genuinely new piece is
+`capacity`, which is per-*hole* rather than per-cell, so the Unity side
+needs some notion of a hole group (a shared id or a capacity counter on the
+shape) plus a change to `CatPuzzleController.ResolveHole`, which today
+collects a single cat and immediately completes the hole.

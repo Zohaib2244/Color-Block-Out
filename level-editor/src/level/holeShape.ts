@@ -10,9 +10,11 @@
  */
 import { DIRECTIONS, DIRECTION_OFFSET, cellKey } from "../types";
 import type {
+  BlockColor,
   Direction,
   GridCell,
   HoleOpeningsConfig,
+  HolePlacement,
   HoleShapePreset,
   HoleShapePresetCell,
   HoleType,
@@ -62,11 +64,6 @@ function rotateDirection(direction: Direction, quarterTurns: number): Direction 
   return DIRECTIONS[(index + quarterTurns) % 4];
 }
 
-/** Rotates a hole type's default openings by a given rotation, for rendering/inspection. */
-export function openingsForHole(holeType: HoleType, rotationQuarterTurns: RotationQuarterTurns): Direction[] {
-  return DEFAULT_HOLE_OPENINGS[holeType].map((d) => rotateDirection(d, rotationQuarterTurns));
-}
-
 /** Finds the 0-3 rotation of `defaultOpenings` that matches `actualOpenings`. */
 export function solveRotation(
   actualOpenings: Direction[],
@@ -93,6 +90,59 @@ export function classifyHoleShape(
     result.set(cellKey(cell.x, cell.z), { holeType, rotationQuarterTurns });
   }
   return result;
+}
+
+/** Builds one hole (a connected shape sharing a single capacity) from raw cells. */
+export function makeHole(id: string, color: BlockColor, capacity: number, cells: GridCell[]): HolePlacement {
+  const classified = classifyHoleShape(cells);
+  return {
+    id,
+    color,
+    capacity,
+    cells: cells.map((c) => {
+      const result = classified.get(cellKey(c.x, c.z))!;
+      return { x: c.x, z: c.z, holeType: result.holeType, rotationQuarterTurns: result.rotationQuarterTurns };
+    }),
+  };
+}
+
+/** cellKey -> the hole occupying it, for hit-testing a click against placed holes. */
+export function holeCellIndex(holes: HolePlacement[]): Map<string, HolePlacement> {
+  const index = new Map<string, HolePlacement>();
+  for (const hole of holes) {
+    for (const cell of hole.cells) index.set(cellKey(cell.x, cell.z), hole);
+  }
+  return index;
+}
+
+/**
+ * Splits loose cells into orthogonally-connected components. Used to migrate
+ * pre-v3 level files, where every cell was its own hole record, back into the
+ * shapes they were originally drawn as.
+ */
+export function connectedComponents(cells: GridCell[]): GridCell[][] {
+  const remaining = new Map(cells.map((c) => [cellKey(c.x, c.z), c]));
+  const components: GridCell[][] = [];
+  while (remaining.size > 0) {
+    const [firstKey, firstCell] = remaining.entries().next().value as [string, GridCell];
+    remaining.delete(firstKey);
+    const component: GridCell[] = [firstCell];
+    const queue: GridCell[] = [firstCell];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const dir of DIRECTIONS) {
+        const offset = DIRECTION_OFFSET[dir];
+        const key = cellKey(current.x + offset.x, current.z + offset.z);
+        const neighbor = remaining.get(key);
+        if (!neighbor) continue;
+        remaining.delete(key);
+        component.push(neighbor);
+        queue.push(neighbor);
+      }
+    }
+    components.push(component);
+  }
+  return components;
 }
 
 /** Normalizes a drawn shape into preset cells relative to its bounding-box min corner (0,0). */

@@ -5,17 +5,26 @@ import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
 import { listPresets } from "../level/holePresetLibrary";
-import { classifyHoleShape, openingsForHole, stampPreset } from "../level/holeShape";
+import { holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
 import { useTheme } from "../theme";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
-import type { BlockColor, GridCell, HoleShapePreset, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
+import type {
+  BlockColor,
+  GridCell,
+  HolePlacement,
+  HoleShapePreset,
+  HoleType,
+  RotationQuarterTurns,
+  SavedGrid,
+  SavedLevel,
+} from "../types";
 import { GridCanvas } from "./GridCanvas";
 import { PieceLegend } from "./Legend";
 import { ZoomControl, zoomedCellPx } from "./ZoomControl";
-import { drawCat, drawHole } from "./drawShapes";
+import { drawCat, drawHoleGroup } from "./drawShapes";
 
 type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset";
 
@@ -38,11 +47,12 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [capacity, setCapacity] = useState(1);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
-  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  /** Only used by shape mode, which needs the whole outline before it can become a hole. */
+  const [shapeCells, setShapeCells] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  /** Whether the current drag gesture is adding or removing from the selection. */
-  const selectModeRef = useRef(true);
+  /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
+  const dragActionRef = useRef<"add" | "remove">("add");
   const palette = getCanvasPalette(useTheme());
 
   useEffect(() => setGrids(listGrids()), [gridsVersion]);
@@ -58,13 +68,15 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     (cell: GridCell) => !!grid && !!playableMask[gridIndex(grid.width, cell.x, cell.z)],
     [grid, playableMask]
   );
-
-  const cellPx = useMemo(
-    () => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32),
-    [grid, zoom]
+  const holesByCell = useMemo(() => holeCellIndex(draft.holes), [draft.holes]);
+  const catsByCell = useMemo(
+    () => new Map(draft.cats.map((c) => [cellKey(c.x, c.z), c])),
+    [draft.cats]
   );
 
+  const cellPx = useMemo(() => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32), [grid, zoom]);
   const issues = useMemo(() => (grid ? validateLevel(draft, grid) : []), [draft, grid]);
+  const isShapeMode = mode === "holes-shape";
   const isHoleMode = mode !== "cats";
 
   function refreshLevels() {
@@ -74,124 +86,141 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
   function loadLevel(level: SavedLevel) {
     setDraft({ ...level, cats: [...level.cats], holes: [...level.holes] });
-    setSelectedCells(new Set());
+    setShapeCells(new Set());
   }
 
   function newLevel() {
     if (!grid) return;
     setDraft(makeBlankDraft(grid.id));
-    setSelectedCells(new Set());
+    setShapeCells(new Set());
   }
 
-  function beginSelection(cell: GridCell) {
-    if (mode === "holes-preset") {
-      // Presets stamp from a single anchor cell, so a click (or drag) just
-      // repositions that anchor rather than accumulating a selection.
-      setSelectedCells(new Set([cellKey(cell.x, cell.z)]));
-      return;
-    }
-    selectModeRef.current = !selectedCells.has(cellKey(cell.x, cell.z));
-    applySelection(cell);
+  /** Clears anything already sitting on these cells, so a placement never stacks. */
+  function clearCells(level: SavedLevel, keys: Set<string>): SavedLevel {
+    return {
+      ...level,
+      cats: level.cats.filter((c) => !keys.has(cellKey(c.x, c.z))),
+      // a hole is one unit: if a placement lands on any of its cells, the whole hole goes
+      holes: level.holes.filter((h) => !h.cells.some((c) => keys.has(cellKey(c.x, c.z)))),
+    };
   }
 
-  function applySelection(cell: GridCell) {
-    if (mode === "holes-preset") {
-      setSelectedCells(new Set([cellKey(cell.x, cell.z)]));
-      return;
-    }
-    setSelectedCells((prev) => {
+  // ── direct manipulation: click places, click again removes ──────
+
+  function placeCat(cell: GridCell) {
+    setDraft((prev) => {
       const key = cellKey(cell.x, cell.z);
-      if (prev.has(key) === selectModeRef.current) return prev;
+      if (prev.cats.some((c) => cellKey(c.x, c.z) === key)) return prev;
+      // don't let a cat land on top of an existing hole
+      if (prev.holes.some((h) => h.cells.some((c) => cellKey(c.x, c.z) === key))) return prev;
+      return { ...prev, cats: [...prev.cats, { color: selectedColor, x: cell.x, z: cell.z }] };
+    });
+  }
+
+  function removeCat(cell: GridCell) {
+    const key = cellKey(cell.x, cell.z);
+    setDraft((prev) => ({ ...prev, cats: prev.cats.filter((c) => cellKey(c.x, c.z) !== key) }));
+  }
+
+  function placeSingleHole(cell: GridCell) {
+    setDraft((prev) => {
+      const keys = new Set([cellKey(cell.x, cell.z)]);
+      const cleared = clearCells(prev, keys);
+      const hole: HolePlacement = {
+        id: newId(),
+        color: selectedColor,
+        capacity,
+        cells: [{ x: cell.x, z: cell.z, holeType: selectedHoleType, rotationQuarterTurns: manualRotation }],
+      };
+      return { ...cleared, holes: [...cleared.holes, hole] };
+    });
+  }
+
+  function removeHoleAt(cell: GridCell) {
+    const key = cellKey(cell.x, cell.z);
+    setDraft((prev) => ({
+      ...prev,
+      holes: prev.holes.filter((h) => !h.cells.some((c) => cellKey(c.x, c.z) === key)),
+    }));
+  }
+
+  function stampPresetAt(cell: GridCell) {
+    if (!selectedPreset) return;
+    const stamped = stampPreset(selectedPreset, cell, presetRotation);
+    setDraft((prev) => {
+      const keys = new Set(stamped.map((c) => cellKey(c.x, c.z)));
+      const cleared = clearCells(prev, keys);
+      const hole: HolePlacement = {
+        id: newId(),
+        color: selectedColor,
+        capacity,
+        cells: stamped.map((c) => ({
+          x: c.x,
+          z: c.z,
+          holeType: c.holeType,
+          rotationQuarterTurns: c.rotationQuarterTurns,
+        })),
+      };
+      return { ...cleared, holes: [...cleared.holes, hole] };
+    });
+  }
+
+  function handlePaintStart(cell: GridCell) {
+    const key = cellKey(cell.x, cell.z);
+    if (mode === "cats") {
+      dragActionRef.current = catsByCell.has(key) ? "remove" : "add";
+      if (dragActionRef.current === "remove") removeCat(cell);
+      else placeCat(cell);
+      return;
+    }
+    if (mode === "holes-manual") {
+      if (holesByCell.has(key)) removeHoleAt(cell);
+      else placeSingleHole(cell);
+      return;
+    }
+    if (mode === "holes-preset") {
+      if (holesByCell.has(key)) removeHoleAt(cell);
+      else stampPresetAt(cell);
+      return;
+    }
+    // shape mode: accumulate an outline first
+    dragActionRef.current = shapeCells.has(key) ? "remove" : "add";
+    applyShapeSelection(cell);
+  }
+
+  function handlePaintDrag(cell: GridCell) {
+    if (mode === "cats") {
+      if (dragActionRef.current === "add") placeCat(cell);
+      else removeCat(cell);
+      return;
+    }
+    if (isShapeMode) applyShapeSelection(cell);
+    // manual/preset holes are single deliberate placements — no drag repeat
+  }
+
+  function applyShapeSelection(cell: GridCell) {
+    setShapeCells((prev) => {
+      const key = cellKey(cell.x, cell.z);
+      const shouldHave = dragActionRef.current === "add";
+      if (prev.has(key) === shouldHave) return prev;
       const next = new Set(prev);
-      if (selectModeRef.current) next.add(key);
+      if (shouldHave) next.add(key);
       else next.delete(key);
       return next;
     });
   }
 
-  function selectedCellList(): GridCell[] {
-    return [...selectedCells].map((key) => {
+  function commitShape() {
+    const cells: GridCell[] = [...shapeCells].map((key) => {
       const [x, z] = key.split(",").map(Number);
       return { x, z };
     });
-  }
-
-  function handlePlace() {
-    const cells = selectedCellList();
     if (cells.length === 0) return;
-
-    if (mode === "holes-preset") {
-      if (!selectedPreset) return;
-      const stamped = stampPreset(selectedPreset, cells[0], presetRotation);
-      const cellKeys = new Set(stamped.map((c) => cellKey(c.x, c.z)));
-      setDraft((prev) => ({
-        ...prev,
-        cats: prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z))),
-        holes: [
-          ...prev.holes.filter((h) => !cellKeys.has(cellKey(h.x, h.z))),
-          ...stamped.map((c) => ({
-            color: selectedColor,
-            x: c.x,
-            z: c.z,
-            holeType: c.holeType,
-            rotationQuarterTurns: c.rotationQuarterTurns,
-            capacity,
-          })),
-        ],
-      }));
-      setSelectedCells(new Set());
-      return;
-    }
-
     setDraft((prev) => {
-      const cellKeys = new Set(cells.map((c) => cellKey(c.x, c.z)));
-      let cats = prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z)));
-      let holes = prev.holes.filter((h) => !cellKeys.has(cellKey(h.x, h.z)));
-
-      if (mode === "cats") {
-        cats = [...cats, ...cells.map((c) => ({ color: selectedColor, x: c.x, z: c.z }))];
-      } else if (mode === "holes-shape") {
-        const classified = classifyHoleShape(cells);
-        holes = [
-          ...holes,
-          ...cells.map((c) => {
-            const result = classified.get(cellKey(c.x, c.z))!;
-            return {
-              color: selectedColor,
-              x: c.x,
-              z: c.z,
-              holeType: result.holeType,
-              rotationQuarterTurns: result.rotationQuarterTurns,
-              capacity,
-            };
-          }),
-        ];
-      } else {
-        holes = [
-          ...holes,
-          ...cells.map((c) => ({
-            color: selectedColor,
-            x: c.x,
-            z: c.z,
-            holeType: selectedHoleType,
-            rotationQuarterTurns: manualRotation,
-            capacity,
-          })),
-        ];
-      }
-      return { ...prev, cats, holes };
+      const cleared = clearCells(prev, shapeCells);
+      return { ...cleared, holes: [...cleared.holes, makeHole(newId(), selectedColor, capacity, cells)] };
     });
-    setSelectedCells(new Set());
-  }
-
-  function handleRemoveSelected() {
-    const cellKeys = new Set(selectedCellList().map((c) => cellKey(c.x, c.z)));
-    setDraft((prev) => ({
-      ...prev,
-      cats: prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z))),
-      holes: prev.holes.filter((h) => !cellKeys.has(cellKey(h.x, h.z))),
-    }));
-    setSelectedCells(new Set());
+    setShapeCells(new Set());
   }
 
   function handleSaveLevel() {
@@ -217,15 +246,17 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     const text = await file.text();
     const json = parseLevelJson(text);
     const { grid: gridDraft, level: levelDraft } = fromLevelJson(json);
-    const newGrid: SavedGrid = { ...gridDraft, id: newId(), updatedAt: Date.now() };
-    saveGrid(newGrid);
-    const newLevelEntry: SavedLevel = { ...levelDraft, id: newId(), gridId: newGrid.id, updatedAt: Date.now() };
-    saveLevel(newLevelEntry);
+    const importedGrid: SavedGrid = { ...gridDraft, id: newId(), updatedAt: Date.now() };
+    saveGrid(importedGrid);
+    const importedLevel: SavedLevel = { ...levelDraft, id: newId(), gridId: importedGrid.id, updatedAt: Date.now() };
+    saveLevel(importedLevel);
     setGrids(listGrids());
     onGridsChanged?.();
     refreshLevels();
-    loadLevel(newLevelEntry);
+    loadLevel(importedLevel);
   }
+
+  const totalCapacity = draft.holes.reduce((sum, h) => sum + h.capacity, 0);
 
   return (
     <div className="screen">
@@ -308,24 +339,35 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   Holes (shape)
                 </button>
                 <button className={mode === "holes-manual" ? "active" : ""} onClick={() => setMode("holes-manual")}>
-                  Holes (manual)
+                  Holes (single)
                 </button>
                 <button className={mode === "holes-preset" ? "active" : ""} onClick={() => setMode("holes-preset")}>
                   Holes (preset)
                 </button>
               </div>
-              <label>
-                Color
-                <select value={selectedColor} onChange={(e) => setSelectedColor(e.target.value as BlockColor)}>
+              <ZoomControl value={zoom} onChange={setZoom} />
+            </div>
+
+            <div className="field-row">
+              <label className="color-field">
+                Color — cats &amp; holes
+                <div className="color-picker">
                   {BLOCK_COLORS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+                    <button
+                      key={c}
+                      type="button"
+                      title={c}
+                      aria-label={c}
+                      aria-pressed={selectedColor === c}
+                      className={selectedColor === c ? "color-chip active" : "color-chip"}
+                      style={{ background: BLOCK_COLOR_HEX[c] }}
+                      onClick={() => setSelectedColor(c)}
+                    />
                   ))}
-                </select>
+                </div>
               </label>
               {isHoleMode && (
-                <label title="How many cats each placed hole can swallow before it's full">
+                <label title="How many cats this hole can swallow before it's full">
                   Cat Capacity
                   <input
                     type="number"
@@ -387,35 +429,27 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   </label>
                 </>
               )}
-              <ZoomControl value={zoom} onChange={setZoom} />
             </div>
 
-            <div className="field-row">
-              <button onClick={() => setSelectedCells(new Set())} disabled={selectedCells.size === 0}>
-                Clear Selection ({selectedCells.size})
-              </button>
-              <button
-                className="primary"
-                onClick={handlePlace}
-                disabled={selectedCells.size === 0 || (mode === "holes-preset" && !selectedPreset)}
-              >
-                {mode === "cats"
-                  ? "Place Cats"
-                  : mode === "holes-shape"
-                    ? "Create Hole Shape"
-                    : mode === "holes-preset"
-                      ? "Stamp Preset"
-                      : "Place Hole"}
-              </button>
-              <button onClick={handleRemoveSelected} disabled={selectedCells.size === 0}>
-                Remove Selected
-              </button>
-            </div>
+            {isShapeMode && (
+              <div className="field-row">
+                <button onClick={() => setShapeCells(new Set())} disabled={shapeCells.size === 0}>
+                  Clear Outline ({shapeCells.size})
+                </button>
+                <button className="primary" onClick={commitShape} disabled={shapeCells.size === 0}>
+                  Create Hole
+                </button>
+              </div>
+            )}
 
             <p className="hint">
-              {mode === "holes-preset"
-                ? "Click (or drag) to position a single anchor cell, then Stamp Preset — the saved shape is placed relative to that anchor, rotated by the amount above, and every cell gets the capacity set here."
-                : "Click or drag across playable cells to select them, then Place. In shape mode each cell's hole type and rotation is solved automatically from its neighbors, exactly like CatLevelEditorWindow."}
+              {mode === "cats"
+                ? "Click a cell to drop a cat in the selected color; click it again to take it away. Drag to place or clear a run of them."
+                : mode === "holes-manual"
+                  ? "Click a cell to cut a one-cell hole with the capacity above; click it again to remove it."
+                  : mode === "holes-preset"
+                    ? "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole."
+                    : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
             </p>
 
             <div className="canvas-row">
@@ -425,33 +459,31 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   length={grid.length}
                   cellPx={cellPx}
                   isInteractive={isPlayable}
-                  onPaintStart={beginSelection}
-                  onPaintDrag={applySelection}
+                  onPaintStart={handlePaintStart}
+                  onPaintDrag={handlePaintDrag}
                   renderCell={(ctx, cell, rect) => {
                     const playable = isPlayable(cell);
                     ctx.fillStyle = playable ? palette.floor : palette.inert;
                     ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-                    if (!playable) return;
-
-                    if (selectedCells.has(cellKey(cell.x, cell.z))) {
+                    if (playable && isShapeMode && shapeCells.has(cellKey(cell.x, cell.z))) {
                       ctx.fillStyle = palette.selectedTint;
                       ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
                     }
-
-                    const hole = draft.holes.find((h) => h.x === cell.x && h.z === cell.z);
-                    if (hole) {
-                      drawHole(
+                  }}
+                  renderOverlay={(ctx, cellRect) => {
+                    // holes first: each is drawn as ONE shape across all its cells
+                    for (const hole of draft.holes) {
+                      drawHoleGroup(
                         ctx,
-                        rect,
+                        hole.cells,
+                        cellRect,
                         BLOCK_COLOR_HEX[hole.color],
-                        openingsForHole(hole.holeType, hole.rotationQuarterTurns),
                         palette.holeVoid,
                         hole.capacity
                       );
                     }
-                    const cat = draft.cats.find((c) => c.x === cell.x && c.z === cell.z);
-                    if (cat) {
-                      drawCat(ctx, rect, BLOCK_COLOR_HEX[cat.color], palette.holeVoid);
+                    for (const cat of draft.cats) {
+                      drawCat(ctx, cellRect(cat.x, cat.z), BLOCK_COLOR_HEX[cat.color], palette.holeVoid);
                     }
                   }}
                 />
@@ -464,7 +496,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   <span className="muted"> cats · </span>
                   <span className="stat-value">{draft.holes.length}</span>
                   <span className="muted"> holes · </span>
-                  <span className="stat-value">{draft.holes.reduce((sum, h) => sum + h.capacity, 0)}</span>
+                  <span className="stat-value">{totalCapacity}</span>
                   <span className="muted"> capacity</span>
                 </p>
                 {issues.length > 0 && (

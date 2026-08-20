@@ -1,13 +1,21 @@
 import { computePlayableMask } from "../grid/floodFill";
-import type { BlockColor, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
+import { connectedComponents, makeHole } from "../level/holeShape";
+import { newId } from "../storage";
+import type { BlockColor, GridCell, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
 
 /**
- * v2 added `capacity` to each hole (how many cats it can swallow). v1 files
- * still import — their holes are migrated to capacity 1, which is what the
- * original one-cat-per-hole behaviour amounted to.
+ * Format history:
+ *  - v1: holes were a flat list of single cells.
+ *  - v2: added `capacity` to each of those cells.
+ *  - v3: a hole is one shape — `{ color, capacity, cells[] }` — because
+ *    capacity belongs to the whole tunnel, not to each cell of it.
+ *
+ * v1/v2 files still import: their loose cells are regrouped into
+ * orthogonally-connected same-color shapes, and each shape takes the largest
+ * capacity found among its cells (1 for v1, which had no capacity at all).
  */
-export const LEVEL_JSON_FORMAT_VERSION = 2 as const;
-const SUPPORTED_FORMAT_VERSIONS = [1, 2];
+export const LEVEL_JSON_FORMAT_VERSION = 3 as const;
+const SUPPORTED_FORMAT_VERSIONS = [1, 2, 3];
 
 export const DEFAULT_HOLE_CAPACITY = 1;
 
@@ -26,14 +34,26 @@ export interface LevelJsonCat {
   z: number;
 }
 
-export interface LevelJsonHole {
-  color: BlockColor;
+export interface LevelJsonHoleCell {
   x: number;
   z: number;
   holeType: HoleType;
   rotationQuarterTurns: RotationQuarterTurns;
-  /** How many cats this hole can swallow before it's full. Minimum 1. */
+}
+
+/** ONE hole: a connected shape of cells sharing a single color and capacity. */
+export interface LevelJsonHole {
+  id: string;
+  color: BlockColor;
+  /** How many cats this whole shape can swallow before it's full. Minimum 1. */
   capacity: number;
+  cells: LevelJsonHoleCell[];
+}
+
+/** The pre-v3 shape of a hole entry: one loose cell, optionally with a capacity. */
+interface LegacyFlatHole extends LevelJsonHoleCell {
+  color: BlockColor;
+  capacity?: number;
 }
 
 export interface LevelJson {
@@ -57,12 +77,15 @@ export function toLevelJson(level: SavedLevel, grid: SavedGrid): LevelJson {
     },
     cats: level.cats.map((c) => ({ color: c.color, x: c.x, z: c.z })),
     holes: level.holes.map((h) => ({
+      id: h.id,
       color: h.color,
-      x: h.x,
-      z: h.z,
-      holeType: h.holeType,
-      rotationQuarterTurns: h.rotationQuarterTurns,
       capacity: normalizeCapacity(h.capacity),
+      cells: h.cells.map((c) => ({
+        x: c.x,
+        z: c.z,
+        holeType: c.holeType,
+        rotationQuarterTurns: c.rotationQuarterTurns,
+      })),
     })),
   };
 }
@@ -83,18 +106,49 @@ export function downloadLevelJson(json: LevelJson): void {
 }
 
 export function parseLevelJson(raw: string): LevelJson {
-  const parsed = JSON.parse(raw) as Partial<LevelJson> & { holes?: Partial<LevelJsonHole>[] };
+  const parsed = JSON.parse(raw) as Partial<LevelJson> & { holes?: unknown[] };
   if (typeof parsed.formatVersion !== "number" || !SUPPORTED_FORMAT_VERSIONS.includes(parsed.formatVersion)) {
     throw new Error(`Unsupported level JSON formatVersion: ${String(parsed.formatVersion)}`);
   }
   if (!parsed.grid || !Array.isArray(parsed.cats) || !Array.isArray(parsed.holes)) {
     throw new Error("Level JSON is missing grid/cats/holes.");
   }
-  return {
-    ...(parsed as LevelJson),
-    formatVersion: LEVEL_JSON_FORMAT_VERSION,
-    holes: parsed.holes.map((h) => ({ ...(h as LevelJsonHole), capacity: normalizeCapacity(h.capacity) })),
-  };
+
+  const holes =
+    parsed.formatVersion >= 3
+      ? (parsed.holes as LevelJsonHole[]).map((h) => ({
+          id: h.id || newId(),
+          color: h.color,
+          capacity: normalizeCapacity(h.capacity),
+          cells: h.cells ?? [],
+        }))
+      : regroupLegacyHoles(parsed.holes as LegacyFlatHole[]);
+
+  return { ...(parsed as LevelJson), formatVersion: LEVEL_JSON_FORMAT_VERSION, holes };
+}
+
+/**
+ * Rebuilds pre-v3 loose hole cells into the shapes they were drawn as:
+ * connected components, split by color so two different-colored tunnels that
+ * happen to touch don't fuse into one hole.
+ */
+function regroupLegacyHoles(flat: LegacyFlatHole[]): LevelJsonHole[] {
+  const byColor = new Map<BlockColor, LegacyFlatHole[]>();
+  for (const cell of flat) {
+    const list = byColor.get(cell.color) ?? [];
+    list.push(cell);
+    byColor.set(cell.color, list);
+  }
+
+  const holes: LevelJsonHole[] = [];
+  for (const [color, cells] of byColor) {
+    const capacityAt = new Map(cells.map((c) => [`${c.x},${c.z}`, normalizeCapacity(c.capacity)]));
+    for (const component of connectedComponents(cells as GridCell[])) {
+      const capacity = Math.max(...component.map((c) => capacityAt.get(`${c.x},${c.z}`) ?? DEFAULT_HOLE_CAPACITY));
+      holes.push(makeHole(newId(), color, capacity, component));
+    }
+  }
+  return holes;
 }
 
 /**
@@ -122,12 +176,15 @@ export function fromLevelJson(json: LevelJson): {
       name: json.levelName,
       cats: json.cats.map((c) => ({ color: c.color, x: c.x, z: c.z })),
       holes: json.holes.map((h) => ({
+        id: h.id || newId(),
         color: h.color,
-        x: h.x,
-        z: h.z,
-        holeType: h.holeType,
-        rotationQuarterTurns: h.rotationQuarterTurns,
         capacity: normalizeCapacity(h.capacity),
+        cells: h.cells.map((c) => ({
+          x: c.x,
+          z: c.z,
+          holeType: c.holeType,
+          rotationQuarterTurns: c.rotationQuarterTurns,
+        })),
       })),
     },
   };
