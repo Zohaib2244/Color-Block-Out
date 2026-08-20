@@ -17,6 +17,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     private bool placingCats = true;
     private bool drawingHole = false;
     private CatHoleType selectedHoleType = CatHoleType.Isolated;
+    private int selectedCapacity = 1;
     private readonly HashSet<Vector2Int> selectedCells = new HashSet<Vector2Int>();
     private Vector2 scroll;
     private float cellSize = 28f;
@@ -48,7 +49,11 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
         placingCats = GUILayout.Toolbar(placingCats ? 0 : 1, new[] { "Cats", "Holes" }) == 0;
         selectedColor = (BlockColorTypes)EditorGUILayout.EnumPopup("Color", selectedColor);
-        if (!placingCats) selectedHoleType = (CatHoleType)EditorGUILayout.EnumPopup("Hole shape", selectedHoleType);
+        if (!placingCats)
+        {
+            selectedHoleType = (CatHoleType)EditorGUILayout.EnumPopup("Hole shape", selectedHoleType);
+            selectedCapacity = Mathf.Max(1, EditorGUILayout.IntField("Cat capacity", selectedCapacity));
+        }
         drawingHole = !placingCats && GUILayout.Toggle(drawingHole, "Draw connected hole shape");
         cellSize = EditorGUILayout.Slider("Cell Size", cellSize, 16f, 48f);
 
@@ -61,7 +66,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         DrawGrid();
-        EditorGUILayout.HelpBox("Select cells in X/Z coordinates. Hole shapes are built from connected selected cells and choose Corner/End Cap/Isolated/Middle/One Side/Straight automatically.", MessageType.None);
+        EditorGUILayout.HelpBox("Select cells in X/Z coordinates. Hole shapes are built from connected selected cells and choose Corner/End Cap/Isolated/Middle/One Side/Straight automatically. Cat capacity applies to the whole shape placed by one Place Hole/Create Hole Shape click, not to each cell -- its cells move independently at runtime but share one pool of cats they can collect.", MessageType.None);
     }
 
     private GridManager EnsureGridInScene()
@@ -124,17 +129,35 @@ public sealed class CatLevelEditorWindow : EditorWindow
         }
         else if (drawingHole)
         {
+            // Every cell drawn in this one gesture is the same hole: they split
+            // one capacity pool, so they share a single group id.
             HashSet<Vector2Int> shape = new HashSet<Vector2Int>(selectedCells);
+            string groupId = System.Guid.NewGuid().ToString("N");
             foreach (Vector2Int cell in shape)
             {
                 CatHoleType type = GetHoleType(cell, shape);
-                levelAsset.holes.Add(new CatHolePlacement { color = selectedColor, gridPosition = cell, holeType = type, rotationQuarterTurns = GetRotation(cell, shape, type) });
+                levelAsset.holes.Add(new CatHolePlacement
+                {
+                    color = selectedColor,
+                    gridPosition = cell,
+                    holeType = type,
+                    rotationQuarterTurns = GetRotation(cell, shape, type),
+                    holeGroupId = groupId,
+                    capacity = selectedCapacity,
+                });
             }
         }
         else
         {
             Vector2Int cell = selectedCells.First();
-            levelAsset.holes.Add(new CatHolePlacement { color = selectedColor, gridPosition = cell, holeType = selectedHoleType });
+            levelAsset.holes.Add(new CatHolePlacement
+            {
+                color = selectedColor,
+                gridPosition = cell,
+                holeType = selectedHoleType,
+                holeGroupId = System.Guid.NewGuid().ToString("N"),
+                capacity = selectedCapacity,
+            });
         }
         SaveLevelAsset(); selectedCells.Clear();
     }
