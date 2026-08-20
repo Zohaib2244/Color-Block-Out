@@ -1,6 +1,6 @@
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { cellKey } from "../types";
-import type { SavedGrid, SavedLevel } from "../types";
+import type { BlockColor, SavedGrid, SavedLevel } from "../types";
 
 export interface ValidationIssue {
   severity: "error" | "warning";
@@ -31,6 +31,12 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
     if (!isPlayable(hole.x, hole.z)) {
       issues.push({ severity: "error", message: `${hole.color} hole at (${hole.x}, ${hole.z}) is not on a playable cell.` });
     }
+    if (!Number.isInteger(hole.capacity) || hole.capacity < 1) {
+      issues.push({
+        severity: "error",
+        message: `${hole.color} hole at (${hole.x}, ${hole.z}) has an invalid capacity (${hole.capacity}); must be a whole number of 1 or more.`,
+      });
+    }
     addOccupant(hole.x, hole.z, `${hole.color} hole`);
   }
   for (const [key, labels] of occupied) {
@@ -39,15 +45,34 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
     }
   }
 
-  const catColors = new Set(level.cats.map((c) => c.color));
-  const holeColors = new Set(level.holes.map((h) => h.color));
-  for (const color of catColors) {
-    if (!holeColors.has(color)) {
-      issues.push({ severity: "warning", message: `No hole of color ${color} exists for its cats.` });
+  const catCounts = new Map<BlockColor, number>();
+  for (const cat of level.cats) catCounts.set(cat.color, (catCounts.get(cat.color) ?? 0) + 1);
+
+  const holeCapacity = new Map<BlockColor, number>();
+  for (const hole of level.holes) {
+    const capacity = Number.isInteger(hole.capacity) && hole.capacity >= 1 ? hole.capacity : 0;
+    holeCapacity.set(hole.color, (holeCapacity.get(hole.color) ?? 0) + capacity);
+  }
+
+  for (const [color, cats] of catCounts) {
+    const capacity = holeCapacity.get(color) ?? 0;
+    if (capacity === 0) {
+      issues.push({ severity: "warning", message: `No hole of color ${color} exists for its ${cats} cat(s).` });
+    } else if (capacity < cats) {
+      issues.push({
+        severity: "error",
+        message: `${color}: ${cats} cats but only ${capacity} hole capacity — ${cats - capacity} cat(s) could never be collected.`,
+      });
+    } else if (capacity > cats) {
+      issues.push({
+        severity: "warning",
+        message: `${color}: ${capacity} hole capacity for only ${cats} cat(s) — ${capacity - cats} slot(s) go unused.`,
+      });
     }
   }
-  for (const color of holeColors) {
-    if (!catColors.has(color)) {
+
+  for (const color of holeCapacity.keys()) {
+    if (!catCounts.has(color)) {
       issues.push({ severity: "warning", message: `No cat of color ${color} exists for its hole(s).` });
     }
   }

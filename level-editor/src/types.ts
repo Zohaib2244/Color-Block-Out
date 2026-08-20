@@ -71,6 +71,8 @@ export interface HolePlacement {
   z: number;
   holeType: HoleType;
   rotationQuarterTurns: RotationQuarterTurns;
+  /** How many cats this hole can swallow before it's full. Minimum 1. */
+  capacity: number;
 }
 
 export interface SavedLevel {

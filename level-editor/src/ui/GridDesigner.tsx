@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { getCanvasPalette } from "../canvasPalette";
 import { computePlayableMask, gridIndex, makeFlatGrid } from "../grid/floodFill";
 import { deleteGrid, listGrids, saveGrid } from "../grid/gridLibrary";
@@ -6,8 +6,8 @@ import { newId } from "../storage";
 import { useTheme } from "../theme";
 import type { SavedGrid } from "../types";
 import { GridCanvas } from "./GridCanvas";
-
-const MAX_CANVAS_DIMENSION_PX = 640;
+import { SwatchLegend } from "./Legend";
+import { ZoomControl, zoomedCellPx } from "./ZoomControl";
 
 interface GridDesignerProps {
   onGridsChanged?: () => void;
@@ -16,7 +16,10 @@ interface GridDesignerProps {
 export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
   const [grids, setGrids] = useState<SavedGrid[]>(() => listGrids());
   const [draft, setDraft] = useState<SavedGrid>(() => makeBlankDraft());
+  const [zoom, setZoom] = useState(1);
   const palette = getCanvasPalette(useTheme());
+  /** Value the current drag gesture is painting, so dragging never flip-flops cells. */
+  const paintValueRef = useRef(true);
 
   const refreshGrids = useCallback(() => {
     setGrids(listGrids());
@@ -28,10 +31,7 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
     [draft.width, draft.length, draft.wallToggles]
   );
 
-  const cellPx = useMemo(() => {
-    const largestDimension = Math.max(draft.width, draft.length);
-    return Math.max(12, Math.min(32, Math.floor(MAX_CANVAS_DIMENSION_PX / largestDimension)));
-  }, [draft.width, draft.length]);
+  const cellPx = useMemo(() => zoomedCellPx(draft.width, draft.length, zoom), [draft.width, draft.length, zoom]);
 
   function loadGrid(grid: SavedGrid) {
     setDraft({ ...grid, wallToggles: [...grid.wallToggles] });
@@ -72,11 +72,12 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
     });
   }
 
-  function toggleCell(x: number, z: number) {
+  function paintCell(x: number, z: number, value: boolean) {
     setDraft((prev) => {
-      const next = [...prev.wallToggles];
       const idx = gridIndex(prev.width, x, z);
-      next[idx] = !next[idx];
+      if (prev.wallToggles[idx] === value) return prev;
+      const next = [...prev.wallToggles];
+      next[idx] = value;
       return { ...prev, wallToggles: next };
     });
   }
@@ -150,6 +151,7 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
               onChange={(e) => setDraft((prev) => ({ ...prev, cellSize: Number(e.target.value) }))}
             />
           </label>
+          <ZoomControl value={zoom} onChange={setZoom} />
         </div>
 
         <div className="field-row">
@@ -162,25 +164,45 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
         </div>
 
         <p className="hint">
-          Click cells to toggle walls. Green = will be playable (enclosed). Warm red = not a wall, but open to the
-          outside, so it will NOT be generated as a playable cell — exactly like GridCreatorTool's flood fill.
-          Playable cells: {playableCount} / {draft.width * draft.length}.
+          Click or <strong>drag</strong> across cells to paint walls — the whole stroke follows whatever the first
+          cell became, so you can sweep a wall in one motion. A cell is only playable if it's sealed off from the
+          grid border, exactly like GridCreatorTool's flood fill.
         </p>
 
-        <div className="canvas-wrap">
-          <GridCanvas
-            width={draft.width}
-            length={draft.length}
-            cellPx={cellPx}
-            onCellClick={({ x, z }) => toggleCell(x, z)}
-            renderCell={(ctx, cell, rect) => {
-              const idx = gridIndex(draft.width, cell.x, cell.z);
-              const isWall = draft.wallToggles[idx];
-              const isPlayable = playableMask[idx];
-              ctx.fillStyle = isWall ? palette.wall : isPlayable ? palette.playable : palette.exterior;
-              ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-            }}
-          />
+        <div className="canvas-row">
+          <div className="canvas-wrap">
+            <GridCanvas
+              width={draft.width}
+              length={draft.length}
+              cellPx={cellPx}
+              onPaintStart={({ x, z }) => {
+                paintValueRef.current = !draft.wallToggles[gridIndex(draft.width, x, z)];
+                paintCell(x, z, paintValueRef.current);
+              }}
+              onPaintDrag={({ x, z }) => paintCell(x, z, paintValueRef.current)}
+              renderCell={(ctx, cell, rect) => {
+                const idx = gridIndex(draft.width, cell.x, cell.z);
+                const isWall = draft.wallToggles[idx];
+                const isPlayable = playableMask[idx];
+                ctx.fillStyle = isWall ? palette.wall : isPlayable ? palette.playable : palette.exterior;
+                ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+              }}
+            />
+          </div>
+
+          <div className="canvas-side">
+            <SwatchLegend
+              items={[
+                { color: palette.playable, label: "Playable — sealed from the outside" },
+                { color: palette.wall, label: "Wall — you painted it" },
+                { color: palette.exterior, label: "Open to the outside — dropped" },
+              ]}
+            />
+            <p className="stat-line">
+              <span className="stat-value">{playableCount}</span>
+              <span className="muted"> / {draft.width * draft.length} playable</span>
+            </p>
+          </div>
         </div>
       </main>
     </div>

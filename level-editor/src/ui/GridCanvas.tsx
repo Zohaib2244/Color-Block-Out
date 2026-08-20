@@ -3,18 +3,22 @@ import { getCanvasPalette } from "../canvasPalette";
 import { useTheme } from "../theme";
 import type { GridCell } from "../types";
 
-const LABEL_MARGIN = 22;
+const LABEL_MARGIN = 24;
+/** Every Nth line is drawn heavier, so counting cells on a big grid isn't a chore. */
+const MAJOR_EVERY = 5;
 
 export interface GridCanvasProps {
   width: number;
   length: number;
   cellPx?: number;
   showLabels?: boolean;
-  /** Called on click of a cell; omit to make the canvas display-only. */
-  onCellClick?: (cell: GridCell) => void;
-  /** Draw a single cell's fill/content. Border + hover overlay are handled by GridCanvas itself. */
-  renderCell: (ctx: CanvasRenderingContext2D, cell: GridCell, rect: DOMRect | { x: number; y: number; width: number; height: number }) => void;
-  /** Cells the pointer may interact with; others still render but ignore clicks/hover. Defaults to all cells. */
+  /** Start of a paint gesture (pointer down on a cell). */
+  onPaintStart?: (cell: GridCell) => void;
+  /** Each new cell the pointer enters while the button is held. */
+  onPaintDrag?: (cell: GridCell) => void;
+  /** Draw a single cell's fill/content. Gridlines, crosshair and hover are drawn by GridCanvas. */
+  renderCell: (ctx: CanvasRenderingContext2D, cell: GridCell, rect: { x: number; y: number; width: number; height: number }) => void;
+  /** Cells the pointer may interact with; others still render but ignore paint/hover. Defaults to all cells. */
   isInteractive?: (cell: GridCell) => boolean;
 }
 
@@ -23,31 +27,55 @@ export interface GridCanvasProps {
  * GridCreatorTool/CatLevelEditorWindow's editor GUIs: row 0 on screen is the
  * highest Z value, and Z increases going up (toward the viewer's "north").
  */
-export function GridCanvas({ width, length, cellPx = 32, showLabels = true, onCellClick, renderCell, isInteractive }: GridCanvasProps) {
+export function GridCanvas({
+  width,
+  length,
+  cellPx = 32,
+  showLabels = true,
+  onPaintStart,
+  onPaintDrag,
+  renderCell,
+  isInteractive,
+}: GridCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState<GridCell | null>(null);
+  const paintingRef = useRef(false);
+  const lastPaintedRef = useRef<string | null>(null);
   const theme = useTheme();
   const palette = getCanvasPalette(theme);
   const margin = showLabels ? LABEL_MARGIN : 0;
   const canvasWidth = width * cellPx + margin;
   const canvasHeight = length * cellPx + margin;
+  const interactive = !!onPaintStart;
 
   const cellFromEvent = useCallback(
     (evt: { clientX: number; clientY: number }): GridCell | null => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
-      const rect = canvas.getBoundingClientRect();
-      const px = evt.clientX - rect.left - margin;
-      const py = evt.clientY - rect.top - margin;
+      const bounds = canvas.getBoundingClientRect();
+      const px = evt.clientX - bounds.left - margin;
+      const py = evt.clientY - bounds.top - margin;
       if (px < 0 || py < 0) return null;
       const x = Math.floor(px / cellPx);
-      const row = Math.floor(py / cellPx);
-      const z = length - 1 - row;
+      const z = length - 1 - Math.floor(py / cellPx);
       if (x < 0 || x >= width || z < 0 || z >= length) return null;
       return { x, z };
     },
     [width, length, cellPx, margin]
   );
+
+  useEffect(() => {
+    const stopPainting = () => {
+      paintingRef.current = false;
+      lastPaintedRef.current = null;
+    };
+    window.addEventListener("pointerup", stopPainting);
+    window.addEventListener("pointercancel", stopPainting);
+    return () => {
+      window.removeEventListener("pointerup", stopPainting);
+      window.removeEventListener("pointercancel", stopPainting);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,51 +90,129 @@ export function GridCanvas({ width, length, cellPx = 32, showLabels = true, onCe
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    if (showLabels) {
-      ctx.fillStyle = palette.textMuted;
-      ctx.font = "10px 'JetBrains Mono', monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for (let x = 0; x < width; x++) {
-        ctx.fillText(String(x), margin + x * cellPx + cellPx / 2, margin / 2);
-      }
-      ctx.textAlign = "right";
-      for (let z = 0; z < length; z++) {
-        const row = length - 1 - z;
-        ctx.fillText(String(z), margin - 6, margin + row * cellPx + cellPx / 2);
-      }
-    }
+    const gridX = margin;
+    const gridY = margin;
+    const gridW = width * cellPx;
+    const gridH = length * cellPx;
 
+    // ── cell fills ────────────────────────────────────────────────
     for (let x = 0; x < width; x++) {
       for (let z = 0; z < length; z++) {
         const row = length - 1 - z;
-        const rect = { x: margin + x * cellPx, y: margin + row * cellPx, width: cellPx, height: cellPx };
-        renderCell(ctx, { x, z }, rect);
-
-        if (hovered && hovered.x === x && hovered.z === z && (!isInteractive || isInteractive({ x, z }))) {
-          ctx.fillStyle = palette.selectedTint;
-          ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-        }
-
-        ctx.strokeStyle = palette.border;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width - 1, rect.height - 1);
+        renderCell(ctx, { x, z }, { x: gridX + x * cellPx, y: gridY + row * cellPx, width: cellPx, height: cellPx });
       }
     }
-  }, [width, length, cellPx, margin, canvasWidth, canvasHeight, showLabels, renderCell, hovered, isInteractive, palette]);
+
+    // ── hover crosshair: tint the whole row + column so reading a cell's
+    //    coordinates off a large grid doesn't need finger-tracing ─────
+    if (hovered && (!isInteractive || isInteractive(hovered))) {
+      const hoverRow = length - 1 - hovered.z;
+      ctx.fillStyle = palette.selectedTint;
+      ctx.globalAlpha = 0.28;
+      ctx.fillRect(gridX + hovered.x * cellPx, gridY, cellPx, gridH);
+      ctx.fillRect(gridX, gridY + hoverRow * cellPx, gridW, cellPx);
+      ctx.globalAlpha = 1;
+      ctx.fillRect(gridX + hovered.x * cellPx, gridY + hoverRow * cellPx, cellPx, cellPx);
+    }
+
+    // ── gridlines ─────────────────────────────────────────────────
+    for (let x = 0; x <= width; x++) {
+      const major = x % MAJOR_EVERY === 0 || x === width;
+      ctx.strokeStyle = major ? palette.gridLineMajor : palette.gridLine;
+      ctx.lineWidth = major ? 1.5 : 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.round(gridX + x * cellPx) + 0.5, gridY);
+      ctx.lineTo(Math.round(gridX + x * cellPx) + 0.5, gridY + gridH);
+      ctx.stroke();
+    }
+    for (let row = 0; row <= length; row++) {
+      const z = length - row;
+      const major = z % MAJOR_EVERY === 0 || row === 0 || row === length;
+      ctx.strokeStyle = major ? palette.gridLineMajor : palette.gridLine;
+      ctx.lineWidth = major ? 1.5 : 1;
+      ctx.beginPath();
+      ctx.moveTo(gridX, Math.round(gridY + row * cellPx) + 0.5);
+      ctx.lineTo(gridX + gridW, Math.round(gridY + row * cellPx) + 0.5);
+      ctx.stroke();
+    }
+
+    // ── axis labels ───────────────────────────────────────────────
+    if (showLabels) {
+      const labelStep = cellPx < 18 ? MAJOR_EVERY : 1;
+      ctx.font = `10px "JetBrains Mono", ui-monospace, monospace`;
+      ctx.textBaseline = "middle";
+
+      ctx.textAlign = "center";
+      for (let x = 0; x < width; x++) {
+        const isHover = hovered?.x === x;
+        if (!isHover && x % labelStep !== 0) continue;
+        ctx.fillStyle = isHover ? palette.textAccent : palette.textMuted;
+        ctx.fillText(String(x), gridX + x * cellPx + cellPx / 2, margin / 2);
+      }
+
+      ctx.textAlign = "right";
+      for (let z = 0; z < length; z++) {
+        const isHover = hovered?.z === z;
+        if (!isHover && z % labelStep !== 0) continue;
+        const row = length - 1 - z;
+        ctx.fillStyle = isHover ? palette.textAccent : palette.textMuted;
+        ctx.fillText(String(z), margin - 7, gridY + row * cellPx + cellPx / 2);
+      }
+    }
+  }, [
+    width,
+    length,
+    cellPx,
+    margin,
+    canvasWidth,
+    canvasHeight,
+    showLabels,
+    renderCell,
+    hovered,
+    isInteractive,
+    palette,
+  ]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="grid-canvas"
-      onMouseMove={(evt) => setHovered(cellFromEvent(evt))}
-      onMouseLeave={() => setHovered(null)}
-      onClick={(evt) => {
-        const cell = cellFromEvent(evt);
-        if (!cell || !onCellClick) return;
-        if (isInteractive && !isInteractive(cell)) return;
-        onCellClick(cell);
-      }}
-    />
+    <div className="grid-canvas-shell">
+      <canvas
+        ref={canvasRef}
+        className="grid-canvas"
+        style={{ cursor: interactive ? "crosshair" : "default" }}
+        onPointerDown={(evt) => {
+          if (!onPaintStart) return;
+          const cell = cellFromEvent(evt);
+          if (!cell || (isInteractive && !isInteractive(cell))) return;
+          paintingRef.current = true;
+          lastPaintedRef.current = `${cell.x},${cell.z}`;
+          onPaintStart(cell);
+        }}
+        onPointerMove={(evt) => {
+          const cell = cellFromEvent(evt);
+          setHovered(cell);
+          if (!paintingRef.current || !cell) return;
+          const key = `${cell.x},${cell.z}`;
+          if (key === lastPaintedRef.current) return;
+          if (isInteractive && !isInteractive(cell)) return;
+          lastPaintedRef.current = key;
+          (onPaintDrag ?? onPaintStart)?.(cell);
+        }}
+        onPointerLeave={() => setHovered(null)}
+      />
+      {showLabels && (
+        <div className="grid-coord">
+          {hovered ? (
+            <>
+              <span>x</span>
+              {hovered.x}
+              <span>z</span>
+              {hovered.z}
+            </>
+          ) : (
+            <span className="grid-coord-idle">hover the grid</span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

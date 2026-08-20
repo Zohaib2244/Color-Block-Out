@@ -4,8 +4,8 @@ import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
-import { classifyHoleShape, openingsForHole, stampPreset } from "../level/holeShape";
 import { listPresets } from "../level/holePresetLibrary";
+import { classifyHoleShape, openingsForHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
@@ -13,9 +13,9 @@ import { useTheme } from "../theme";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
 import type { BlockColor, GridCell, HoleShapePreset, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
 import { GridCanvas } from "./GridCanvas";
+import { PieceLegend } from "./Legend";
+import { ZoomControl, zoomedCellPx } from "./ZoomControl";
 import { drawCat, drawHole } from "./drawShapes";
-
-const MAX_CANVAS_DIMENSION_PX = 640;
 
 type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset";
 
@@ -35,17 +35,20 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [selectedColor, setSelectedColor] = useState<BlockColor>("Red");
   const [selectedHoleType, setSelectedHoleType] = useState<HoleType>("Isolated");
   const [manualRotation, setManualRotation] = useState<RotationQuarterTurns>(0);
+  const [capacity, setCapacity] = useState(1);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Whether the current drag gesture is adding or removing from the selection. */
+  const selectModeRef = useRef(true);
   const palette = getCanvasPalette(useTheme());
 
   useEffect(() => setGrids(listGrids()), [gridsVersion]);
   useEffect(() => setPresets(listPresets()), [presetsVersion]);
 
   const selectedPreset = useMemo(() => presets.find((p) => p.id === selectedPresetId), [presets, selectedPresetId]);
-
   const grid = useMemo(() => grids.find((g) => g.id === draft.gridId), [grids, draft.gridId]);
   const playableMask = useMemo(
     () => (grid ? computePlayableMask(grid.width, grid.length, grid.wallToggles) : []),
@@ -56,13 +59,13 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     [grid, playableMask]
   );
 
-  const cellPx = useMemo(() => {
-    if (!grid) return 32;
-    const largestDimension = Math.max(grid.width, grid.length);
-    return Math.max(12, Math.min(32, Math.floor(MAX_CANVAS_DIMENSION_PX / largestDimension)));
-  }, [grid]);
+  const cellPx = useMemo(
+    () => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32),
+    [grid, zoom]
+  );
 
   const issues = useMemo(() => (grid ? validateLevel(draft, grid) : []), [draft, grid]);
+  const isHoleMode = mode !== "cats";
 
   function refreshLevels() {
     setLevels(listLevels());
@@ -80,17 +83,28 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     setSelectedCells(new Set());
   }
 
-  function toggleSelected(cell: GridCell) {
+  function beginSelection(cell: GridCell) {
     if (mode === "holes-preset") {
-      // Presets stamp from a single anchor cell, so a click replaces the selection.
+      // Presets stamp from a single anchor cell, so a click (or drag) just
+      // repositions that anchor rather than accumulating a selection.
+      setSelectedCells(new Set([cellKey(cell.x, cell.z)]));
+      return;
+    }
+    selectModeRef.current = !selectedCells.has(cellKey(cell.x, cell.z));
+    applySelection(cell);
+  }
+
+  function applySelection(cell: GridCell) {
+    if (mode === "holes-preset") {
       setSelectedCells(new Set([cellKey(cell.x, cell.z)]));
       return;
     }
     setSelectedCells((prev) => {
       const key = cellKey(cell.x, cell.z);
+      if (prev.has(key) === selectModeRef.current) return prev;
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (selectModeRef.current) next.add(key);
+      else next.delete(key);
       return next;
     });
   }
@@ -115,7 +129,14 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
         cats: prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z))),
         holes: [
           ...prev.holes.filter((h) => !cellKeys.has(cellKey(h.x, h.z))),
-          ...stamped.map((c) => ({ color: selectedColor, x: c.x, z: c.z, holeType: c.holeType, rotationQuarterTurns: c.rotationQuarterTurns })),
+          ...stamped.map((c) => ({
+            color: selectedColor,
+            x: c.x,
+            z: c.z,
+            holeType: c.holeType,
+            rotationQuarterTurns: c.rotationQuarterTurns,
+            capacity,
+          })),
         ],
       }));
       setSelectedCells(new Set());
@@ -135,13 +156,27 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
           ...holes,
           ...cells.map((c) => {
             const result = classified.get(cellKey(c.x, c.z))!;
-            return { color: selectedColor, x: c.x, z: c.z, holeType: result.holeType, rotationQuarterTurns: result.rotationQuarterTurns };
+            return {
+              color: selectedColor,
+              x: c.x,
+              z: c.z,
+              holeType: result.holeType,
+              rotationQuarterTurns: result.rotationQuarterTurns,
+              capacity,
+            };
           }),
         ];
       } else {
         holes = [
           ...holes,
-          ...cells.map((c) => ({ color: selectedColor, x: c.x, z: c.z, holeType: selectedHoleType, rotationQuarterTurns: manualRotation })),
+          ...cells.map((c) => ({
+            color: selectedColor,
+            x: c.x,
+            z: c.z,
+            holeType: selectedHoleType,
+            rotationQuarterTurns: manualRotation,
+            capacity,
+          })),
         ];
       }
       return { ...prev, cats, holes };
@@ -176,10 +211,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   function handleExport() {
     if (!grid) return;
     downloadLevelJson(toLevelJson(draft, grid));
-  }
-
-  function handleImportClick() {
-    fileInputRef.current?.click();
   }
 
   async function handleImportFile(file: File) {
@@ -230,7 +261,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
               e.target.value = "";
             }}
           />
-          <button onClick={handleImportClick}>Import JSON</button>
+          <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
         </div>
       </aside>
 
@@ -242,10 +273,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
           </label>
           <label>
             Grid
-            <select
-              value={draft.gridId}
-              onChange={(e) => setDraft((prev) => ({ ...prev, gridId: e.target.value }))}
-            >
+            <select value={draft.gridId} onChange={(e) => setDraft((prev) => ({ ...prev, gridId: e.target.value }))}>
               <option value="" disabled>
                 Select a grid…
               </option>
@@ -296,6 +324,18 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   ))}
                 </select>
               </label>
+              {isHoleMode && (
+                <label title="How many cats each placed hole can swallow before it's full">
+                  Cat Capacity
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={capacity}
+                    onChange={(e) => setCapacity(Math.max(1, Math.floor(Number(e.target.value)) || 1))}
+                  />
+                </label>
+              )}
               {mode === "holes-manual" && (
                 <>
                   <label>
@@ -345,9 +385,9 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                       ))}
                     </select>
                   </label>
-                  {presets.length === 0 && <p className="hint">No presets saved yet — draw one in the Hole Presets tab.</p>}
                 </>
               )}
+              <ZoomControl value={zoom} onChange={setZoom} />
             </div>
 
             <div className="field-row">
@@ -374,52 +414,70 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
             <p className="hint">
               {mode === "holes-preset"
-                ? "Click a single anchor cell, then Stamp Preset — the saved shape is placed relative to that cell, rotated by the amount above."
-                : "Click playable cells to select them, then Place. In shape mode, select a connected run of cells and each cell's hole type/rotation is solved automatically from its neighbors, exactly like CatLevelEditorWindow."}
+                ? "Click (or drag) to position a single anchor cell, then Stamp Preset — the saved shape is placed relative to that anchor, rotated by the amount above, and every cell gets the capacity set here."
+                : "Click or drag across playable cells to select them, then Place. In shape mode each cell's hole type and rotation is solved automatically from its neighbors, exactly like CatLevelEditorWindow."}
             </p>
 
-            <div className="canvas-wrap">
-              <GridCanvas
-                width={grid.width}
-                length={grid.length}
-                cellPx={cellPx}
-                isInteractive={isPlayable}
-                onCellClick={(cell) => {
-                  if (isPlayable(cell)) toggleSelected(cell);
-                }}
-                renderCell={(ctx, cell, rect) => {
-                  const playable = isPlayable(cell);
-                  ctx.fillStyle = playable ? palette.floor : palette.inert;
-                  ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-                  if (!playable) return;
-
-                  if (selectedCells.has(cellKey(cell.x, cell.z))) {
-                    ctx.fillStyle = palette.selectedTint;
+            <div className="canvas-row">
+              <div className="canvas-wrap">
+                <GridCanvas
+                  width={grid.width}
+                  length={grid.length}
+                  cellPx={cellPx}
+                  isInteractive={isPlayable}
+                  onPaintStart={beginSelection}
+                  onPaintDrag={applySelection}
+                  renderCell={(ctx, cell, rect) => {
+                    const playable = isPlayable(cell);
+                    ctx.fillStyle = playable ? palette.floor : palette.inert;
                     ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-                  }
+                    if (!playable) return;
 
-                  const hole = draft.holes.find((h) => h.x === cell.x && h.z === cell.z);
-                  if (hole) {
-                    const openings = openingsForHole(hole.holeType, hole.rotationQuarterTurns);
-                    drawHole(ctx, rect, BLOCK_COLOR_HEX[hole.color], openings);
-                  }
-                  const cat = draft.cats.find((c) => c.x === cell.x && c.z === cell.z);
-                  if (cat) {
-                    drawCat(ctx, rect, BLOCK_COLOR_HEX[cat.color]);
-                  }
-                }}
-              />
+                    if (selectedCells.has(cellKey(cell.x, cell.z))) {
+                      ctx.fillStyle = palette.selectedTint;
+                      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                    }
+
+                    const hole = draft.holes.find((h) => h.x === cell.x && h.z === cell.z);
+                    if (hole) {
+                      drawHole(
+                        ctx,
+                        rect,
+                        BLOCK_COLOR_HEX[hole.color],
+                        openingsForHole(hole.holeType, hole.rotationQuarterTurns),
+                        palette.holeVoid,
+                        hole.capacity
+                      );
+                    }
+                    const cat = draft.cats.find((c) => c.x === cell.x && c.z === cell.z);
+                    if (cat) {
+                      drawCat(ctx, rect, BLOCK_COLOR_HEX[cat.color], palette.holeVoid);
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="canvas-side">
+                <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
+                <p className="stat-line">
+                  <span className="stat-value">{draft.cats.length}</span>
+                  <span className="muted"> cats · </span>
+                  <span className="stat-value">{draft.holes.length}</span>
+                  <span className="muted"> holes · </span>
+                  <span className="stat-value">{draft.holes.reduce((sum, h) => sum + h.capacity, 0)}</span>
+                  <span className="muted"> capacity</span>
+                </p>
+                {issues.length > 0 && (
+                  <ul className="issues">
+                    {issues.map((issue, i) => (
+                      <li key={i} className={issue.severity}>
+                        {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-
-            {issues.length > 0 && (
-              <ul className="issues">
-                {issues.map((issue, i) => (
-                  <li key={i} className={issue.severity}>
-                    {issue.message}
-                  </li>
-                ))}
-              </ul>
-            )}
           </>
         )}
       </main>

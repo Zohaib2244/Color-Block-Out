@@ -37,16 +37,32 @@ read CSS custom properties directly.
 | `CatLevelEditorWindow` (`Cat Puzzle/Cat Level Editor`) | **Level Editor** tab | Pick a saved grid, place Cats and Holes on top of it. |
 | *(no Unity equivalent)* | **Hole Presets** tab | Draw a hole shape once, save it, and reuse it across any grid/level. |
 
+### Working in the grid
+
+Every grid canvas shares the same interactions:
+
+- **Click or drag to paint.** A drag stroke commits to whatever the first
+  cell became, so sweeping a wall (or selecting a run of cells) is one
+  motion instead of one click per cell.
+- **Zoom slider** — a multiplier over the auto-fit cell size, so resizing a
+  grid still fits on screen while your zoom preference sticks.
+- **Hover crosshair** — the hovered row and column are tinted and their
+  axis labels highlight, so reading a cell's coordinates off a large grid
+  doesn't need finger-tracing. The exact `x, z` is printed under the canvas.
+- **Heavier gridlines every 5 cells**, and axis labels thin out to every
+  5th when zoomed far out.
+
 ### Grid Designer
 
 Same rules as `GridCreatorTool.FindInteriorCells`: a cell only becomes
 **playable** if it is not a wall *and* cannot be reached from the grid
-border by walking through non-wall cells. Toggling a "wall" cell is just a
+border by walking through non-wall cells. Painting a "wall" cell is just a
 way to seal off a room — the canvas shows a live preview (green = will be
-playable, amber = open to the outside and will be dropped) exactly like
-what `GridManager.MarkExteriorCellsAsOccupied` produces when a
-`GridData` asset is actually saved in Unity. The exported JSON stores this
-post-flood-fill playable mask, not the raw wall toggles, since that's what
+playable, warm red = open to the outside and will be dropped, with a
+legend beside it) exactly like what
+`GridManager.MarkExteriorCellsAsOccupied` produces when a `GridData` asset
+is actually saved in Unity. The exported JSON stores this post-flood-fill
+playable mask, not the raw wall toggles, since that's what
 `GridData.wallCells` (inverted) ends up holding either way.
 
 ### Level Editor
@@ -66,11 +82,23 @@ Two ways to place holes, matching `CatLevelEditorWindow`:
   single anchor cell, choose a placement rotation (0/90/180/270), and Stamp
   Preset places every cell of the shape relative to that anchor.
 
-Holes render as pipe-like pieces (a core with a stub toward each open
-side) so a connected shape visually reads as a tunnel, and incorrect
-rotation solving is easy to spot at a glance. Inline validation flags
-overlapping placements, placements off the playable area, and cat/hole
-colors that don't have a match.
+Every hole also carries a **cat capacity** — how many cats it can swallow
+before it's full — set by the `Cat Capacity` field and applied to every
+hole placed by that action. It's drawn as the number inside the hole.
+
+Cats and holes are deliberately drawn as visual opposites so they can't be
+confused even when they share a color: a **cat** is a solid filled creature
+sitting on the floor (round head, pointed ears, two eyes), while a **hole**
+is a dark socket cut *into* the floor, ringed in its color, with a tunnel
+stub running to the cell edge for each open side — so a connected shape
+reads as one continuous tunnel and mis-solved rotations are obvious at a
+glance.
+
+Inline validation flags overlapping placements, placements off the playable
+area, invalid capacities, colors with no counterpart, and — now that
+capacity exists — any color whose total hole capacity is **less** than its
+cat count (an error: those cats could never be collected) or **more** than
+it (a warning: unused slots).
 
 `DEFAULT_HOLE_OPENINGS` is a placeholder — the real per-prefab values live
 in your project's `CatHoleConfiguration` asset
@@ -95,11 +123,11 @@ project library — grids are reusable across many levels, same as
 `GridData` assets in Unity, and presets are reusable across all of them). A
 level can be exported to a standalone JSON file and re-imported later.
 
-### Level JSON schema (`formatVersion: 1`)
+### Level JSON schema (`formatVersion: 2`)
 
 ```ts
 interface LevelJson {
-  formatVersion: 1;
+  formatVersion: 2;
   levelName: string;
   grid: {
     id: string;
@@ -116,9 +144,17 @@ interface LevelJson {
     z: number;
     holeType: "Isolated" | "EndCap" | "Straight" | "Corner" | "OneSide" | "Middle";
     rotationQuarterTurns: 0 | 1 | 2 | 3;
+    // how many cats this hole can swallow before it's full; >= 1
+    capacity: number;
   }>;
 }
 ```
+
+**v2** added `capacity`. v1 files still import — their holes are migrated to
+`capacity: 1`, which is what the original one-cat-per-hole behaviour
+amounted to. `capacity` has no counterpart in the Unity code yet
+(`CatHole`/`CatPuzzleController` still collect exactly one cat per hole);
+it's authored here ahead of the Unity-side implementation.
 
 `BlockColor` is one of `Red | Orange | Yellow | Blue | Cyan | Green |
 Purple | Pink | Teal`, matching `BlockColorTypes` in
@@ -131,4 +167,7 @@ back into `GridData`/`CatLevelData` assets, and no runtime JSON loader
 exists in-game. The schema above was designed so that step is a mechanical
 field mapping later: `playableCells` inverts directly into
 `GridData.wallCells`, and `cats`/`holes` map 1:1 onto `CatPlacement`/
-`CatHolePlacement`.
+`CatHolePlacement` — the one genuinely new piece being `capacity`, which
+needs a matching field on `CatHolePlacement`/`CatHole` and a change to
+`CatPuzzleController.ResolveHole` (which today collects a single cat and
+completes the hole).

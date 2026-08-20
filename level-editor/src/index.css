@@ -393,6 +393,21 @@ input[type="checkbox"] {
   color: var(--text-muted);
 }
 
+.canvas-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.canvas-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 15rem;
+  flex: 1 1 15rem;
+}
+
 .canvas-wrap {
   display: inline-block;
   border: 1.5px solid var(--border);
@@ -402,9 +417,123 @@ input[type="checkbox"] {
   box-shadow: 3px 3px 0 var(--shadow);
 }
 
+.grid-canvas-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 canvas.grid-canvas {
   display: block;
-  cursor: pointer;
+  touch-action: none;
+}
+
+.grid-coord {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border);
+  padding-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-coord span {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.grid-coord span.grid-coord-idle {
+  letter-spacing: 0.1em;
+}
+
+/* ─── zoom ──────────────────────────────────────────────────────── */
+
+.zoom-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.zoom-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-control input[type="range"] {
+  width: 7rem;
+  padding: 0;
+  accent-color: var(--accent-orange);
+  background: transparent;
+  border: none;
+}
+
+.zoom-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.4rem;
+}
+
+/* ─── legend ────────────────────────────────────────────────────── */
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+}
+
+.legend-glyph {
+  display: block;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+
+.stat-line {
+  margin: 0;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value {
+  font-family: "DotGothic16", monospace;
+  font-size: 1.05rem;
+  color: var(--accent-cyan);
 }
 
 .issues {
