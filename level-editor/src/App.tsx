@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { GridDesigner } from "./ui/GridDesigner";
 import { LevelEditor } from "./ui/LevelEditor";
+import { PresetDesigner } from "./ui/PresetDesigner";
 
-type Tab = "grids" | "levels";
+type Tab = "grids" | "levels" | "presets";
 
 function App() {
   const [tab, setTab] = useState<Tab>("grids");
   const [gridsVersion, setGridsVersion] = useState(0);
+  const [presetsVersion, setPresetsVersion] = useState(0);
 
   return (
     <div className="app">
@@ -19,6 +21,9 @@ function App() {
           <button className={tab === "levels" ? "active" : ""} onClick={() => setTab("levels")}>
             Level Editor
           </button>
+          <button className={tab === "presets" ? "active" : ""} onClick={() => setTab("presets")}>
+            Hole Presets
+          </button>
         </nav>
       </header>
 
@@ -28,8 +33,12 @@ function App() {
       <div className="app-body" style={{ display: tab === "levels" ? "contents" : "none" }}>
         <LevelEditor
           gridsVersion={gridsVersion}
+          presetsVersion={presetsVersion}
           onGridsChanged={() => setGridsVersion((v) => v + 1)}
         />
+      </div>
+      <div className="app-body" style={{ display: tab === "presets" ? "contents" : "none" }}>
+        <PresetDesigner onPresetsChanged={() => setPresetsVersion((v) => v + 1)} />
       </div>
     </div>
   );

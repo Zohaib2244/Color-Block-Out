@@ -3,12 +3,13 @@ import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
-import { classifyHoleShape, openingsForHole } from "../level/holeShape";
+import { classifyHoleShape, openingsForHole, stampPreset } from "../level/holeShape";
+import { listPresets } from "../level/holePresetLibrary";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
-import type { BlockColor, GridCell, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
+import type { BlockColor, GridCell, HoleShapePreset, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
 import { GridCanvas } from "./GridCanvas";
 import { drawCat, drawHole } from "./drawShapes";
 
@@ -17,26 +18,33 @@ const INERT_COLOR = "#15171c";
 const SELECTED_TINT = "rgba(0, 180, 200, 0.35)";
 const MAX_CANVAS_DIMENSION_PX = 640;
 
-type Mode = "cats" | "holes-shape" | "holes-manual";
+type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset";
 
 interface LevelEditorProps {
   gridsVersion: number;
+  presetsVersion: number;
   onLevelsChanged?: () => void;
   onGridsChanged?: () => void;
 }
 
-export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: LevelEditorProps) {
+export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onGridsChanged }: LevelEditorProps) {
   const [grids, setGrids] = useState<SavedGrid[]>(() => listGrids());
   const [levels, setLevels] = useState<SavedLevel[]>(() => listLevels());
+  const [presets, setPresets] = useState<HoleShapePreset[]>(() => listPresets());
   const [draft, setDraft] = useState<SavedLevel>(() => makeBlankDraft(grids[0]?.id ?? ""));
   const [mode, setMode] = useState<Mode>("cats");
   const [selectedColor, setSelectedColor] = useState<BlockColor>("Red");
   const [selectedHoleType, setSelectedHoleType] = useState<HoleType>("Isolated");
   const [manualRotation, setManualRotation] = useState<RotationQuarterTurns>(0);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+  const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setGrids(listGrids()), [gridsVersion]);
+  useEffect(() => setPresets(listPresets()), [presetsVersion]);
+
+  const selectedPreset = useMemo(() => presets.find((p) => p.id === selectedPresetId), [presets, selectedPresetId]);
 
   const grid = useMemo(() => grids.find((g) => g.id === draft.gridId), [grids, draft.gridId]);
   const playableMask = useMemo(
@@ -73,6 +81,11 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
   }
 
   function toggleSelected(cell: GridCell) {
+    if (mode === "holes-preset") {
+      // Presets stamp from a single anchor cell, so a click replaces the selection.
+      setSelectedCells(new Set([cellKey(cell.x, cell.z)]));
+      return;
+    }
     setSelectedCells((prev) => {
       const key = cellKey(cell.x, cell.z);
       const next = new Set(prev);
@@ -92,6 +105,23 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
   function handlePlace() {
     const cells = selectedCellList();
     if (cells.length === 0) return;
+
+    if (mode === "holes-preset") {
+      if (!selectedPreset) return;
+      const stamped = stampPreset(selectedPreset, cells[0], presetRotation);
+      const cellKeys = new Set(stamped.map((c) => cellKey(c.x, c.z)));
+      setDraft((prev) => ({
+        ...prev,
+        cats: prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z))),
+        holes: [
+          ...prev.holes.filter((h) => !cellKeys.has(cellKey(h.x, h.z))),
+          ...stamped.map((c) => ({ color: selectedColor, x: c.x, z: c.z, holeType: c.holeType, rotationQuarterTurns: c.rotationQuarterTurns })),
+        ],
+      }));
+      setSelectedCells(new Set());
+      return;
+    }
+
     setDraft((prev) => {
       const cellKeys = new Set(cells.map((c) => cellKey(c.x, c.z)));
       let cats = prev.cats.filter((c) => !cellKeys.has(cellKey(c.x, c.z)));
@@ -252,6 +282,9 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
                 <button className={mode === "holes-manual" ? "active" : ""} onClick={() => setMode("holes-manual")}>
                   Holes (manual)
                 </button>
+                <button className={mode === "holes-preset" ? "active" : ""} onClick={() => setMode("holes-preset")}>
+                  Holes (preset)
+                </button>
               </div>
               <label>
                 Color
@@ -287,14 +320,52 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
                   </label>
                 </>
               )}
+              {mode === "holes-preset" && (
+                <>
+                  <label>
+                    Preset
+                    <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
+                      <option value="" disabled>
+                        Select a preset…
+                      </option>
+                      {presets.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.cells.length} cells)
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Rotation
+                    <select value={presetRotation} onChange={(e) => setPresetRotation(Number(e.target.value) as RotationQuarterTurns)}>
+                      {[0, 1, 2, 3].map((r) => (
+                        <option key={r} value={r}>
+                          {r * 90}°
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {presets.length === 0 && <p className="hint">No presets saved yet — draw one in the Hole Presets tab.</p>}
+                </>
+              )}
             </div>
 
             <div className="field-row">
               <button onClick={() => setSelectedCells(new Set())} disabled={selectedCells.size === 0}>
                 Clear Selection ({selectedCells.size})
               </button>
-              <button className="primary" onClick={handlePlace} disabled={selectedCells.size === 0}>
-                {mode === "cats" ? "Place Cats" : mode === "holes-shape" ? "Create Hole Shape" : "Place Hole"}
+              <button
+                className="primary"
+                onClick={handlePlace}
+                disabled={selectedCells.size === 0 || (mode === "holes-preset" && !selectedPreset)}
+              >
+                {mode === "cats"
+                  ? "Place Cats"
+                  : mode === "holes-shape"
+                    ? "Create Hole Shape"
+                    : mode === "holes-preset"
+                      ? "Stamp Preset"
+                      : "Place Hole"}
               </button>
               <button onClick={handleRemoveSelected} disabled={selectedCells.size === 0}>
                 Remove Selected
@@ -302,9 +373,9 @@ export function LevelEditor({ gridsVersion, onLevelsChanged, onGridsChanged }: L
             </div>
 
             <p className="hint">
-              Click playable cells to select them, then Place. In shape mode, select a connected run of cells and
-              each cell's hole type/rotation is solved automatically from its neighbors, exactly like
-              CatLevelEditorWindow.
+              {mode === "holes-preset"
+                ? "Click a single anchor cell, then Stamp Preset — the saved shape is placed relative to that cell, rotated by the amount above."
+                : "Click playable cells to select them, then Place. In shape mode, select a connected run of cells and each cell's hole type/rotation is solved automatically from its neighbors, exactly like CatLevelEditorWindow."}
             </p>
 
             <div className="canvas-wrap">

@@ -24,6 +24,7 @@ directly.
 | --- | --- | --- |
 | `GridCreatorTool` (`Cat Puzzle/Grid Creator`) | **Grid Designer** tab | Define board width/length, toggle wall cells, save a reusable grid. |
 | `CatLevelEditorWindow` (`Cat Puzzle/Cat Level Editor`) | **Level Editor** tab | Pick a saved grid, place Cats and Holes on top of it. |
+| *(no Unity equivalent)* | **Hole Presets** tab | Draw a hole shape once, save it, and reuse it across any grid/level. |
 
 ### Grid Designer
 
@@ -50,6 +51,9 @@ Two ways to place holes, matching `CatLevelEditorWindow`:
   `CatLevelEditorWindow.GetHoleType`/`GetRotation`.
 - **Holes (manual)** — place a single hole with an explicit type and
   rotation.
+- **Holes (preset)** — pick a saved shape from the Hole Presets tab, click a
+  single anchor cell, choose a placement rotation (0/90/180/270), and Stamp
+  Preset places every cell of the shape relative to that anchor.
 
 Holes render as pipe-like pieces (a core with a stub toward each open
 side) so a connected shape visually reads as a tunnel, and incorrect
@@ -63,12 +67,22 @@ in your project's `CatHoleConfiguration` asset
 from code. If your prefabs use different default openings, edit that
 constant to match so exported rotations line up with them.
 
+### Hole Presets
+
+Draw a connected shape on a blank 9×9 sandbox grid (same drawing
+interaction as Holes (shape)) and save it under a name. A preset stores
+each cell's `HoleType`/rotation plus its position relative to the shape's
+own bounding-box corner — it isn't tied to any grid, level, or color, so
+the same preset can be stamped anywhere. Rotating a preset at placement
+time rotates both its cell positions and each cell's own hole rotation
+together, so a saved corner piece still reads correctly after a 90° turn.
+
 ## Data model
 
-Grids and levels are saved to `localStorage` (a small project library —
-grids are reusable across many levels, same as `GridData` assets in
-Unity). A level can be exported to a standalone JSON file and re-imported
-later.
+Grids, levels, and hole presets are saved to `localStorage` (a small
+project library — grids are reusable across many levels, same as
+`GridData` assets in Unity, and presets are reusable across all of them). A
+level can be exported to a standalone JSON file and re-imported later.
 
 ### Level JSON schema (`formatVersion: 1`)
 

@@ -83,3 +83,19 @@ export interface SavedLevel {
 }
 
 export type HoleOpeningsConfig = Record<HoleType, Direction[]>;
+
+/** A single cell within a saved hole shape, relative to the shape's bounding-box min corner. */
+export interface HoleShapePresetCell {
+  dx: number;
+  dz: number;
+  holeType: HoleType;
+  rotationQuarterTurns: RotationQuarterTurns;
+}
+
+/** A reusable hole shape (drawn once in the Hole Presets tab, stamped onto any level's grid). */
+export interface HoleShapePreset {
+  id: string;
+  name: string;
+  cells: HoleShapePresetCell[];
+  updatedAt: number;
+}

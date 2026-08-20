@@ -9,7 +9,15 @@
  * neighbors.
  */
 import { DIRECTIONS, DIRECTION_OFFSET, cellKey } from "../types";
-import type { Direction, GridCell, HoleOpeningsConfig, HoleType, RotationQuarterTurns } from "../types";
+import type {
+  Direction,
+  GridCell,
+  HoleOpeningsConfig,
+  HoleShapePreset,
+  HoleShapePresetCell,
+  HoleType,
+  RotationQuarterTurns,
+} from "../types";
 
 /**
  * Directions each hole type is open on at rotation 0. Mirrors
@@ -85,4 +93,52 @@ export function classifyHoleShape(
     result.set(cellKey(cell.x, cell.z), { holeType, rotationQuarterTurns });
   }
   return result;
+}
+
+/** Normalizes a drawn shape into preset cells relative to its bounding-box min corner (0,0). */
+export function buildPresetCells(cells: GridCell[]): HoleShapePresetCell[] {
+  if (cells.length === 0) return [];
+  const classified = classifyHoleShape(cells);
+  const minX = Math.min(...cells.map((c) => c.x));
+  const minZ = Math.min(...cells.map((c) => c.z));
+  return cells.map((c) => {
+    const result = classified.get(cellKey(c.x, c.z))!;
+    return { dx: c.x - minX, dz: c.z - minZ, holeType: result.holeType, rotationQuarterTurns: result.rotationQuarterTurns };
+  });
+}
+
+/**
+ * Rotates a (dx, dz) offset by 90deg steps using the same rotation direction
+ * as Direction (Up->Right->Down->Left): (x, z) -> (z, -x) per quarter turn.
+ */
+export function rotateOffset(dx: number, dz: number, quarterTurns: number): { dx: number; dz: number } {
+  let x = dx;
+  let z = dz;
+  for (let i = 0; i < ((quarterTurns % 4) + 4) % 4; i++) {
+    [x, z] = [z, -x];
+  }
+  return { dx: x, dz: z };
+}
+
+/** Rotates every cell of a preset (both its position and its own hole rotation) by a placement rotation. */
+export function rotatePresetCells(cells: HoleShapePresetCell[], quarterTurns: RotationQuarterTurns): HoleShapePresetCell[] {
+  return cells.map((c) => {
+    const { dx, dz } = rotateOffset(c.dx, c.dz, quarterTurns);
+    return { dx, dz, holeType: c.holeType, rotationQuarterTurns: ((c.rotationQuarterTurns + quarterTurns) % 4) as RotationQuarterTurns };
+  });
+}
+
+/** Stamps a preset onto the grid at an anchor cell, with an optional placement rotation. */
+export function stampPreset(
+  preset: HoleShapePreset,
+  anchor: GridCell,
+  placementRotation: RotationQuarterTurns
+): Array<{ x: number; z: number; holeType: HoleType; rotationQuarterTurns: RotationQuarterTurns }> {
+  const rotated = rotatePresetCells(preset.cells, placementRotation);
+  return rotated.map((c) => ({
+    x: anchor.x + c.dx,
+    z: anchor.z + c.dz,
+    holeType: c.holeType,
+    rotationQuarterTurns: c.rotationQuarterTurns,
+  }));
 }
