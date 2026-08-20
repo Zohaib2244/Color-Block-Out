@@ -32,15 +32,3 @@ MonoBehaviour:
   catPrefab: {fileID: 3707414687231756827, guid: c480058ffd5d2864683073ec65d8ccfa,
     type: 3}
   holeConfiguration: {fileID: 11400000, guid: feddebdf9580e2846a83d7ea117f98b7, type: 2}
-  catJumpPower: 0.25
-  catJumpDuration: 0.18
-  catSinkDepth: 0.15
-  catExitDuration: 0.22
-  holeExitOffset: {x: 0, y: -0.6, z: 0}
-  holeExitDuration: 0.45
-  holeExitEase: 31
-  highlightScale: 1.08
-  highlightLift: 0.04
-  highlightDuration: 0.15
-  defaultCatParentHeight: 0.03
-  defaultHoleParentHeight: 0.03
