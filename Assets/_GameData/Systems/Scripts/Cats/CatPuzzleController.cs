@@ -73,6 +73,12 @@ public sealed class CatPuzzleController : MonoBehaviour
         }
 
         CatHoleConfiguration configuration = level.holeConfiguration;
+        // Cells authored in the same gesture (shared holeGroupId) split one
+        // capacity pool -- build those pools once up front, keyed per group,
+        // so every cell of a shape references the same counter regardless of
+        // where each cell later gets dragged to.
+        Dictionary<string, CatHoleCapacityGroup> capacityGroups = new Dictionary<string, CatHoleCapacityGroup>();
+        int ungroupedIndex = 0;
         if (configuration != null)
         foreach (CatHolePlacement placement in level.holes)
         {
@@ -80,7 +86,15 @@ public sealed class CatPuzzleController : MonoBehaviour
             if (prefab == null) continue;
             GameObject instance = Instantiate(prefab, spawnedContent);
             CatHole hole = instance.GetComponent<CatHole>() ?? instance.AddComponent<CatHole>();
-            hole.Configure(placement.color, placement.gridPosition);
+
+            string groupKey = string.IsNullOrEmpty(placement.holeGroupId) ? $"__ungrouped_{ungroupedIndex++}" : placement.holeGroupId;
+            if (!capacityGroups.TryGetValue(groupKey, out CatHoleCapacityGroup group))
+            {
+                group = new CatHoleCapacityGroup(placement.capacity);
+                capacityGroups[groupKey] = group;
+            }
+
+            hole.Configure(placement.color, placement.gridPosition, group);
             instance.transform.rotation = Quaternion.Euler(0f, placement.rotationQuarterTurns * 90f, 0f);
             if (instance.GetComponent<CatHoleDragHandler>() == null) instance.AddComponent<CatHoleDragHandler>();
             holes.Add(hole);
@@ -155,7 +169,20 @@ public sealed class CatPuzzleController : MonoBehaviour
         if (cat == null || cat.Color != hole.Color) return;
 
         cat.Collect();
+        hole.CollectCat();
         CatCollected.Invoke(cat, hole);
+
+        // A hole's cat cap belongs to its whole authored shape, not to this one
+        // cell -- once the shared pool is spent, every cell of that shape stops
+        // accepting cats, wherever each has independently been dragged to.
+        if (hole.IsFull)
+        {
+            foreach (CatHole sibling in holes.Where(candidate => candidate != null && candidate.IsActive && candidate.CapacityGroup == hole.CapacityGroup))
+            {
+                sibling.Complete();
+                HoleCompleted.Invoke(sibling);
+            }
+        }
 
         bool colorComplete = cats.All(candidate => candidate == null || candidate.Color != hole.Color || candidate.IsCollected);
         if (colorComplete)
