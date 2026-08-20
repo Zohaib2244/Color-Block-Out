@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { getCanvasPalette } from "../canvasPalette";
 import { buildPresetCells, openingsForHole } from "../level/holeShape";
 import { createPreset, deletePreset, listPresets } from "../level/holePresetLibrary";
+import { useTheme } from "../theme";
 import { cellKey } from "../types";
 import type { GridCell, HoleShapePreset } from "../types";
 import { GridCanvas } from "./GridCanvas";
@@ -9,9 +11,8 @@ import { drawHole } from "./drawShapes";
 const SANDBOX_SIZE = 9;
 const SANDBOX_CELL_PX = 40;
 const PREVIEW_CELL_PX = 24;
-const PREVIEW_COLOR = "#8fd3ff";
-const FLOOR_COLOR = "#20242c";
-const EMPTY_COLOR = "#15171c";
+const PREVIEW_COLOR_DARK = "#00b4c8";
+const PREVIEW_COLOR_LIGHT = "#00768a";
 
 interface PresetDesignerProps {
   onPresetsChanged?: () => void;
@@ -21,6 +22,7 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
   const [presets, setPresets] = useState<HoleShapePreset[]>(() => listPresets());
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [name, setName] = useState("");
+  const palette = getCanvasPalette(useTheme());
 
   function refresh() {
     setPresets(listPresets());
@@ -103,10 +105,10 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
             cellPx={SANDBOX_CELL_PX}
             onCellClick={toggleCell}
             renderCell={(ctx, cell, rect) => {
-              ctx.fillStyle = FLOOR_COLOR;
+              ctx.fillStyle = palette.floor;
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
               if (selectedCells.has(cellKey(cell.x, cell.z))) {
-                ctx.fillStyle = "rgba(0, 180, 200, 0.35)";
+                ctx.fillStyle = palette.selectedTint;
                 ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
               }
             }}
@@ -118,6 +120,9 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
 }
 
 function PresetPreview({ preset }: { preset: HoleShapePreset }) {
+  const theme = useTheme();
+  const palette = getCanvasPalette(theme);
+  const previewColor = theme === "light" ? PREVIEW_COLOR_LIGHT : PREVIEW_COLOR_DARK;
   const width = Math.max(1, ...preset.cells.map((c) => c.dx + 1));
   const length = Math.max(1, ...preset.cells.map((c) => c.dz + 1));
   const byCell = new Map(preset.cells.map((c) => [cellKey(c.dx, c.dz), c]));
@@ -130,10 +135,10 @@ function PresetPreview({ preset }: { preset: HoleShapePreset }) {
       showLabels={false}
       renderCell={(ctx, cell, rect) => {
         const preview = byCell.get(cellKey(cell.x, cell.z));
-        ctx.fillStyle = preview ? FLOOR_COLOR : EMPTY_COLOR;
+        ctx.fillStyle = preview ? palette.floor : palette.inert;
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
         if (preview) {
-          drawHole(ctx, rect, PREVIEW_COLOR, openingsForHole(preview.holeType, preview.rotationQuarterTurns));
+          drawHole(ctx, rect, previewColor, openingsForHole(preview.holeType, preview.rotationQuarterTurns));
         }
       }}
     />

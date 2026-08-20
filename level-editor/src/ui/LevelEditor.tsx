@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCanvasPalette } from "../canvasPalette";
 import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
@@ -8,14 +9,12 @@ import { listPresets } from "../level/holePresetLibrary";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
+import { useTheme } from "../theme";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
 import type { BlockColor, GridCell, HoleShapePreset, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
 import { GridCanvas } from "./GridCanvas";
 import { drawCat, drawHole } from "./drawShapes";
 
-const PLAYABLE_COLOR = "#20242c";
-const INERT_COLOR = "#15171c";
-const SELECTED_TINT = "rgba(0, 180, 200, 0.35)";
 const MAX_CANVAS_DIMENSION_PX = 640;
 
 type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset";
@@ -40,6 +39,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const palette = getCanvasPalette(useTheme());
 
   useEffect(() => setGrids(listGrids()), [gridsVersion]);
   useEffect(() => setPresets(listPresets()), [presetsVersion]);
@@ -389,12 +389,12 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 }}
                 renderCell={(ctx, cell, rect) => {
                   const playable = isPlayable(cell);
-                  ctx.fillStyle = playable ? PLAYABLE_COLOR : INERT_COLOR;
+                  ctx.fillStyle = playable ? palette.floor : palette.inert;
                   ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
                   if (!playable) return;
 
                   if (selectedCells.has(cellKey(cell.x, cell.z))) {
-                    ctx.fillStyle = SELECTED_TINT;
+                    ctx.fillStyle = palette.selectedTint;
                     ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
                   }
 

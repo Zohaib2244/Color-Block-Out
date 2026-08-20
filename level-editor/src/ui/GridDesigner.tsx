@@ -1,13 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import { getCanvasPalette } from "../canvasPalette";
 import { computePlayableMask, gridIndex, makeFlatGrid } from "../grid/floodFill";
 import { deleteGrid, listGrids, saveGrid } from "../grid/gridLibrary";
 import { newId } from "../storage";
+import { useTheme } from "../theme";
 import type { SavedGrid } from "../types";
 import { GridCanvas } from "./GridCanvas";
-
-const WALL_COLOR = "#55565c";
-const PLAYABLE_COLOR = "#1f5c3a";
-const EXTERIOR_COLOR = "#3a2f22";
 
 const MAX_CANVAS_DIMENSION_PX = 640;
 
@@ -18,6 +16,7 @@ interface GridDesignerProps {
 export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
   const [grids, setGrids] = useState<SavedGrid[]>(() => listGrids());
   const [draft, setDraft] = useState<SavedGrid>(() => makeBlankDraft());
+  const palette = getCanvasPalette(useTheme());
 
   const refreshGrids = useCallback(() => {
     setGrids(listGrids());
@@ -163,7 +162,7 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
         </div>
 
         <p className="hint">
-          Click cells to toggle walls. Green = will be playable (enclosed). Amber = not a wall, but open to the
+          Click cells to toggle walls. Green = will be playable (enclosed). Warm red = not a wall, but open to the
           outside, so it will NOT be generated as a playable cell — exactly like GridCreatorTool's flood fill.
           Playable cells: {playableCount} / {draft.width * draft.length}.
         </p>
@@ -178,7 +177,7 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
               const idx = gridIndex(draft.width, cell.x, cell.z);
               const isWall = draft.wallToggles[idx];
               const isPlayable = playableMask[idx];
-              ctx.fillStyle = isWall ? WALL_COLOR : isPlayable ? PLAYABLE_COLOR : EXTERIOR_COLOR;
+              ctx.fillStyle = isWall ? palette.wall : isPlayable ? palette.playable : palette.exterior;
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
             }}
           />

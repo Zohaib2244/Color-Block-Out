@@ -18,6 +18,17 @@ npm run dev      # http://localhost:5173
 `npm run build` produces a static `dist/` you can host anywhere or open
 directly.
 
+## Design system
+
+Visual style follows AVN Hub's "Chunky Blocks + Accent Border" design
+system (same ember palette, sticker-card treatment, and DotGothic16/
+JetBrains Mono pairing as `Zohaib2244/AVNHub`'s `styles/globals.css`), not
+a design invented for this tool: rounded sticker cards with a 1.5px border
+and a hard, zero-blur offset shadow; dark (default) and light themes with
+a header toggle (`src/theme.ts`, persisted to `localStorage`); canvas fill
+colors mirrored per-theme in `src/canvasPalette.ts` since `<canvas>` can't
+read CSS custom properties directly.
+
 ## How it maps to the Unity tools
 
 | Unity tool | Web equivalent | What it does |

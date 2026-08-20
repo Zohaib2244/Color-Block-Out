@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getCanvasPalette } from "../canvasPalette";
+import { useTheme } from "../theme";
 import type { GridCell } from "../types";
 
 const LABEL_MARGIN = 22;
-const BORDER_COLOR = "#3d3220";
 
 export interface GridCanvasProps {
   width: number;
@@ -25,6 +26,8 @@ export interface GridCanvasProps {
 export function GridCanvas({ width, length, cellPx = 32, showLabels = true, onCellClick, renderCell, isInteractive }: GridCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState<GridCell | null>(null);
+  const theme = useTheme();
+  const palette = getCanvasPalette(theme);
   const margin = showLabels ? LABEL_MARGIN : 0;
   const canvasWidth = width * cellPx + margin;
   const canvasHeight = length * cellPx + margin;
@@ -60,7 +63,7 @@ export function GridCanvas({ width, length, cellPx = 32, showLabels = true, onCe
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     if (showLabels) {
-      ctx.fillStyle = "#9f9887";
+      ctx.fillStyle = palette.textMuted;
       ctx.font = "10px 'JetBrains Mono', monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -81,16 +84,16 @@ export function GridCanvas({ width, length, cellPx = 32, showLabels = true, onCe
         renderCell(ctx, { x, z }, rect);
 
         if (hovered && hovered.x === x && hovered.z === z && (!isInteractive || isInteractive({ x, z }))) {
-          ctx.fillStyle = "rgba(0, 180, 200, 0.25)";
+          ctx.fillStyle = palette.selectedTint;
           ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
         }
 
-        ctx.strokeStyle = BORDER_COLOR;
+        ctx.strokeStyle = palette.border;
         ctx.lineWidth = 1;
         ctx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width - 1, rect.height - 1);
       }
     }
-  }, [width, length, cellPx, margin, canvasWidth, canvasHeight, showLabels, renderCell, hovered, isInteractive]);
+  }, [width, length, cellPx, margin, canvasWidth, canvasHeight, showLabels, renderCell, hovered, isInteractive, palette]);
 
   return (
     <canvas
