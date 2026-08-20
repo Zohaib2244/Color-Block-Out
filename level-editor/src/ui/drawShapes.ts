@@ -56,6 +56,52 @@ export function drawCat(ctx: CanvasRenderingContext2D, rect: CellRect, colorHex:
   }
 }
 
+/** Overlap between neighbouring cell rects, so abutting edges don't hairline-seam. */
+const BLEED = 0.5;
+
+/**
+ * Builds the outline of the UNION of a set of cells, inset from each cell's
+ * bounds by `inset`.
+ *
+ * The important part is that an edge facing a neighbour in the shape runs all
+ * the way to the cell boundary (and a hair past it) rather than stopping at
+ * the inset, and that a corner is only rounded when BOTH of its edges are on
+ * the outside of the shape. Rounding every cell's corners instead — and
+ * bridging them with a narrower connector — is what makes a straight 1x3
+ * tunnel read as three pinched boxes rather than one capsule.
+ */
+function buildUnionPath(
+  cells: GridCell[],
+  cellRect: CellRectLookup,
+  present: Set<string>,
+  inset: number,
+  cornerRadius: number
+): Path2D {
+  const path = new Path2D();
+  const has = (x: number, z: number) => present.has(cellKey(x, z));
+
+  for (const cell of cells) {
+    const r = cellRect(cell.x, cell.z);
+    const hasLeft = has(cell.x - 1, cell.z);
+    const hasRight = has(cell.x + 1, cell.z);
+    const hasUp = has(cell.x, cell.z + 1); // +z is up on screen
+    const hasDown = has(cell.x, cell.z - 1);
+
+    const left = hasLeft ? r.x - BLEED : r.x + inset;
+    const right = hasRight ? r.x + r.width + BLEED : r.x + r.width - inset;
+    const top = hasUp ? r.y - BLEED : r.y + inset;
+    const bottom = hasDown ? r.y + r.height + BLEED : r.y + r.height - inset;
+
+    path.roundRect(left, top, right - left, bottom - top, [
+      !hasUp && !hasLeft ? cornerRadius : 0,
+      !hasUp && !hasRight ? cornerRadius : 0,
+      !hasDown && !hasRight ? cornerRadius : 0,
+      !hasDown && !hasLeft ? cornerRadius : 0,
+    ]);
+  }
+  return path;
+}
+
 /**
  * ONE hole drawn as ONE shape: the union of its cells, outlined by a single
  * continuous rim in the hole's color and filled with the dark void.
@@ -76,56 +122,30 @@ export function drawHoleGroup(
   cellRect: CellRectLookup,
   colorHex: string,
   voidHex: string,
-  capacity?: number
+  capacity?: number,
+  highlightHex?: string
 ) {
   if (cells.length === 0) return;
 
   const sample = cellRect(cells[0].x, cells[0].z);
   const size = Math.min(sample.width, sample.height);
-  const pad = size * 0.13;
+  const pad = size * 0.12;
   const rim = Math.max(1.5, size * 0.085);
-  const radius = size * 0.26;
+  const radius = size * 0.3;
   const present = new Set(cells.map((c) => cellKey(c.x, c.z)));
 
-  const outer = new Path2D();
-  const inner = new Path2D();
-
-  for (const cell of cells) {
-    const r = cellRect(cell.x, cell.z);
-    outer.roundRect(r.x + pad, r.y + pad, r.width - pad * 2, r.height - pad * 2, radius);
-    inner.roundRect(
-      r.x + pad + rim,
-      r.y + pad + rim,
-      r.width - (pad + rim) * 2,
-      r.height - (pad + rim) * 2,
-      Math.max(0, radius - rim)
-    );
-
-    // Bridge to the +x / +z neighbours only, so each internal edge is built once.
-    // The inner bridge starts at the neighbouring cells' *inner* edges (inset by
-    // rim), not the outer ones — starting at the outer edge would leave a
-    // rim-wide band of rim color across the tunnel and visibly seam the shape.
-    if (present.has(cellKey(cell.x + 1, cell.z))) {
-      const n = cellRect(cell.x + 1, cell.z);
-      const x0 = r.x + r.width - pad;
-      const x1 = n.x + pad;
-      outer.rect(x0, r.y + pad, x1 - x0, r.height - pad * 2);
-      inner.rect(x0 - rim, r.y + pad + rim, x1 - x0 + rim * 2, r.height - (pad + rim) * 2);
-    }
-    if (present.has(cellKey(cell.x, cell.z + 1))) {
-      // +z is up on screen, so the neighbour's rect sits above this one
-      const n = cellRect(cell.x, cell.z + 1);
-      const y0 = n.y + n.height - pad;
-      const y1 = r.y + pad;
-      outer.rect(r.x + pad, y0, r.width - pad * 2, y1 - y0);
-      inner.rect(r.x + pad + rim, y0 - rim, r.width - (pad + rim) * 2, y1 - y0 + rim * 2);
-    }
+  // A selection halo is a *larger* union filled underneath, not a stroke:
+  // stroking the union would outline each cell's subpath, internal edges and all.
+  if (highlightHex) {
+    const halo = Math.max(2, size * 0.05);
+    ctx.fillStyle = highlightHex;
+    ctx.fill(buildUnionPath(cells, cellRect, present, Math.max(0, pad - halo), radius + halo));
   }
 
   ctx.fillStyle = colorHex;
-  ctx.fill(outer);
+  ctx.fill(buildUnionPath(cells, cellRect, present, pad, radius));
   ctx.fillStyle = voidHex;
-  ctx.fill(inner);
+  ctx.fill(buildUnionPath(cells, cellRect, present, pad + rim, Math.max(0, radius - rim)));
 
   if (capacity !== undefined && size >= 20) {
     const avgX = cells.reduce((sum, c) => sum + c.x, 0) / cells.length;

@@ -86,9 +86,18 @@ outline, which genuinely needs the whole shape before it can become a hole.
   and rotation; click it again to remove it.
 - **Holes (preset)** — click to stamp a saved shape from the Hole Presets
   tab, using that cell as its anchor and the chosen placement rotation.
+- **Edit** — click a placed hole to select it (it gets a halo), then retune
+  it in the inspector: change its **color**, change its **capacity**, or
+  reshape it by clicking an empty cell touching it to grow it or one of its
+  own cells to carve that cell away. Every shape edit re-derives each
+  cell's `holeType`/`rotationQuarterTurns`, so a grown corner becomes a
+  `Corner` automatically. A hole must stay one connected shape, so a click
+  that isn't adjacent to the selection is ignored — but carving a *middle*
+  cell legitimately splits the hole, and both resulting pieces inherit the
+  original's color and capacity.
 
-Clicking any cell of a placed hole removes (or replaces) the **whole**
-hole, since a hole is one unit rather than a pile of cells.
+Outside Edit mode, clicking any cell of a placed hole removes (or replaces)
+the **whole** hole, since a hole is one unit rather than a pile of cells.
 
 ### A hole is one shape, not N cells
 
@@ -101,9 +110,14 @@ capacity printed once, rather than one boxed number per cell.
 The outline is built by filling the union of the shape's cells in the rim
 color and then filling an inset copy of the same union in the void color;
 stroking would draw a line across every internal cell boundary and shatter
-one hole back into N tiles. Because each cell's region is inset slightly,
-two *separate* holes that happen to sit side by side still render with a
-visible seam between them, so adjacent holes stay distinguishable.
+one hole back into N tiles. Two details make the union read as one form
+rather than a chain of boxes: an edge facing a neighbour in the shape runs
+all the way to the cell boundary instead of stopping at the inset, and a
+corner is rounded only when *both* of its edges are on the outside of the
+shape. A straight 1×3 therefore draws as a single capsule, and an L keeps a
+proper sharp inner corner. Because each cell's region is still inset from
+its bounds, two *separate* holes that happen to sit side by side render
+with a visible seam between them and stay distinguishable.
 
 Cats and holes are deliberately drawn as visual opposites so they can't be
 confused even when they share a color: a **cat** is a solid filled creature

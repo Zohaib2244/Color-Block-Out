@@ -5,7 +5,7 @@ import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
 import { listPresets } from "../level/holePresetLibrary";
-import { holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
+import { connectedComponents, holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
@@ -22,11 +22,12 @@ import type {
   SavedLevel,
 } from "../types";
 import { GridCanvas } from "./GridCanvas";
+import { HoleInspector } from "./HoleInspector";
 import { PieceLegend } from "./Legend";
 import { ZoomControl, zoomedCellPx } from "./ZoomControl";
 import { drawCat, drawHoleGroup } from "./drawShapes";
 
-type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset";
+type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset" | "edit";
 
 interface LevelEditorProps {
   gridsVersion: number;
@@ -49,6 +50,8 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
   /** Only used by shape mode, which needs the whole outline before it can become a hole. */
   const [shapeCells, setShapeCells] = useState<Set<string>>(new Set());
+  /** Edit mode's current subject. */
+  const [selectedHoleId, setSelectedHoleId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
@@ -77,7 +80,12 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const cellPx = useMemo(() => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32), [grid, zoom]);
   const issues = useMemo(() => (grid ? validateLevel(draft, grid) : []), [draft, grid]);
   const isShapeMode = mode === "holes-shape";
-  const isHoleMode = mode !== "cats";
+  const isEditMode = mode === "edit";
+  const placesHoles = mode === "holes-shape" || mode === "holes-manual" || mode === "holes-preset";
+  const selectedHole = useMemo(
+    () => draft.holes.find((h) => h.id === selectedHoleId) ?? null,
+    [draft.holes, selectedHoleId]
+  );
 
   function refreshLevels() {
     setLevels(listLevels());
@@ -165,8 +173,66 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     });
   }
 
+  // ── edit mode: retune a placed hole's color, capacity or shape ──
+
+  function updateSelectedHole(patch: Partial<Pick<HolePlacement, "color" | "capacity">>) {
+    setDraft((prev) => ({
+      ...prev,
+      holes: prev.holes.map((h) => (h.id === selectedHoleId ? { ...h, ...patch } : h)),
+    }));
+  }
+
+  function deleteSelectedHole() {
+    setDraft((prev) => ({ ...prev, holes: prev.holes.filter((h) => h.id !== selectedHoleId) }));
+    setSelectedHoleId(null);
+  }
+
+  function growSelectedHole(hole: HolePlacement, cell: GridCell) {
+    const touchesHole = hole.cells.some((c) => Math.abs(c.x - cell.x) + Math.abs(c.z - cell.z) === 1);
+    if (!touchesHole) return; // a hole must stay one connected shape
+    setDraft((prev) => {
+      const cleared = clearCells(prev, new Set([cellKey(cell.x, cell.z)]));
+      const target = cleared.holes.find((h) => h.id === hole.id);
+      if (!target) return prev;
+      const grown = makeHole(hole.id, hole.color, hole.capacity, [...target.cells, cell]);
+      return { ...cleared, holes: cleared.holes.map((h) => (h.id === hole.id ? grown : h)) };
+    });
+  }
+
+  function carveSelectedHole(hole: HolePlacement, cell: GridCell) {
+    const key = cellKey(cell.x, cell.z);
+    const remaining = hole.cells.filter((c) => cellKey(c.x, c.z) !== key);
+    setDraft((prev) => {
+      const others = prev.holes.filter((h) => h.id !== hole.id);
+      if (remaining.length === 0) return { ...prev, holes: others };
+      // carving out a middle cell can split one hole in two; keep both pieces,
+      // each inheriting the original's color and capacity
+      const pieces = connectedComponents(remaining).map((piece, i) =>
+        makeHole(i === 0 ? hole.id : newId(), hole.color, hole.capacity, piece)
+      );
+      return { ...prev, holes: [...others, ...pieces] };
+    });
+    if (remaining.length === 0) setSelectedHoleId(null);
+  }
+
+  function handleEditClick(cell: GridCell) {
+    const key = cellKey(cell.x, cell.z);
+    const hitHole = holesByCell.get(key);
+    if (hitHole && hitHole.id !== selectedHoleId) {
+      setSelectedHoleId(hitHole.id);
+      return;
+    }
+    if (!selectedHole) return;
+    if (hitHole && hitHole.id === selectedHoleId) carveSelectedHole(selectedHole, cell);
+    else if (!hitHole) growSelectedHole(selectedHole, cell);
+  }
+
   function handlePaintStart(cell: GridCell) {
     const key = cellKey(cell.x, cell.z);
+    if (isEditMode) {
+      handleEditClick(cell);
+      return;
+    }
     if (mode === "cats") {
       dragActionRef.current = catsByCell.has(key) ? "remove" : "add";
       if (dragActionRef.current === "remove") removeCat(cell);
@@ -189,6 +255,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   }
 
   function handlePaintDrag(cell: GridCell) {
+    if (isEditMode) return; // edits are deliberate single clicks
     if (mode === "cats") {
       if (dragActionRef.current === "add") placeCat(cell);
       else removeCat(cell);
@@ -344,10 +411,16 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 <button className={mode === "holes-preset" ? "active" : ""} onClick={() => setMode("holes-preset")}>
                   Holes (preset)
                 </button>
+                <button className={mode === "edit" ? "active" : ""} onClick={() => setMode("edit")}>
+                  Edit
+                </button>
               </div>
               <ZoomControl value={zoom} onChange={setZoom} />
             </div>
 
+            {/* placement controls — irrelevant while editing an existing hole,
+                whose own color/capacity live in the inspector instead */}
+            {!isEditMode && (
             <div className="field-row">
               <label className="color-field">
                 Color — cats &amp; holes
@@ -366,7 +439,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   ))}
                 </div>
               </label>
-              {isHoleMode && (
+              {placesHoles && (
                 <label title="How many cats this hole can swallow before it's full">
                   Cat Capacity
                   <input
@@ -430,6 +503,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 </>
               )}
             </div>
+            )}
 
             {isShapeMode && (
               <div className="field-row">
@@ -449,7 +523,9 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   ? "Click a cell to cut a one-cell hole with the capacity above; click it again to remove it."
                   : mode === "holes-preset"
                     ? "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole."
-                    : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
+                    : mode === "edit"
+                      ? "Click any hole to select it, then change its color or capacity on the right. Click a cell touching it to grow the shape, or one of its own cells to carve that cell away."
+                      : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
             </p>
 
             <div className="canvas-row">
@@ -479,7 +555,8 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                         cellRect,
                         BLOCK_COLOR_HEX[hole.color],
                         palette.holeVoid,
-                        hole.capacity
+                        hole.capacity,
+                        isEditMode && hole.id === selectedHoleId ? palette.textAccent : undefined
                       );
                     }
                     for (const cat of draft.cats) {
@@ -490,6 +567,18 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
               </div>
 
               <div className="canvas-side">
+                {isEditMode &&
+                  (selectedHole ? (
+                    <HoleInspector
+                      hole={selectedHole}
+                      onColorChange={(color) => updateSelectedHole({ color })}
+                      onCapacityChange={(value) => updateSelectedHole({ capacity: value })}
+                      onDelete={deleteSelectedHole}
+                      onDeselect={() => setSelectedHoleId(null)}
+                    />
+                  ) : (
+                    <p className="hint">Click a hole on the grid to select and edit it.</p>
+                  ))}
                 <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
                 <p className="stat-line">
                   <span className="stat-value">{draft.cats.length}</span>
