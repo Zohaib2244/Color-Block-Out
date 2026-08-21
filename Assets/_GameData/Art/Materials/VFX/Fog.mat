@@ -12,6 +12,9 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _ALPHAMODULATE_ON
+  - _COLOROVERLAY_ON
+  - _DISTORTION_ON
   - _FADING_ON
   - _SOFTPARTICLES_ON
   - _SURFACE_TYPE_TRANSPARENT
@@ -19,8 +22,8 @@ Material:
   - _FLIPBOOKBLENDING_OFF
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_DoubleSidedGI: 1
+  m_CustomRenderQueue: 3005
   stringTagMap:
     RenderType: Transparent
   disabledShaderPasses:
@@ -62,22 +65,22 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _Blend: 0
+    - _Blend: 3
     - _BlendModePreserveSpecular: 1
     - _BlendOp: 0
     - _BumpScale: 1
     - _CameraFadingEnabled: 0
-    - _CameraFarFadeDistance: 2
-    - _CameraNearFadeDistance: 1
-    - _ColorMode: 0
-    - _Cull: 2
+    - _CameraFarFadeDistance: 0
+    - _CameraNearFadeDistance: 0
+    - _ColorMode: 3
+    - _Cull: 0
     - _Cutoff: 0.5
-    - _DistortionBlend: 0.5
-    - _DistortionEnabled: 0
+    - _DistortionBlend: 0.29
+    - _DistortionEnabled: 1
     - _DistortionStrength: 1
     - _DistortionStrengthScaled: 0.1
-    - _DstBlend: 10
-    - _DstBlendAlpha: 10
+    - _DstBlend: 0
+    - _DstBlendAlpha: 1
     - _FlipbookBlending: 0
     - _FlipbookMode: 0
     - _FogDensity: 1.23
@@ -85,24 +88,24 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _QueueControl: 0
-    - _QueueOffset: 0
+    - _QueueOffset: 5
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
     - _SoftParticlesEnabled: 1
-    - _SoftParticlesFarFadeDistance: 1.29
-    - _SoftParticlesNearFadeDistance: 0
-    - _SrcBlend: 5
-    - _SrcBlendAlpha: 1
+    - _SoftParticlesFarFadeDistance: 0.1
+    - _SoftParticlesNearFadeDistance: 0.07
+    - _SrcBlend: 2
+    - _SrcBlendAlpha: 0
     - _Surface: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.08490565, g: 0.08490565, b: 0.08490565, a: 0.8862745}
+    - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
     - _BaseColorAddSubDiff: {r: -1, g: 0, b: 0, a: 0}
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
-    - _Color: {r: 0.08490563, g: 0.08490563, b: 0.08490563, a: 0.8862745}
+    - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FogColor: {r: 0, g: 0, b: 0, a: 0.83137256}
-    - _SoftParticleFadeParams: {r: 0, g: 0.7751938, b: 0, a: 0}
+    - _SoftParticleFadeParams: {r: 0.07, g: 33.333332, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5878396010975147833
