@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37d9ba77988ef914797f097b4a69b4a5, type: 3}
+  m_Name: Level_45
+  m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
+  levelName: Level_45
+  grid: {fileID: 11400000, guid: aea4dfa278764b309cee0f9b44528686, type: 2}
+  levelTime: 110
+  cats:
+  - colorId: 6
+    cell: {x: 6, y: 2}
+  - colorId: 6
+    cell: {x: 6, y: 2}
+  - colorId: 6
+    cell: {x: 6, y: 2}
+  - colorId: 7
+    cell: {x: 9, y: 3}
+  - colorId: 7
+    cell: {x: 9, y: 3}
+  - colorId: 7
+    cell: {x: 9, y: 3}
+  - colorId: 8
+    cell: {x: 1, y: 1}
+  - colorId: 8
+    cell: {x: 1, y: 1}
+  - colorId: 8
+    cell: {x: 1, y: 1}
+  - colorId: 0
+    cell: {x: 6, y: 3}
+  - colorId: 0
+    cell: {x: 6, y: 3}
+  - colorId: 0
+    cell: {x: 6, y: 3}
+  - colorId: 0
+    cell: {x: 6, y: 3}
+  - colorId: 1
+    cell: {x: 3, y: 3}
+  - colorId: 1
+    cell: {x: 3, y: 3}
+  - colorId: 1
+    cell: {x: 3, y: 3}
+  holes:
+  - colorId: 6
+    origin: {x: 6, y: 1}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: -1, y: 0}
+  - colorId: 7
+    origin: {x: 9, y: 5}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: -1, y: 0}
+    - {x: 0, y: 1}
+  - colorId: 8
+    origin: {x: 5, y: 2}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: -1, y: 0}
+    - {x: 0, y: 1}
+  - colorId: 0
+    origin: {x: 5, y: 8}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: -1, y: 0}
+    - {x: 0, y: 1}
+  - colorId: 1
+    origin: {x: 3, y: 4}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: -1, y: 0}

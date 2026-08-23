@@ -31,6 +31,9 @@ public sealed class CatPuzzleConfig : ScriptableObject
     [Tooltip("Cat prefab. Its CatPiece component carries the collection animation settings.")]
     public GameObject catPrefab;
 
+    [Tooltip("Vertical gap between cats stacked on the same cell.")]
+    public float catStackHeight = 0.3f;
+
     [Tooltip("Hole piece prefabs and the hole root prefab, which carries the exit and highlight settings.")]
     public CatHoleConfiguration holeConfiguration;
 

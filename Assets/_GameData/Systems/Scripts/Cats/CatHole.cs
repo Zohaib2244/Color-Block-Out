@@ -16,6 +16,7 @@ public sealed class CatHole : MonoBehaviour
     [SerializeField] private Vector2Int originCell;
     [SerializeField] private List<Vector2Int> offsets = new List<Vector2Int> { Vector2Int.zero };
     [SerializeField] private bool active = true;
+    [SerializeField] private int collectedCount;
 
     [Header("Exit")]
     [Tooltip("Where the meshes slide to before the hole hides, relative to their resting position.")]
@@ -31,6 +32,15 @@ public sealed class CatHole : MonoBehaviour
     public bool IsActive => active;
     public int CellCount => offsets.Count;
 
+    /// <summary>
+    /// A hole's own capacity is one cat per cell it covers, so a 1-cell hole is done after its
+    /// first catch while a wider hole keeps accepting until each of its cells has taken one.
+    /// </summary>
+    public int CollectedCount => collectedCount;
+    public bool IsSatisfied => collectedCount >= CellCount;
+
+    public void RegisterCollected(int count = 1) => collectedCount += count;
+
     public void Configure(int newColorId, Vector2Int origin, IEnumerable<Vector2Int> shapeOffsets)
     {
         colorId = newColorId;
@@ -38,6 +48,7 @@ public sealed class CatHole : MonoBehaviour
         offsets = new List<Vector2Int>(shapeOffsets);
         if (offsets.Count == 0) offsets.Add(Vector2Int.zero);
         active = true;
+        collectedCount = 0;
     }
 
     /// <summary>

@@ -35,6 +35,7 @@ public static class CatLevelBuilder
         foreach (CatHolePlacement placement in level.holes) SpawnHole(placement, instance, config);
 
         instance.RefreshContents();
+        RestackCats(instance.Cats, grid, config.catStackHeight);
         return instance;
     }
 
@@ -88,6 +89,34 @@ public static class CatLevelBuilder
         cat.SetGridPosition(cell);
         if (grid == null) return;
         cat.transform.localPosition = grid.CellToLocalPosition(cell);
+    }
+
+    /// <summary>
+    /// Sorts cats sharing a cell into a vertical stack, so more than one cat can occupy the same
+    /// cell as a puzzle element. Cats not sharing a cell with anyone else stay flush with the grid.
+    /// Collected cats are skipped since they are on their way out of play.
+    /// </summary>
+    public static void RestackCats(IEnumerable<CatPiece> cats, GridManager grid, float stackHeight)
+    {
+        if (grid == null) return;
+
+        Dictionary<Vector2Int, List<CatPiece>> byCell = new Dictionary<Vector2Int, List<CatPiece>>();
+        foreach (CatPiece cat in cats)
+        {
+            if (cat == null || cat.IsCollected) continue;
+            if (!byCell.TryGetValue(cat.GridPosition, out List<CatPiece> stack)) byCell[cat.GridPosition] = stack = new List<CatPiece>();
+            stack.Add(cat);
+        }
+
+        foreach (KeyValuePair<Vector2Int, List<CatPiece>> entry in byCell)
+        {
+            Vector3 local = grid.CellToLocalPosition(entry.Key);
+            for (int i = 0; i < entry.Value.Count; i++)
+            {
+                local.y = i * stackHeight;
+                entry.Value[i].transform.localPosition = local;
+            }
+        }
     }
 
     /// <summary>Writes the scene back into the level asset, including holes the designer dragged around.</summary>

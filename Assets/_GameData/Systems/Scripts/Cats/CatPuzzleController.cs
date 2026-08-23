@@ -100,14 +100,27 @@ public sealed class CatPuzzleController : MonoBehaviour
         return true;
     }
 
+    /// <summary>Only the top of a stack is exposed, so it alone decides whether a hole can sit here.</summary>
     private bool IsBlockedByCat(CatHole hole, Vector2Int cell)
     {
+        CatPiece top = TopCatAt(cell);
+        return top != null && top.ColorId != hole.ColorId;
+    }
+
+    /// <summary>The uncollected cat sitting highest in a cell's stack, or null if the cell is empty.</summary>
+    private CatPiece TopCatAt(Vector2Int cell)
+    {
+        CatPiece top = null;
+        float topY = float.NegativeInfinity;
         foreach (CatPiece cat in Cats)
         {
             if (cat == null || cat.IsCollected || cat.GridPosition != cell) continue;
-            if (cat.ColorId != hole.ColorId) return true;
+            float y = cat.transform.localPosition.y;
+            if (top != null && y <= topY) continue;
+            top = cat;
+            topY = y;
         }
-        return false;
+        return top;
     }
 
     private bool IsBlockedByHole(CatHole hole, Vector2Int cell)
@@ -174,36 +187,50 @@ public sealed class CatPuzzleController : MonoBehaviour
     private void ResolveHole(CatHole hole) => CollectCatsUnder(hole, hole != null ? hole.OriginCell : Vector2Int.zero);
 
     /// <summary>
-    /// Eats every matching cat the shape covers from <paramref name="origin"/>. Called while the
-    /// hole is still being dragged, so a cat is taken the moment the hole reaches it rather than
-    /// on release. Each cat hops to a hole cell no other cat is using before it disappears.
+    /// Eats the single matching cat exposed on top of each cell the shape covers from
+    /// <paramref name="origin"/> — one hole cell takes one cat per visit, never a whole stack at
+    /// once, so a stack of the hole's own colour needs the hole to come back for each cat beneath
+    /// it. A mismatched colour on top blocks that cell entirely (see <see cref="IsBlockedByCat"/>).
+    /// Called while the hole is still being dragged, so a cat is taken the moment the hole reaches
+    /// it rather than on release. Each cat hops to a hole cell no other cat is using before it
+    /// disappears.
     /// </summary>
     public void CollectCatsUnder(CatHole hole, Vector2Int origin)
     {
         if (hole == null || !hole.IsActive || activeLevel == null) return;
 
         List<Vector2Int> holeCells = hole.CellsAt(origin).ToList();
-        HashSet<Vector2Int> taken = new HashSet<Vector2Int>();
-        foreach (CatPiece cat in Cats)
-            if (cat != null && !cat.IsCollected && holeCells.Contains(cat.GridPosition)) taken.Add(cat.GridPosition);
+        HashSet<Vector2Int> reservedExits = new HashSet<Vector2Int>();
+        int collectedCount = 0;
 
-        bool collectedAny = false;
-        foreach (CatPiece cat in Cats.ToArray())
+        foreach (Vector2Int cell in holeCells)
         {
-            if (cat == null || cat.IsCollected || cat.ColorId != hole.ColorId) continue;
-            if (!holeCells.Contains(cat.GridPosition)) continue;
+            CatPiece cat = TopCatAt(cell);
+            if (cat == null || cat.ColorId != hole.ColorId) continue;
 
-            taken.Remove(cat.GridPosition);
-            Vector2Int exit = PickExitCell(holeCells, taken, cat.GridPosition);
-            taken.Add(exit);
+            Vector2Int exit = PickExitCell(holeCells, reservedExits, cat);
+            reservedExits.Add(exit);
 
             cat.SetGridPosition(exit);
             cat.CollectInto(CellToLocal(exit), HoleSurfaceY());
-            collectedAny = true;
+            collectedCount++;
             CatCollected.Invoke(cat, hole);
         }
-        if (!collectedAny) return;
+        if (collectedCount == 0) return;
 
+        CatLevelBuilder.RestackCats(Cats, GridManager, StackHeight);
+        hole.RegisterCollected(collectedCount);
+
+        // A hole retires once it has taken one cat per cell it covers — a 1-cell hole is done
+        // after a single catch, it does not wait for the whole colour to clear.
+        if (hole.IsSatisfied)
+        {
+            hole.Complete();
+            HoleCompleted.Invoke(hole);
+        }
+
+        // Any other same-coloured hole that can no longer be filled retires too, since nothing is
+        // left for it to do.
         bool colorComplete = Cats.All(cat => cat == null || cat.ColorId != hole.ColorId || cat.IsCollected);
         if (colorComplete)
         {
@@ -217,14 +244,15 @@ public sealed class CatPuzzleController : MonoBehaviour
         if (IsComplete) PuzzleCompleted.Invoke();
     }
 
-    /// <summary>Closest hole cell nobody else is heading for, so cats never stack up on the way out.</summary>
-    private static Vector2Int PickExitCell(List<Vector2Int> holeCells, HashSet<Vector2Int> taken, Vector2Int from)
+    /// <summary>Closest hole cell nobody else is heading for or still standing on, so exiting cats never overlap.</summary>
+    private Vector2Int PickExitCell(List<Vector2Int> holeCells, HashSet<Vector2Int> reservedExits, CatPiece exiting)
     {
+        Vector2Int from = exiting.GridPosition;
         Vector2Int best = from;
         int bestDistance = int.MaxValue;
         foreach (Vector2Int cell in holeCells)
         {
-            if (taken.Contains(cell)) continue;
+            if (!IsCellFree(cell, reservedExits, exiting)) continue;
             int distance = Mathf.Abs(cell.x - from.x) + Mathf.Abs(cell.y - from.y);
             if (distance >= bestDistance) continue;
             best = cell;
@@ -232,6 +260,19 @@ public sealed class CatPuzzleController : MonoBehaviour
         }
         return best;
     }
+
+    private bool IsCellFree(Vector2Int cell, HashSet<Vector2Int> reservedExits, CatPiece exiting)
+    {
+        if (reservedExits.Contains(cell)) return false;
+        foreach (CatPiece other in Cats)
+            if (other != null && other != exiting && !other.IsCollected && other.GridPosition == cell) return false;
+        return true;
+    }
+
+    /// <summary>Vertical gap between stacked cats, sourced from the level spawner's shared config.</summary>
+    private static float StackHeight => LevelSpawner.Instance != null && LevelSpawner.Instance.Config != null
+        ? LevelSpawner.Instance.Config.catStackHeight
+        : 0f;
 
     /// <summary>Where the hole surface sits in the Cats parent's space, which cats fall through.</summary>
     private float HoleSurfaceY()

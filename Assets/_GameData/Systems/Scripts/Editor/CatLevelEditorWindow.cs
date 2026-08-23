@@ -223,11 +223,11 @@ public sealed class CatLevelEditorWindow : EditorWindow
         }
         else if (tool == Tool.Cats)
         {
-            EditorGUILayout.HelpBox("Click a cell to place a cat of the selected colour. Clicking a cat that is already there recolours it.", MessageType.None);
+            EditorGUILayout.HelpBox("Click a cell to place a cat of the selected colour. Clicking a cat of a different colour recolours it; clicking one that's already the selected colour stacks another on top. Shift+click always stacks, even over a different colour.", MessageType.None);
         }
         else
         {
-            EditorGUILayout.HelpBox("Click a cell to remove the cat or hole on it.", MessageType.None);
+            EditorGUILayout.HelpBox("Click a cell to remove the cat or hole on it. On a stack of cats this removes only the top one.", MessageType.None);
         }
 
         cellSize = EditorGUILayout.Slider("Board Zoom", cellSize, 14f, 48f);
@@ -326,7 +326,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         Rect board = new Rect(area.x + 20f, area.y + 4f, width * cellSize, height * cellSize);
 
         HandleBoardInput(board, width, height);
-        Dictionary<Vector2Int, CatPiece> catsByCell = MapCats();
+        Dictionary<Vector2Int, List<CatPiece>> catStacksByCell = MapCatStacks();
         Dictionary<Vector2Int, CatHole> holesByCell = MapHoles();
 
         for (int x = 0; x < width; x++)
@@ -339,7 +339,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
                 EditorGUI.DrawRect(rect, playable ? ((x + z) % 2 == 0 ? EmptyColor : EmptyAltColor) : WallColor);
 
                 if (holesByCell.TryGetValue(cell, out CatHole hole)) DrawHoleCell(rect, board, cell, height, hole, holesByCell);
-                if (catsByCell.TryGetValue(cell, out CatPiece cat)) DrawCatCell(rect, cat);
+                if (catStacksByCell.TryGetValue(cell, out List<CatPiece> stack)) DrawCatCell(rect, stack);
                 if (selection.Contains(cell)) EditorGUI.DrawRect(rect, SelectionColor);
 
                 if (showCoordinates && playable)
@@ -382,14 +382,28 @@ public sealed class CatLevelEditorWindow : EditorWindow
         else Handles.DrawLine(new Vector3(rect.xMax, rect.y), new Vector3(rect.xMax, rect.yMax));
     }
 
-    private void DrawCatCell(Rect rect, CatPiece cat)
+    /// <summary>Draws every cat on a cell as concentric rings, outermost = bottom of the stack, so a stack reads at a glance.</summary>
+    private void DrawCatCell(Rect rect, List<CatPiece> stack)
     {
         float inset = rect.width * 0.22f;
         Rect body = new Rect(rect.x + inset, rect.y + inset, rect.width - inset * 2f, rect.height - inset * 2f);
-        Handles.color = SwatchOf(cat.ColorId);
-        Handles.DrawSolidDisc(body.center, Vector3.forward, body.width * 0.5f);
-        Handles.color = Color.black;
-        Handles.DrawWireDisc(body.center, Vector3.forward, body.width * 0.5f);
+        float maxRadius = body.width * 0.5f;
+        float shrinkPerLayer = stack.Count > 1 ? maxRadius * 0.22f : 0f;
+
+        for (int i = stack.Count - 1; i >= 0; i--)
+        {
+            float radius = maxRadius - (stack.Count - 1 - i) * shrinkPerLayer;
+            Handles.color = SwatchOf(stack[i].ColorId);
+            Handles.DrawSolidDisc(body.center, Vector3.forward, radius);
+            Handles.color = Color.black;
+            Handles.DrawWireDisc(body.center, Vector3.forward, radius);
+        }
+
+        if (stack.Count > 1)
+        {
+            GUIStyle badge = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.UpperRight, normal = { textColor = Color.white } };
+            GUI.Label(rect, $"x{stack.Count}", badge);
+        }
     }
 
     private void HandleBoardInput(Rect board, int width, int height)
@@ -405,7 +419,10 @@ public sealed class CatLevelEditorWindow : EditorWindow
         Vector2Int cell = new Vector2Int(x, z);
         switch (tool)
         {
-            case Tool.Cats: Defer(() => PlaceCat(cell)); break;
+            case Tool.Cats:
+                bool stackOnTop = evt.shift;
+                Defer(() => PlaceCat(cell, stackOnTop));
+                break;
             case Tool.Holes:
                 if (!gridAsset.IsPlayable(cell)) break;
                 if (evt.type == EventType.MouseDrag) selection.Add(cell);
@@ -531,8 +548,9 @@ public sealed class CatLevelEditorWindow : EditorWindow
         {
             if (cat == null) continue;
             Undo.RecordObject(cat.transform, "Snap Cat");
-            CatLevelBuilder.PlaceCat(cat, instance.Grid.LocalPositionToCell(cat.transform.localPosition), instance.Grid);
+            cat.SetGridPosition(instance.Grid.LocalPositionToCell(cat.transform.localPosition));
         }
+        CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
         foreach (CatHole hole in instance.Holes)
         {
             if (hole == null) continue;
@@ -542,23 +560,34 @@ public sealed class CatLevelEditorWindow : EditorWindow
         MarkSceneDirty();
     }
 
-    private void PlaceCat(Vector2Int cell)
+    /// <summary>
+    /// Places a cat of the selected colour. An empty cell just gets one. A cell that already has a
+    /// cat of a *different* colour gets its top cat recoloured. A cell whose top cat already
+    /// matches the selected colour adds another cat on top instead, since recolouring it to what it
+    /// already is would do nothing — this is also how same-colour stacks get built without needing
+    /// shift. <paramref name="stackOnTop"/> (a shift+click) always adds on top regardless of colour.
+    /// </summary>
+    private void PlaceCat(Vector2Int cell, bool stackOnTop)
     {
         if (!EnsureSceneLevel() || !gridAsset.IsPlayable(cell)) return;
 
         // The instance keeps serialized lists of its content, so undo has to cover it too.
         Undo.RecordObject(instance, "Edit Cat Level");
 
-        CatPiece existing = MapCats().TryGetValue(cell, out CatPiece found) ? found : null;
-        if (existing != null)
+        List<CatPiece> existing = MapCatStacks().TryGetValue(cell, out List<CatPiece> found) ? found : null;
+        CatPiece top = existing != null && existing.Count > 0 ? existing[existing.Count - 1] : null;
+        bool addNew = top == null || stackOnTop || top.ColorId == selectedColorId;
+
+        if (!addNew)
         {
-            Undo.RecordObject(existing, "Recolour Cat");
-            existing.Configure(selectedColorId, cell, Palette);
-            existing.name = $"Cat_{ColorName(selectedColorId)}_{cell.x}_{cell.y}";
+            Undo.RecordObject(top, "Recolour Cat");
+            top.Configure(selectedColorId, cell, Palette);
+            top.name = $"Cat_{ColorName(selectedColorId)}_{cell.x}_{cell.y}";
         }
         else
         {
             CatLevelBuilder.SpawnCat(new CatPlacement { colorId = selectedColorId, cell = cell }, instance, config);
+            CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
         }
         MarkSceneDirty();
     }
@@ -573,11 +602,17 @@ public sealed class CatLevelEditorWindow : EditorWindow
         MarkSceneDirty();
     }
 
+    /// <summary>Removes one cat/hole from a cell. A stack of cats loses only its top one per click.</summary>
     private void EraseAt(Vector2Int cell)
     {
         if (instance == null) return;
         Undo.RecordObject(instance, "Erase Cell");
-        if (MapCats().TryGetValue(cell, out CatPiece cat) && cat != null) Undo.DestroyObjectImmediate(cat.gameObject);
+        if (MapCatStacks().TryGetValue(cell, out List<CatPiece> stack) && stack.Count > 0)
+        {
+            Undo.DestroyObjectImmediate(stack[stack.Count - 1].gameObject);
+            instance.RefreshContents();
+            CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
+        }
         else if (MapHoles().TryGetValue(cell, out CatHole hole) && hole != null) Undo.DestroyObjectImmediate(hole.gameObject);
         selection.Remove(cell);
         instance.RefreshContents();
@@ -591,15 +626,19 @@ public sealed class CatLevelEditorWindow : EditorWindow
         return instance != null;
     }
 
-    private Dictionary<Vector2Int, CatPiece> MapCats()
+    /// <summary>Cats per cell, ordered bottom of the stack first (lowest local Y) so the last entry is always the top one.</summary>
+    private Dictionary<Vector2Int, List<CatPiece>> MapCatStacks()
     {
-        Dictionary<Vector2Int, CatPiece> map = new Dictionary<Vector2Int, CatPiece>();
+        Dictionary<Vector2Int, List<CatPiece>> map = new Dictionary<Vector2Int, List<CatPiece>>();
         if (instance == null) return map;
         foreach (CatPiece cat in instance.Cats)
         {
             if (cat == null) continue;
-            map[CellOf(cat.transform, cat.GridPosition)] = cat;
+            Vector2Int cell = CellOf(cat.transform, cat.GridPosition);
+            if (!map.TryGetValue(cell, out List<CatPiece> stack)) map[cell] = stack = new List<CatPiece>();
+            stack.Add(cat);
         }
+        foreach (List<CatPiece> stack in map.Values) stack.Sort((a, b) => a.transform.localPosition.y.CompareTo(b.transform.localPosition.y));
         return map;
     }
 

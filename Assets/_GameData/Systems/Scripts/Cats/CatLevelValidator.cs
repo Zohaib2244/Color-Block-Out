@@ -66,7 +66,6 @@ public static class CatLevelValidator
     {
         if (level.cats.Count == 0) issues.Add(new Issue(Severity.Warning, "The level has no cats, so it is complete the moment it loads."));
 
-        HashSet<Vector2Int> seen = new HashSet<Vector2Int>();
         foreach (CatPlacement cat in level.cats)
         {
             if (cat == null) continue;
@@ -75,8 +74,7 @@ public static class CatLevelValidator
             else if (!grid.IsPlayable(cat.cell))
                 issues.Add(new Issue(Severity.Error, $"Cat at {cat.cell} stands on a blocked cell."));
 
-            if (!seen.Add(cat.cell))
-                issues.Add(new Issue(Severity.Error, $"Two cats share cell {cat.cell}."));
+            // Cats are allowed to stack: more than one cat may share a cell by design.
 
             if (palette != null && !palette.Contains(cat.colorId))
                 issues.Add(new Issue(Severity.Error, $"Cat at {cat.cell} uses colour id {cat.colorId}, which is not in the palette."));

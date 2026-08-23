@@ -1,0 +1,6388 @@
+{
+  "levels": [
+    {
+      "name": "Level_01",
+      "index": 1,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 3,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_02",
+      "index": 2,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 4,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_03",
+      "index": 3,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 3,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_04",
+      "index": 4,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 1
+            },
+            {
+              "x": 4,
+              "z": 1
+            },
+            {
+              "x": 5,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_05",
+      "index": 5,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 4
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 5
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_06",
+      "index": 6,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 5
+            },
+            {
+              "x": 4,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 5,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_07",
+      "index": 7,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 1,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 4
+            },
+            {
+              "x": 4,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 5
+            },
+            {
+              "x": 3,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_08",
+      "index": 8,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_09",
+      "index": 9,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 2
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 5,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_10",
+      "index": 10,
+      "gridWidth": 7,
+      "gridLength": 7,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 50,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 3,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_11",
+      "index": 11,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 6
+            },
+            {
+              "x": 6,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_12",
+      "index": 12,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 4
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 6
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 6,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            },
+            {
+              "x": 6,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_13",
+      "index": 13,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 2
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 6
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 3
+            },
+            {
+              "x": 6,
+              "z": 3
+            },
+            {
+              "x": 4,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_14",
+      "index": 14,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 6,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 4,
+              "z": 1
+            },
+            {
+              "x": 5,
+              "z": 1
+            },
+            {
+              "x": 3,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_15",
+      "index": 15,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 2
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 3,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 3,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 2,
+              "z": 6
+            },
+            {
+              "x": 3,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_16",
+      "index": 16,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 2
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 4
+            },
+            {
+              "x": 6,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 6
+            },
+            {
+              "x": 4,
+              "z": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_17",
+      "index": 17,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 5
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 5
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 5,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 5
+            },
+            {
+              "x": 1,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 6
+            },
+            {
+              "x": 4,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_18",
+      "index": 18,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 6
+            },
+            {
+              "x": 5,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 4
+            },
+            {
+              "x": 5,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_19",
+      "index": 19,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 4
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 3,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 3,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 5
+            },
+            {
+              "x": 6,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_20",
+      "index": 20,
+      "gridWidth": 8,
+      "gridLength": 8,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 65,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 5
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 6
+            },
+            {
+              "x": 4,
+              "z": 6
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_21",
+      "index": 21,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 4,
+          "z": 7
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 1,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 5,
+              "z": 4
+            },
+            {
+              "x": 6,
+              "z": 4
+            },
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 7,
+              "z": 6
+            },
+            {
+              "x": 6,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 7
+            },
+            {
+              "x": 7,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_22",
+      "index": 22,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 2,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 5,
+              "z": 7
+            },
+            {
+              "x": 6,
+              "z": 7
+            },
+            {
+              "x": 4,
+              "z": 7
+            },
+            {
+              "x": 5,
+              "z": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_23",
+      "index": 23,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 4,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 7,
+              "z": 5
+            },
+            {
+              "x": 6,
+              "z": 5
+            },
+            {
+              "x": 7,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 7,
+              "z": 1
+            },
+            {
+              "x": 7,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 7
+            },
+            {
+              "x": 5,
+              "z": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_24",
+      "index": 24,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 3,
+          "z": 7
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 3,
+          "z": 7
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 3,
+          "z": 7
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 1,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            },
+            {
+              "x": 1,
+              "z": 7
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 2
+            },
+            {
+              "x": 7,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 1,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_25",
+      "index": 25,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 6
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 5
+            },
+            {
+              "x": 1,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 5
+            },
+            {
+              "x": 4,
+              "z": 5
+            },
+            {
+              "x": 3,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_26",
+      "index": 26,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 6
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 5
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 7,
+              "z": 6
+            },
+            {
+              "x": 6,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 7
+            },
+            {
+              "x": 6,
+              "z": 7
+            },
+            {
+              "x": 4,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_27",
+      "index": 27,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 7,
+              "z": 2
+            },
+            {
+              "x": 6,
+              "z": 2
+            },
+            {
+              "x": 7,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 3,
+              "z": 1
+            },
+            {
+              "x": 1,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_28",
+      "index": 28,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 5
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 4
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 6
+            },
+            {
+              "x": 4,
+              "z": 6
+            },
+            {
+              "x": 2,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 7
+            },
+            {
+              "x": 6,
+              "z": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_29",
+      "index": 29,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 2
+            },
+            {
+              "x": 6,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 3
+            },
+            {
+              "x": 7,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 4
+            },
+            {
+              "x": 6,
+              "z": 4
+            },
+            {
+              "x": 4,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_30",
+      "index": 30,
+      "gridWidth": 9,
+      "gridLength": 9,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 80,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 7,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 7
+            },
+            {
+              "x": 2,
+              "z": 7
+            },
+            {
+              "x": 3,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 6,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 6
+            },
+            {
+              "x": 6,
+              "z": 7
+            },
+            {
+              "x": 6,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_31",
+      "index": 31,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 8
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 3
+            },
+            {
+              "x": 7,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 5
+            },
+            {
+              "x": 4,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_32",
+      "index": 32,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 2
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 8,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 8,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 8,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 7,
+              "z": 5
+            },
+            {
+              "x": 7,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 4
+            },
+            {
+              "x": 8,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 7,
+              "z": 2
+            },
+            {
+              "x": 8,
+              "z": 2
+            },
+            {
+              "x": 6,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 1
+            },
+            {
+              "x": 6,
+              "z": 1
+            },
+            {
+              "x": 4,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_33",
+      "index": 33,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 2
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 6
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 3,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 8
+            },
+            {
+              "x": 2,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 7,
+              "z": 3
+            },
+            {
+              "x": 8,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_34",
+      "index": 34,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 1
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 1
+            },
+            {
+              "x": 5,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 8
+            },
+            {
+              "x": 4,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 8,
+              "z": 5
+            },
+            {
+              "x": 7,
+              "z": 5
+            },
+            {
+              "x": 8,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_35",
+      "index": 35,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 3,
+          "z": 2
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 6,
+          "z": 7
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 6,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 2
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 2
+            },
+            {
+              "x": 7,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 3,
+              "z": 1
+            },
+            {
+              "x": 1,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 6
+            },
+            {
+              "x": 5,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_36",
+      "index": 36,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 7,
+          "z": 7
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 4
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 4
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 8
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 4,
+              "z": 7
+            },
+            {
+              "x": 5,
+              "z": 7
+            },
+            {
+              "x": 3,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 8
+            },
+            {
+              "x": 2,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_37",
+      "index": 37,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 6
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 6
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 8
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 3
+            },
+            {
+              "x": 7,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 1
+            },
+            {
+              "x": 7,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 5
+            },
+            {
+              "x": 7,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 7
+            },
+            {
+              "x": 7,
+              "z": 7
+            },
+            {
+              "x": 5,
+              "z": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_38",
+      "index": 38,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 4
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 2,
+          "z": 7
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 3,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 8,
+              "z": 8
+            },
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 8,
+              "z": 4
+            },
+            {
+              "x": 7,
+              "z": 4
+            },
+            {
+              "x": 8,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_39",
+      "index": 39,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 8,
+          "z": 6
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 8,
+          "z": 6
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 1,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 5
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 1
+            },
+            {
+              "x": 2,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_40",
+      "index": 40,
+      "gridWidth": 10,
+      "gridLength": 10,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 95,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 8,
+          "z": 7
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 8,
+          "z": 7
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 8,
+          "z": 3
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 8,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 2
+            },
+            {
+              "x": 7,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 1
+            },
+            {
+              "x": 5,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 5
+            },
+            {
+              "x": 5,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_41",
+      "index": 41,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 6
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 8
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 8
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 9
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 9
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 3,
+              "z": 8
+            },
+            {
+              "x": 2,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 1,
+              "z": 7
+            },
+            {
+              "x": 2,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 6
+            },
+            {
+              "x": 9,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 4,
+              "z": 3
+            },
+            {
+              "x": 5,
+              "z": 3
+            },
+            {
+              "x": 3,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 9,
+              "z": 8
+            },
+            {
+              "x": 8,
+              "z": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_42",
+      "index": 42,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 8
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 8
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 8
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 1,
+          "z": 8
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 8
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 8
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 8
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 8
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 6,
+          "z": 6
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 5
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 2,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 1,
+              "z": 7
+            },
+            {
+              "x": 2,
+              "z": 7
+            },
+            {
+              "x": 1,
+              "z": 6
+            },
+            {
+              "x": 3,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 2,
+              "z": 9
+            },
+            {
+              "x": 3,
+              "z": 9
+            },
+            {
+              "x": 1,
+              "z": 9
+            },
+            {
+              "x": 2,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 5,
+          "cells": [
+            {
+              "x": 8,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 8,
+              "z": 9
+            },
+            {
+              "x": 8,
+              "z": 7
+            },
+            {
+              "x": 6,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 7,
+              "z": 3
+            },
+            {
+              "x": 8,
+              "z": 3
+            },
+            {
+              "x": 6,
+              "z": 3
+            },
+            {
+              "x": 7,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_43",
+      "index": 43,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 5,
+          "z": 7
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 4,
+          "z": 4
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 2,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 4,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 9,
+              "z": 1
+            },
+            {
+              "x": 8,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 8,
+              "z": 8
+            },
+            {
+              "x": 9,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 9,
+              "z": 9
+            },
+            {
+              "x": 8,
+              "z": 9
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 8,
+              "z": 7
+            },
+            {
+              "x": 9,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_44",
+      "index": 44,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 1
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 7,
+          "z": 4
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 5,
+          "cells": [
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 2,
+              "z": 5
+            },
+            {
+              "x": 3,
+              "z": 5
+            },
+            {
+              "x": 1,
+              "z": 5
+            },
+            {
+              "x": 2,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 8
+            },
+            {
+              "x": 6,
+              "z": 9
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 8,
+              "z": 8
+            },
+            {
+              "x": 9,
+              "z": 8
+            },
+            {
+              "x": 8,
+              "z": 9
+            },
+            {
+              "x": 8,
+              "z": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_45",
+      "index": 45,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 3
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 3
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 3,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 3,
+          "z": 3
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 1
+            },
+            {
+              "x": 7,
+              "z": 1
+            },
+            {
+              "x": 5,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 9,
+              "z": 5
+            },
+            {
+              "x": 8,
+              "z": 5
+            },
+            {
+              "x": 9,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 5,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            },
+            {
+              "x": 5,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 5,
+              "z": 8
+            },
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 4,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 9
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 3,
+              "z": 4
+            },
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 2,
+              "z": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_46",
+      "index": 46,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 8
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 7,
+          "z": 7
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 6,
+          "z": 5
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 2,
+              "z": 2
+            },
+            {
+              "x": 3,
+              "z": 2
+            },
+            {
+              "x": 1,
+              "z": 2
+            },
+            {
+              "x": 2,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 6,
+              "z": 9
+            },
+            {
+              "x": 7,
+              "z": 9
+            },
+            {
+              "x": 5,
+              "z": 9
+            },
+            {
+              "x": 6,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 5,
+          "cells": [
+            {
+              "x": 8,
+              "z": 7
+            },
+            {
+              "x": 9,
+              "z": 7
+            },
+            {
+              "x": 8,
+              "z": 8
+            },
+            {
+              "x": 8,
+              "z": 6
+            },
+            {
+              "x": 9,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 4,
+              "z": 4
+            },
+            {
+              "x": 5,
+              "z": 4
+            },
+            {
+              "x": 3,
+              "z": 4
+            },
+            {
+              "x": 4,
+              "z": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_47",
+      "index": 47,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 4
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 2,
+          "z": 4
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 8,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 8,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 8,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 8,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 4,
+          "z": 7
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 6,
+          "z": 1
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 5
+            },
+            {
+              "x": 3,
+              "z": 5
+            },
+            {
+              "x": 1,
+              "z": 5
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 7,
+              "z": 6
+            },
+            {
+              "x": 8,
+              "z": 6
+            },
+            {
+              "x": 6,
+              "z": 6
+            },
+            {
+              "x": 7,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 4
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 7
+            },
+            {
+              "x": 3,
+              "z": 7
+            },
+            {
+              "x": 1,
+              "z": 7
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 5,
+              "z": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_48",
+      "index": 48,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 1,
+          "z": 6
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 7
+        },
+        {
+          "color": 7,
+          "colorName": "Pink",
+          "x": 9,
+          "z": 7
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 1
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 1
+        },
+        {
+          "color": 8,
+          "colorName": "Teal",
+          "x": 9,
+          "z": 1
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 8
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 8,
+          "z": 8
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 3,
+              "z": 7
+            },
+            {
+              "x": 4,
+              "z": 7
+            },
+            {
+              "x": 2,
+              "z": 7
+            },
+            {
+              "x": 3,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 7,
+          "colorName": "Pink",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 7,
+              "z": 1
+            },
+            {
+              "x": 8,
+              "z": 1
+            },
+            {
+              "x": 6,
+              "z": 1
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 8,
+          "colorName": "Teal",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 7,
+              "z": 8
+            },
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 9
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 2,
+              "z": 1
+            },
+            {
+              "x": 3,
+              "z": 1
+            },
+            {
+              "x": 1,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_49",
+      "index": 49,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 0,
+          "colorName": "Red",
+          "x": 6,
+          "z": 2
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 1,
+          "colorName": "Orange",
+          "x": 5,
+          "z": 6
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 2,
+          "colorName": "Yellow",
+          "x": 9,
+          "z": 2
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 5,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 3,
+          "z": 9
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 3,
+          "z": 9
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 0,
+          "colorName": "Red",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 6,
+              "z": 8
+            },
+            {
+              "x": 7,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 1,
+          "colorName": "Orange",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 3
+            },
+            {
+              "x": 6,
+              "z": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 2,
+          "colorName": "Yellow",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 5,
+              "z": 2
+            },
+            {
+              "x": 4,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 3,
+          "cells": [
+            {
+              "x": 1,
+              "z": 7
+            },
+            {
+              "x": 2,
+              "z": 7
+            },
+            {
+              "x": 1,
+              "z": 8
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 2,
+          "cells": [
+            {
+              "x": 9,
+              "z": 1
+            },
+            {
+              "x": 8,
+              "z": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Level_50",
+      "index": 50,
+      "gridWidth": 11,
+      "gridLength": 11,
+      "cellSize": 0.57,
+      "timeLimitSeconds": 110,
+      "cats": [
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 3,
+          "colorName": "Blue",
+          "x": 4,
+          "z": 5
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 4,
+          "colorName": "Cyan",
+          "x": 7,
+          "z": 3
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 1,
+          "z": 1
+        },
+        {
+          "color": 5,
+          "colorName": "Green",
+          "x": 9,
+          "z": 5
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 8
+        },
+        {
+          "color": 6,
+          "colorName": "Purple",
+          "x": 6,
+          "z": 8
+        }
+      ],
+      "holes": [
+        {
+          "id": 0,
+          "color": 3,
+          "colorName": "Blue",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 9,
+              "z": 7
+            },
+            {
+              "x": 8,
+              "z": 7
+            },
+            {
+              "x": 9,
+              "z": 8
+            },
+            {
+              "x": 9,
+              "z": 6
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "color": 4,
+          "colorName": "Cyan",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 1,
+              "z": 3
+            },
+            {
+              "x": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "color": 5,
+          "colorName": "Green",
+          "capacity": 5,
+          "cells": [
+            {
+              "x": 9,
+              "z": 1
+            },
+            {
+              "x": 8,
+              "z": 1
+            },
+            {
+              "x": 9,
+              "z": 2
+            },
+            {
+              "x": 7,
+              "z": 1
+            },
+            {
+              "x": 8,
+              "z": 2
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "color": 6,
+          "colorName": "Purple",
+          "capacity": 4,
+          "cells": [
+            {
+              "x": 1,
+              "z": 8
+            },
+            {
+              "x": 2,
+              "z": 8
+            },
+            {
+              "x": 1,
+              "z": 9
+            },
+            {
+              "x": 1,
+              "z": 7
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
