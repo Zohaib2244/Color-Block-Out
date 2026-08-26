@@ -558,7 +558,7 @@ public static class CatLevelJsonImporter
         {
             if (entry == null || string.IsNullOrEmpty(entry.displayName)) continue;
             string key = Key(entry.displayName);
-            if (!byName.ContainsKey(key)) byName[key] = entry.id;
+            if (!byName.ContainsKey(key)) byName[key] = entry.Id;
         }
         return byName;
     }

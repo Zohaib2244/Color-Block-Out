@@ -18,6 +18,9 @@ public sealed class CatHole : MonoBehaviour
     [SerializeField] private bool active = true;
     [SerializeField] private int collectedCount;
 
+    [Tooltip("Tag used by the mesh pieces that should receive the hole's colour. Other children, like a fog plane, are left alone.")]
+    [SerializeField] private string coloredTag = "Hole";
+
     [Header("Exit")]
     [Tooltip("Where the meshes slide to before the hole hides, relative to their resting position.")]
     [SerializeField] private Vector3 exitOffset = new Vector3(0f, -0.6f, 0f);
@@ -52,14 +55,16 @@ public sealed class CatHole : MonoBehaviour
     }
 
     /// <summary>
-    /// Re-tints every piece. Needed after a scene reload as well as on build, because the tint
-    /// lives in a material property block and those are not saved with the scene.
+    /// Re-tints every piece tagged <see cref="coloredTag"/>. Needed after a scene reload as well as
+    /// on build, since the palette's tinted material instances are not saved with the scene. Other
+    /// children (e.g. a fog plane) are skipped so they keep their own material.
     /// </summary>
     public void ApplyColor(CatColorPalette palette)
     {
         if (palette == null) return;
         rendererBuffer.Clear();
         GetComponentsInChildren(true, rendererBuffer);
+        rendererBuffer.RemoveAll(renderer => renderer == null || !renderer.CompareTag(coloredTag));
         palette.PaintHole(rendererBuffer, colorId);
     }
 

@@ -45,8 +45,8 @@ public sealed class CatPiece : MonoBehaviour
     }
 
     /// <summary>
-    /// Re-tints the cat. Needed after a scene reload as well as on build, because the tint lives in
-    /// a material property block and those are not saved with the scene.
+    /// Re-applies the cat's colour material. Needed after a scene reload as well as on build, since
+    /// nothing about the assignment is saved with the scene.
     /// </summary>
     public void ApplyColor(CatColorPalette palette)
     {

@@ -73,7 +73,7 @@ public static class CatPuzzleAssetCreator
                 ("Teal", new Color32(0x00, 0x89, 0x7B, 0xFF))
             };
             for (int i = 0; i < defaults.Length; i++)
-                palette.entries.Add(new CatColorEntry { id = i, displayName = defaults[i].name, color = defaults[i].color });
+                palette.entries.Add(new CatColorEntry { type = (CatColorType)i, displayName = defaults[i].name, color = defaults[i].color });
         }
 
         EditorUtility.SetDirty(palette);
