@@ -683,13 +683,47 @@ canvas.grid-canvas {
   border: 1.5px solid var(--border);
 }
 
-.legend-glyph {
-  display: block;
-  flex-shrink: 0;
-  line-height: 0;
-  border-radius: 4px;
+/* ─── folder connection ──────────────────────────── */
+
+.folder-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.folder-bar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.72rem;
+}
+
+.folder-bar button.danger-link {
+  padding: 0 4px;
+}
+
+.folder-name {
+  font-size: 0.7rem;
+  color: var(--accent-cyan);
   overflow: hidden;
-  border: 1.5px solid var(--border);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Remembered, but its permission lapsed — usable again after Reconnect. */
+.folder-name.stale {
+  color: var(--text-muted);
+}
+
+.folder-status,
+.folder-note {
+  flex-basis: 100%;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 /* ─── inspector ─────────────────────────────────────────────────── */

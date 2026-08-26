@@ -3,7 +3,11 @@ import { getCanvasPalette } from "../canvasPalette";
 import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
+import { toFileName } from "../io/folder";
+import { sameShape } from "../io/gridJson";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
+import { useFolder } from "../io/useFolder";
+import type { FolderFile } from "../io/useFolder";
 import { boundarySides, nearestBoundarySide } from "../level/gates";
 import { listPresets } from "../level/holePresetLibrary";
 import { connectedComponents, holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
@@ -24,10 +28,10 @@ import type {
   SavedGrid,
   SavedLevel,
 } from "../types";
+import { FolderBar } from "./FolderBar";
 import { GridCanvas } from "./GridCanvas";
 import type { CellLocal } from "./GridCanvas";
 import { HoleInspector } from "./HoleInspector";
-import { PieceLegend } from "./Legend";
 import { StackVisualizer } from "./StackVisualizer";
 import { ToolPanel } from "./ToolPanel";
 import { ZoomControl } from "./ZoomControl";
@@ -87,6 +91,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const folder = useFolder("levels");
   /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
   const dragActionRef = useRef<"add" | "remove">("add");
   const palette = getCanvasPalette(useTheme());
@@ -482,6 +487,9 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     saveLevel(saved);
     setDraft({ ...saved });
     refreshLevels();
+    // A level saved while a folder is attached lands in it as JSON too, so the
+    // folder stays the shareable copy of the library rather than a stale one.
+    void folder.write(toFileName(saved.name, "level"), JSON.stringify(toLevelJson(saved, grid), null, 2));
   }
 
   function handleDeleteLevel(id: string) {
@@ -495,18 +503,68 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     downloadLevelJson(toLevelJson(draft, grid));
   }
 
-  async function handleImportFile(file: File) {
-    const text = await file.text();
-    const json = parseLevelJson(text);
-    const { grid: gridDraft, level: levelDraft } = fromLevelJson(json);
-    const importedGrid: SavedGrid = { ...gridDraft, id: newId(), updatedAt: Date.now() };
-    saveGrid(importedGrid);
-    const importedLevel: SavedLevel = { ...levelDraft, id: newId(), gridId: importedGrid.id, updatedAt: Date.now() };
-    saveLevel(importedLevel);
+  /**
+   * Imports level JSON, one file or a whole folder.
+   *
+   * Every level file carries its own inline copy of the grid it was authored
+   * on, so importing 40 levels that share a board would otherwise leave 40
+   * identical grids behind. A grid whose shape already matches is reused
+   * instead, and a level whose name already exists is replaced in place
+   * (keeping its id), so re-reading a folder updates the library rather than
+   * doubling it.
+   */
+  function importLevelFiles(files: FolderFile[]): string {
+    if (files.length === 0) return "No .json files there.";
+    let pool = listGrids();
+    const byName = new Map(listLevels().map((level) => [level.name, level]));
+    const failed: string[] = [];
+    let added = 0;
+    let updated = 0;
+    let last: SavedLevel | null = null;
+
+    for (const file of files) {
+      try {
+        const { grid: gridDraft, level: levelDraft } = fromLevelJson(parseLevelJson(file.text));
+        let target = pool.find((g) => sameShape(gridDraft, g));
+        if (!target) {
+          target = { ...gridDraft, id: newId(), updatedAt: Date.now() };
+          saveGrid(target);
+          pool = [...pool, target];
+        }
+        const match = byName.get(levelDraft.name);
+        const level: SavedLevel = {
+          ...levelDraft,
+          id: match?.id ?? newId(),
+          gridId: target.id,
+          updatedAt: Date.now(),
+        };
+        saveLevel(level);
+        byName.set(level.name, level);
+        last = level;
+        if (match) updated++;
+        else added++;
+      } catch {
+        failed.push(file.name);
+      }
+    }
+
     setGrids(listGrids());
     onGridsChanged?.();
     refreshLevels();
-    loadLevel(importedLevel);
+    if (last) loadLevel(last);
+
+    const parts: string[] = [];
+    if (added) parts.push(`${added} added`);
+    if (updated) parts.push(`${updated} updated`);
+    if (failed.length) parts.push(`${failed.length} skipped (${failed.slice(0, 3).join(", ")})`);
+    return parts.join(" · ") || "Nothing to import.";
+  }
+
+  async function handleImportFiles(list: FileList | null) {
+    if (!list) return;
+    const files: FolderFile[] = [];
+    for (const file of Array.from(list)) files.push({ name: file.name, text: await file.text() });
+    importLevelFiles(files);
   }
 
   const totalCapacity = draft.holes.reduce((sum, h) => sum + h.capacity, 0);
@@ -543,13 +601,14 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
             type="file"
             accept="application/json"
             style={{ display: "none" }}
+            multiple
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleImportFile(file);
+              void handleImportFiles(e.target.files);
               e.target.value = "";
             }}
           />
           <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
+          <FolderBar folder={folder} noun="level" onFiles={importLevelFiles} />
         </div>
       </aside>
 
@@ -818,7 +877,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 <p className="hint">{IDLE_PANEL_HINTS[tool]}</p>
               )}
 
-              <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
               <p className="stat-line">
                 <span className="stat-value">{draft.cats.length}</span>
                 <span className="muted"> on board · </span>

@@ -2,9 +2,14 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { getCanvasPalette } from "../canvasPalette";
 import { computePlayableMask, gridIndex, makeFlatGrid } from "../grid/floodFill";
 import { deleteGrid, listGrids, saveGrid } from "../grid/gridLibrary";
+import { downloadGridJson, fromGridJson, parseGridJson, toGridJson } from "../io/gridJson";
+import { toFileName } from "../io/folder";
+import { useFolder } from "../io/useFolder";
+import type { FolderFile } from "../io/useFolder";
 import { newId } from "../storage";
 import { useTheme } from "../theme";
 import type { SavedGrid } from "../types";
+import { FolderBar } from "./FolderBar";
 import { GridCanvas } from "./GridCanvas";
 import { SwatchLegend } from "./Legend";
 import { ZoomControl } from "./ZoomControl";
@@ -25,6 +30,8 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
   /** Value the current drag gesture is painting, so dragging never flip-flops cells. */
   const paintValueRef = useRef(true);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folder = useFolder("grids");
 
   const fitToViewport = useCallback(() => {
     const el = viewportRef.current;
@@ -101,6 +108,56 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
     saveGrid(saved);
     setDraft({ ...saved, wallToggles: [...saved.wallToggles] });
     refreshGrids();
+    // A grid saved while a folder is attached lands in it as JSON too, so the
+    // folder stays the shareable copy of the library rather than a stale one.
+    void folder.write(toFileName(saved.name, "grid"), JSON.stringify(toGridJson(saved), null, 2));
+  }
+
+  function handleExport() {
+    if (!draft.name.trim()) return;
+    downloadGridJson(toGridJson(draft));
+  }
+
+  /**
+   * Imports grid JSON. A file whose name matches an existing grid replaces it
+   * in place, keeping its id, so re-reading a folder updates the library
+   * instead of piling up copies — and every level pointing at that grid id
+   * keeps working.
+   */
+  function importGridFiles(files: FolderFile[]): string {
+    if (files.length === 0) return "No .json files in that folder.";
+    const byName = new Map(listGrids().map((grid) => [grid.name, grid]));
+    let added = 0;
+    let updated = 0;
+    const failed: string[] = [];
+
+    for (const file of files) {
+      try {
+        const parsed = fromGridJson(parseGridJson(file.text));
+        const match = byName.get(parsed.name);
+        const saved = { ...parsed, id: match?.id ?? newId(), updatedAt: Date.now() };
+        saveGrid(saved);
+        byName.set(saved.name, saved);
+        if (match) updated++;
+        else added++;
+      } catch {
+        failed.push(file.name);
+      }
+    }
+
+    refreshGrids();
+    const parts = [];
+    if (added) parts.push(`${added} added`);
+    if (updated) parts.push(`${updated} updated`);
+    if (failed.length) parts.push(`${failed.length} skipped (${failed.slice(0, 3).join(", ")})`);
+    return parts.join(" · ") || "Nothing to import.";
+  }
+
+  async function handleImportFiles(list: FileList | null) {
+    if (!list) return;
+    const files: FolderFile[] = [];
+    for (const file of Array.from(list)) files.push({ name: file.name, text: await file.text() });
+    importGridFiles(files);
   }
 
   function handleDelete(id: string) {
@@ -134,6 +191,21 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
           ))}
           {grids.length === 0 && <li className="muted empty">No saved grids yet.</li>}
         </ul>
+        <div className="sidebar-footer">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            multiple
+            style={{ display: "none" }}
+            onChange={(e) => {
+              void handleImportFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <button onClick={() => fileInputRef.current?.click()}>Import Grid</button>
+          <FolderBar folder={folder} noun="grid" onFiles={importGridFiles} />
+        </div>
       </aside>
 
       <main className="editor-main">
@@ -173,6 +245,9 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
           <button onClick={() => applyPreset("outer")}>Outer Walls Only</button>
           <button className="primary" onClick={handleSave} disabled={!draft.name.trim()}>
             Save Grid
+          </button>
+          <button onClick={handleExport} disabled={!draft.name.trim()}>
+            Export JSON
           </button>
         </div>
 
