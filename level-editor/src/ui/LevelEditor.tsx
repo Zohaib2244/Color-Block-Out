@@ -4,6 +4,7 @@ import { BLOCK_COLOR_HEX } from "../colors";
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
 import { listGrids, saveGrid } from "../grid/gridLibrary";
 import { downloadLevelJson, fromLevelJson, parseLevelJson, toLevelJson } from "../io/levelJson";
+import { boundarySides, nearestBoundarySide } from "../level/gates";
 import { listPresets } from "../level/holePresetLibrary";
 import { connectedComponents, holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
@@ -13,6 +14,8 @@ import { useTheme } from "../theme";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
 import type {
   BlockColor,
+  CatPlacement,
+  GatePlacement,
   GridCell,
   HolePlacement,
   HoleShapePreset,
@@ -21,13 +24,15 @@ import type {
   SavedGrid,
   SavedLevel,
 } from "../types";
+import { GateInspector } from "./GateInspector";
 import { GridCanvas } from "./GridCanvas";
+import type { CellLocal } from "./GridCanvas";
 import { HoleInspector } from "./HoleInspector";
 import { PieceLegend } from "./Legend";
 import { ZoomControl, zoomedCellPx } from "./ZoomControl";
-import { drawCat, drawHoleGroup } from "./drawShapes";
+import { drawCatStack, drawGate, drawHoleGroup } from "./drawShapes";
 
-type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset" | "edit";
+type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset" | "gates" | "edit";
 
 interface LevelEditorProps {
   gridsVersion: number;
@@ -52,6 +57,8 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [shapeCells, setShapeCells] = useState<Set<string>>(new Set());
   /** Edit mode's current subject. */
   const [selectedHoleId, setSelectedHoleId] = useState<string | null>(null);
+  /** Gates mode's current subject. */
+  const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
@@ -72,19 +79,41 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     [grid, playableMask]
   );
   const holesByCell = useMemo(() => holeCellIndex(draft.holes), [draft.holes]);
-  const catsByCell = useMemo(
-    () => new Map(draft.cats.map((c) => [cellKey(c.x, c.z), c])),
-    [draft.cats]
-  );
+  /** Cats sharing a cell form a stack; the LAST of a cell's entries is its top. */
+  const catsByCell = useMemo(() => {
+    const stacks = new Map<string, CatPlacement[]>();
+    for (const cat of draft.cats) {
+      const key = cellKey(cat.x, cat.z);
+      const stack = stacks.get(key);
+      if (stack) stack.push(cat);
+      else stacks.set(key, [cat]);
+    }
+    return stacks;
+  }, [draft.cats]);
+  const gatesByCell = useMemo(() => {
+    const byCell = new Map<string, GatePlacement[]>();
+    for (const gate of draft.gates) {
+      const key = cellKey(gate.x, gate.z);
+      const list = byCell.get(key);
+      if (list) list.push(gate);
+      else byCell.set(key, [gate]);
+    }
+    return byCell;
+  }, [draft.gates]);
 
   const cellPx = useMemo(() => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32), [grid, zoom]);
   const issues = useMemo(() => (grid ? validateLevel(draft, grid) : []), [draft, grid]);
   const isShapeMode = mode === "holes-shape";
   const isEditMode = mode === "edit";
+  const isGateMode = mode === "gates";
   const placesHoles = mode === "holes-shape" || mode === "holes-manual" || mode === "holes-preset";
   const selectedHole = useMemo(
     () => draft.holes.find((h) => h.id === selectedHoleId) ?? null,
     [draft.holes, selectedHoleId]
+  );
+  const selectedGate = useMemo(
+    () => draft.gates.find((g) => g.id === selectedGateId) ?? null,
+    [draft.gates, selectedGateId]
   );
 
   function refreshLevels() {
@@ -93,17 +122,26 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   }
 
   function loadLevel(level: SavedLevel) {
-    setDraft({ ...level, cats: [...level.cats], holes: [...level.holes] });
+    // Levels saved before gates existed have no `gates` field at all.
+    setDraft({ ...level, cats: [...level.cats], holes: [...level.holes], gates: [...(level.gates ?? [])] });
     setShapeCells(new Set());
+    setSelectedGateId(null);
+    setSelectedHoleId(null);
   }
 
   function newLevel() {
     if (!grid) return;
     setDraft(makeBlankDraft(grid.id));
     setShapeCells(new Set());
+    setSelectedGateId(null);
+    setSelectedHoleId(null);
   }
 
-  /** Clears anything already sitting on these cells, so a placement never stacks. */
+  /**
+   * Clears anything already sitting on these cells, so a hole never lands on
+   * occupied floor. Gates are left alone: a gate lives on its cell's *edge*,
+   * and parking a hole on that cell is exactly how a gate is meant to be used.
+   */
   function clearCells(level: SavedLevel, keys: Set<string>): SavedLevel {
     return {
       ...level,
@@ -115,19 +153,24 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
   // ── direct manipulation: click places, click again removes ──────
 
+  /** Drops a cat on TOP of whatever is already on the cell — appending is what makes it the top. */
   function placeCat(cell: GridCell) {
     setDraft((prev) => {
       const key = cellKey(cell.x, cell.z);
-      if (prev.cats.some((c) => cellKey(c.x, c.z) === key)) return prev;
       // don't let a cat land on top of an existing hole
       if (prev.holes.some((h) => h.cells.some((c) => cellKey(c.x, c.z) === key))) return prev;
       return { ...prev, cats: [...prev.cats, { color: selectedColor, x: cell.x, z: cell.z }] };
     });
   }
 
+  /** Takes the TOP cat off the cell — the last entry for it — leaving the rest of the stack. */
   function removeCat(cell: GridCell) {
     const key = cellKey(cell.x, cell.z);
-    setDraft((prev) => ({ ...prev, cats: prev.cats.filter((c) => cellKey(c.x, c.z) !== key) }));
+    setDraft((prev) => {
+      const last = prev.cats.map((c) => cellKey(c.x, c.z)).lastIndexOf(key);
+      if (last < 0) return prev;
+      return { ...prev, cats: prev.cats.filter((_, i) => i !== last) };
+    });
   }
 
   function placeSingleHole(cell: GridCell) {
@@ -215,6 +258,51 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     if (remaining.length === 0) setSelectedHoleId(null);
   }
 
+  // ── gates: one per boundary edge, holding an ordered queue of cats ──
+
+  function updateSelectedGate(cats: BlockColor[]) {
+    setDraft((prev) => ({
+      ...prev,
+      gates: prev.gates.map((g) => (g.id === selectedGateId ? { ...g, cats } : g)),
+    }));
+  }
+
+  function deleteSelectedGate() {
+    setDraft((prev) => ({ ...prev, gates: prev.gates.filter((g) => g.id !== selectedGateId) }));
+    setSelectedGateId(null);
+  }
+
+  /**
+   * Click a boundary cell to put a gate on the edge nearest the click; click
+   * that gate again to push the toolbar colour onto its queue. Interior cells
+   * have no wall to replace, so they do nothing.
+   */
+  function handleGateClick(cell: GridCell, local: CellLocal) {
+    const onCell = gatesByCell.get(cellKey(cell.x, cell.z)) ?? [];
+    const sides = boundarySides(cell, isPlayable);
+
+    if (onCell.length > 0) {
+      // Prefer whichever of this cell's gates is on the edge nearest the click.
+      const nearest = nearestBoundarySide(onCell.map((g) => g.side), local.u, local.v);
+      const hit = onCell.find((g) => g.side === nearest) ?? onCell[0];
+      if (hit.id === selectedGateId) {
+        setDraft((prev) => ({
+          ...prev,
+          gates: prev.gates.map((g) => (g.id === hit.id ? { ...g, cats: [...g.cats, selectedColor] } : g)),
+        }));
+      } else {
+        setSelectedGateId(hit.id);
+      }
+      return;
+    }
+
+    const side = nearestBoundarySide(sides, local.u, local.v);
+    if (!side) return; // interior cell: no wall here to replace
+    const gate: GatePlacement = { id: newId(), x: cell.x, z: cell.z, side, cats: [] };
+    setDraft((prev) => ({ ...prev, gates: [...prev.gates, gate] }));
+    setSelectedGateId(gate.id);
+  }
+
   function handleEditClick(cell: GridCell) {
     const key = cellKey(cell.x, cell.z);
     const hitHole = holesByCell.get(key);
@@ -227,10 +315,14 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     else if (!hitHole) growSelectedHole(selectedHole, cell);
   }
 
-  function handlePaintStart(cell: GridCell) {
+  function handlePaintStart(cell: GridCell, local: CellLocal) {
     const key = cellKey(cell.x, cell.z);
     if (isEditMode) {
       handleEditClick(cell);
+      return;
+    }
+    if (isGateMode) {
+      handleGateClick(cell, local);
       return;
     }
     if (mode === "cats") {
@@ -255,7 +347,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   }
 
   function handlePaintDrag(cell: GridCell) {
-    if (isEditMode) return; // edits are deliberate single clicks
+    if (isEditMode || isGateMode) return; // edits and gate placement are deliberate single clicks
     if (mode === "cats") {
       if (dragActionRef.current === "add") placeCat(cell);
       else removeCat(cell);
@@ -324,6 +416,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   }
 
   const totalCapacity = draft.holes.reduce((sum, h) => sum + h.capacity, 0);
+  const gatedCats = draft.gates.reduce((sum, g) => sum + g.cats.length, 0);
 
   return (
     <div className="screen">
@@ -338,6 +431,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 <span>{level.name}</span>
                 <span className="muted">
                   {level.cats.length}c · {level.holes.length}h
+                  {(level.gates?.length ?? 0) > 0 && ` · ${level.gates.length}g`}
                 </span>
               </button>
               <button className="danger-link" onClick={() => handleDeleteLevel(level.id)} title="Delete level">
@@ -410,6 +504,9 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                 </button>
                 <button className={mode === "holes-preset" ? "active" : ""} onClick={() => setMode("holes-preset")}>
                   Holes (preset)
+                </button>
+                <button className={mode === "gates" ? "active" : ""} onClick={() => setMode("gates")}>
+                  Gates
                 </button>
                 <button className={mode === "edit" ? "active" : ""} onClick={() => setMode("edit")}>
                   Edit
@@ -518,14 +615,16 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
             <p className="hint">
               {mode === "cats"
-                ? "Click a cell to drop a cat in the selected color; click it again to take it away. Drag to place or clear a run of them."
+                ? "Click a cell to drop a cat in the selected color; cats stack, so clicking again adds another on top and the topmost is the only one a hole can take. Click a stacked cell to lift its top cat off. Drag to place or clear a run of them."
                 : mode === "holes-manual"
                   ? "Click a cell to cut a one-cell hole with the capacity above; click it again to remove it."
                   : mode === "holes-preset"
                     ? "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole."
-                    : mode === "edit"
-                      ? "Click any hole to select it, then change its color or capacity on the right. Click a cell touching it to grow the shape, or one of its own cells to carve that cell away."
-                      : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
+                    : mode === "gates"
+                      ? "Click a cell on the board's edge to put a gate on the wall nearest your click. Click that gate again to push the selected color onto its queue, and reorder or trim the queue on the right."
+                      : mode === "edit"
+                        ? "Click any hole to select it, then change its color or capacity on the right. Click a cell touching it to grow the shape, or one of its own cells to carve that cell away."
+                        : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
             </p>
 
             <div className="canvas-row">
@@ -559,8 +658,27 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                         isEditMode && hole.id === selectedHoleId ? palette.textAccent : undefined
                       );
                     }
-                    for (const cat of draft.cats) {
-                      drawCat(ctx, cellRect(cat.x, cat.z), BLOCK_COLOR_HEX[cat.color], palette.holeVoid);
+                    // gates sit on cell edges, under the cats so a cat on the mouth cell still reads
+                    for (const gate of draft.gates) {
+                      drawGate(
+                        ctx,
+                        cellRect(gate.x, gate.z),
+                        gate.side,
+                        gate.cats.map((c) => BLOCK_COLOR_HEX[c]),
+                        palette.textMuted,
+                        palette.holeVoid,
+                        isGateMode && gate.id === selectedGateId ? palette.textAccent : undefined
+                      );
+                    }
+                    for (const [key, stack] of catsByCell) {
+                      const [x, z] = key.split(",").map(Number);
+                      drawCatStack(
+                        ctx,
+                        cellRect(x, z),
+                        stack.map((c) => BLOCK_COLOR_HEX[c.color]),
+                        palette.holeVoid,
+                        palette.floor
+                      );
                     }
                   }}
                 />
@@ -579,10 +697,24 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                   ) : (
                     <p className="hint">Click a hole on the grid to select and edit it.</p>
                   ))}
+                {isGateMode &&
+                  (selectedGate ? (
+                    <GateInspector
+                      gate={selectedGate}
+                      selectedColor={selectedColor}
+                      onQueueChange={updateSelectedGate}
+                      onDelete={deleteSelectedGate}
+                      onDeselect={() => setSelectedGateId(null)}
+                    />
+                  ) : (
+                    <p className="hint">Click a cell on the board's edge to add a gate, or an existing gate to edit it.</p>
+                  ))}
                 <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
                 <p className="stat-line">
                   <span className="stat-value">{draft.cats.length}</span>
-                  <span className="muted"> cats · </span>
+                  <span className="muted"> on board · </span>
+                  <span className="stat-value">{gatedCats}</span>
+                  <span className="muted"> in gates · </span>
                   <span className="stat-value">{draft.holes.length}</span>
                   <span className="muted"> holes · </span>
                   <span className="stat-value">{totalCapacity}</span>
@@ -607,5 +739,5 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 }
 
 function makeBlankDraft(gridId: string): SavedLevel {
-  return { id: "", name: "", gridId, cats: [], holes: [], updatedAt: 0 };
+  return { id: "", name: "", gridId, cats: [], holes: [], gates: [], updatedAt: 0 };
 }

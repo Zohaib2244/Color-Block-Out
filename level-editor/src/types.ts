@@ -65,6 +65,25 @@ export interface CatPlacement {
   z: number;
 }
 
+/**
+ * A gate: sits on one boundary edge of a playable cell, replacing the wall
+ * that would otherwise be generated there, and holds a queue of cats.
+ *
+ * In play the hole is moved onto the gate's own cell (`x`, `z`) — the cell in
+ * front of the mouth — and if the gate's topmost cat matches that hole's
+ * colour, the cat hops out into it.
+ */
+export interface GatePlacement {
+  id: string;
+  /** The playable cell the gate feeds: where a hole is parked to draw from it. */
+  x: number;
+  z: number;
+  /** Which edge of that cell the gate replaces the wall on. Always a board boundary. */
+  side: Direction;
+  /** Queued cats. Index 0 is the topmost — the next one out. */
+  cats: BlockColor[];
+}
+
 /** One grid cell of a hole. `holeType`/`rotation` pick the Unity prefab for that cell. */
 export interface HoleCell {
   x: number;
@@ -90,8 +109,16 @@ export interface SavedLevel {
   id: string;
   name: string;
   gridId: string;
+  /**
+   * Cats are allowed to share a cell — a stack. Order is load-bearing: among
+   * the entries on one cell, earlier is LOWER and the last one is on top. That
+   * matches Unity's `CatLevelBuilder.RestackCats`, which lifts each cat on a
+   * cell by `index * catStackHeight` in list order, and `TopCatAt`, which
+   * exposes only the highest one to a hole.
+   */
   cats: CatPlacement[];
   holes: HolePlacement[];
+  gates: GatePlacement[];
   updatedAt: number;
 }
 

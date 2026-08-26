@@ -1,5 +1,5 @@
 import { cellKey } from "../types";
-import type { GridCell } from "../types";
+import type { Direction, GridCell } from "../types";
 
 export interface CellRect {
   x: number;
@@ -53,6 +53,61 @@ export function drawCat(ctx: CanvasRenderingContext2D, rect: CellRect, colorHex:
     ctx.beginPath();
     ctx.arc(cx + r * 0.37, headY - r * 0.04, eyeR, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+
+/** How many cats of a stack get their own silhouette before it becomes just a count. */
+const MAX_STACK_GLYPHS = 4;
+
+/**
+ * A stack of cats on one cell, drawn bottom-to-top so the TOP cat — the only
+ * one a hole can actually take, and the one that decides whether a hole may
+ * even enter the cell — ends up drawn last, unoccluded and dead centre.
+ * The ones beneath peek out below it, and a badge carries the true count once
+ * the pile is deeper than the offsets can show.
+ *
+ * `colors` runs bottom (index 0) to top, matching the level's cat order.
+ */
+export function drawCatStack(
+  ctx: CanvasRenderingContext2D,
+  rect: CellRect,
+  colors: string[],
+  voidHex: string,
+  badgeTextHex: string
+) {
+  if (colors.length === 0) return;
+  if (colors.length === 1) {
+    drawCat(ctx, rect, colors[0], voidHex);
+    return;
+  }
+
+  const size = Math.min(rect.width, rect.height);
+  // Only the top few are drawn; a deep stack leans on the badge instead.
+  const shown = colors.slice(-MAX_STACK_GLYPHS);
+  const step = size * 0.11;
+  // Lift the whole pile so it stays centred in the cell as it grows downward.
+  const lift = (step * (shown.length - 1)) / 2;
+
+  shown.forEach((color, i) => {
+    // i = 0 is the lowest of the shown cats, so it sits furthest down and is
+    // painted first — later (higher) cats overlap it.
+    const depth = shown.length - 1 - i;
+    drawCat(ctx, { ...rect, y: rect.y + depth * step - lift }, color, voidHex);
+  });
+
+  if (size >= 20) {
+    const r = size * 0.16;
+    const cx = rect.x + rect.width - r - size * 0.06;
+    const cy = rect.y + rect.height - r - size * 0.06;
+    ctx.fillStyle = voidHex;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = badgeTextHex;
+    ctx.font = `700 ${Math.round(size * 0.24)}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(colors.length), cx, cy);
   }
 }
 
@@ -165,5 +220,113 @@ export function drawHoleGroup(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(String(capacity), r.x + r.width / 2, r.y + r.height / 2);
+  }
+}
+
+/** Most queued cats shown as pips on the gate before the rest become a "+N". */
+const MAX_GATE_PIPS = 5;
+
+/**
+ * A gate: a bar laid along ONE boundary edge of a cell, standing in for the
+ * wall Unity would otherwise build there.
+ *
+ * It is drawn just inside its own cell rather than out in the neighbouring
+ * blocked cell, so a gate on the outermost row stays on the canvas instead of
+ * colliding with the axis labels — and so it reads as belonging to the cell a
+ * hole gets parked on, which is the cell that actually matters in play.
+ *
+ * Queued cats appear as pips running along the bar in queue order. The first —
+ * the topmost, the one that leaves next — is drawn larger and ringed, since it
+ * is the only one whose colour decides anything on the next move.
+ */
+export function drawGate(
+  ctx: CanvasRenderingContext2D,
+  rect: CellRect,
+  side: Direction,
+  catColorHexes: string[],
+  bodyHex: string,
+  voidHex: string,
+  highlightHex?: string
+) {
+  const size = Math.min(rect.width, rect.height);
+  const thickness = size * 0.26;
+  const span = size * 0.88;
+  const radius = thickness * 0.42;
+  const vertical = side === "Left" || side === "Right";
+
+  // The bar hugs its edge; `inner` corners (facing into the cell) are the rounded ones.
+  const along = (rect.x + rect.width / 2) - span / 2;
+  const alongV = (rect.y + rect.height / 2) - span / 2;
+  let bar: CellRect;
+  let corners: [number, number, number, number];
+  switch (side) {
+    case "Up": // +z is up on screen
+      bar = { x: along, y: rect.y, width: span, height: thickness };
+      corners = [0, 0, radius, radius];
+      break;
+    case "Down":
+      bar = { x: along, y: rect.y + rect.height - thickness, width: span, height: thickness };
+      corners = [radius, radius, 0, 0];
+      break;
+    case "Left":
+      bar = { x: rect.x, y: alongV, width: thickness, height: span };
+      corners = [0, radius, radius, 0];
+      break;
+    default: // Right
+      bar = { x: rect.x + rect.width - thickness, y: alongV, width: thickness, height: span };
+      corners = [radius, 0, 0, radius];
+      break;
+  }
+
+  if (highlightHex) {
+    const halo = Math.max(2, size * 0.05);
+    ctx.fillStyle = highlightHex;
+    ctx.beginPath();
+    ctx.roundRect(bar.x - halo, bar.y - halo, bar.width + halo * 2, bar.height + halo * 2, radius + halo);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = bodyHex;
+  ctx.beginPath();
+  ctx.roundRect(bar.x, bar.y, bar.width, bar.height, corners);
+  ctx.fill();
+
+  if (catColorHexes.length === 0 || size < 14) return;
+
+  // Pips run along the bar's long axis: left-to-right, or bottom-to-top.
+  const shown = catColorHexes.slice(0, MAX_GATE_PIPS);
+  const overflow = catColorHexes.length - shown.length;
+  const slots = shown.length + (overflow > 0 ? 1 : 0);
+  const length = vertical ? bar.height : bar.width;
+  const step = length / slots;
+  const pipR = Math.min(thickness * 0.3, step * 0.34);
+  const cross = vertical ? bar.x + bar.width / 2 : bar.y + bar.height / 2;
+
+  shown.forEach((hex, i) => {
+    // Vertical bars count from the bottom so "first" is the low-z end.
+    const offset = vertical ? bar.y + bar.height - (i + 0.5) * step : bar.x + (i + 0.5) * step;
+    const cx = vertical ? cross : offset;
+    const cy = vertical ? offset : cross;
+    const r = i === 0 ? pipR * 1.3 : pipR;
+
+    ctx.fillStyle = hex;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (i === 0) {
+      ctx.strokeStyle = voidHex;
+      ctx.lineWidth = Math.max(1, size * 0.03);
+      ctx.stroke();
+    }
+  });
+
+  if (overflow > 0) {
+    const offset = vertical ? bar.y + bar.height - (slots - 0.5) * step : bar.x + (slots - 0.5) * step;
+    ctx.fillStyle = voidHex;
+    ctx.font = `700 ${Math.round(Math.min(thickness * 0.7, step * 0.8))}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`+${overflow}`, vertical ? cross : offset, vertical ? offset : cross);
   }
 }

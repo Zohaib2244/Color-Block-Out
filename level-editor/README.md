@@ -73,7 +73,12 @@ grid. There is no select-then-commit step except when drawing a hole
 outline, which genuinely needs the whole shape before it can become a hole.
 
 - **Cats** — click a cell to drop a cat, click it again to take it away;
-  drag to place or clear a run of them.
+  drag to place or clear a run of them. Cats **stack**: clicking an occupied
+  cell adds another cat on top of the pile rather than refusing, and
+  removing takes only the top one off. See *A stack of cats* below.
+- **Gates** — click a cell on the board's edge to put a gate on the wall
+  nearest your click; click that gate again to push the selected color onto
+  its queue, or use the inspector to reorder and trim it. See *Gates* below.
 - **Holes (shape)** — drag out the outline of a tunnel, then **Create
   Hole**. Each cell's `HoleType`
   (`Isolated`/`EndCap`/`Straight`/`Corner`/`OneSide`/`Middle`) is derived
@@ -124,6 +129,42 @@ confused even when they share a color: a **cat** is a solid filled creature
 sitting on the floor (round head, pointed ears, two eyes), while a **hole**
 is a dark recess cut *into* it, ringed in its color.
 
+### A stack of cats
+
+More than one cat may share a cell. **Order is load-bearing**: among the
+entries on one cell, earlier is *lower* and the last one is on **top**. That
+is exactly the contract Unity already implements — `RestackCats` lifts each
+cat on a cell by `index * catStackHeight` in list order, and `TopCatAt`
+exposes only the highest one — so painting order here is stack order there.
+
+Only the top cat matters in play: it is the one a hole can take, and its
+color alone decides whether a hole may enter the cell at all. The canvas
+therefore draws the pile bottom-to-top so the top cat lands unoccluded and
+centred, with the ones beneath peeking out below it and a badge carrying the
+true depth.
+
+### Gates
+
+A **gate** sits on one boundary edge of a playable cell, standing in for the
+wall Unity's `GridBuilder.BuildWalls` would otherwise generate there, and
+holds an ordered queue of cats. In play the hole is moved onto the gate's own
+cell — the cell in front of the mouth — and if the gate's **topmost** cat
+matches that hole's color, the cat hops out into it.
+
+Queue index 0 is the topmost, the one that leaves next. The inspector shows
+the queue as a numbered list (head labelled `next`) rather than a color
+count, because the order *is* the content. On the canvas a gate is a bar laid
+along its edge with the queue as pips, the head drawn larger and ringed.
+
+A gate is drawn just inside its own cell rather than out in the neighbouring
+blocked cell, so a gate on the outermost row stays on canvas instead of
+colliding with the axis labels — and so it reads as belonging to the cell
+that actually matters in play. Placing a hole never clears a gate: parking a
+hole on the gate's cell is the whole point of one.
+
+Gate cats count toward the color budget below, since they still have to be
+collected before the level can finish.
+
 Inline validation flags overlapping placements, placements off the playable
 area, invalid capacities, colors with no counterpart, and any color whose
 total hole capacity is **less** than its cat count (an error: those cats
@@ -152,11 +193,11 @@ project library — grids are reusable across many levels, same as
 `GridData` assets in Unity, and presets are reusable across all of them). A
 level can be exported to a standalone JSON file and re-imported later.
 
-### Level JSON schema (`formatVersion: 3`)
+### Level JSON schema (`formatVersion: 4`)
 
 ```ts
 interface LevelJson {
-  formatVersion: 3;
+  formatVersion: 4;
   levelName: string;
   grid: {
     id: string;
@@ -166,6 +207,8 @@ interface LevelJson {
     // flat, index = z*width + x. TRUE = playable floor cell (post flood-fill).
     playableCells: boolean[];
   };
+  // Several entries MAY share a cell — a stack. Within one cell, earlier
+  // entries sit LOWER and the last one is on top (see "A stack of cats").
   cats: Array<{ color: BlockColor; x: number; z: number }>;
   // ONE entry per hole — a connected shape, not a single cell
   holes: Array<{
@@ -180,6 +223,16 @@ interface LevelJson {
       rotationQuarterTurns: 0 | 1 | 2 | 3;
     }>;
   }>;
+  gates: Array<{
+    id: string;
+    // the playable cell the gate feeds — where a hole gets parked
+    x: number;
+    z: number;
+    // edge of (x, z) the gate replaces the wall on. Up=+z, Right=+x, Down=-z, Left=-x
+    side: "Up" | "Right" | "Down" | "Left";
+    // queued cats; index 0 is the topmost — the next one out
+    cats: BlockColor[];
+  }>;
 }
 ```
 
@@ -189,28 +242,39 @@ Format history:
 - **v2** — added `capacity` to each of those cells.
 - **v3** — a hole is one shape, because capacity belongs to the whole tunnel
   rather than to each cell of it.
+- **v4** — added `gates`, and cats may now share a cell as a stack.
 
 v1/v2 files still import: their loose cells are regrouped into
 orthogonally-connected same-color shapes, and each shape takes the largest
 capacity found among its cells (1 for v1, which had no capacity at all).
-
-`capacity` has no counterpart in the Unity code yet — `CatHole` /
-`CatPuzzleController.ResolveHole` still collect exactly one cat per hole —
-so it's authored here ahead of the Unity-side implementation.
+v1–v3 files import with an empty `gates` list and no stacks, since neither
+could be expressed before v4. Malformed `gates` entries (bad coordinates, an
+unrecognised `side`, unknown colors in a queue) are dropped on import rather
+than failing the file.
 
 `BlockColor` is one of `Red | Orange | Yellow | Blue | Cyan | Green |
-Purple | Pink | Teal`, matching `BlockColorTypes` in
-`Utilities/Enums.cs`.
+Purple | Pink | Teal`, matching the `displayName`s in the project's
+`CatColorPalette` asset, which is what the Unity importer resolves against.
 
-## Out of scope (for now)
+## What Unity does with this
 
-There is no Unity-side importer yet — no editor script converts this JSON
-back into `GridData`/`CatLevelData` assets, and no runtime JSON loader
-exists in-game. The schema above was designed so that step is a mechanical
-field mapping later: `playableCells` inverts directly into
-`GridData.wallCells`, `cats` map 1:1 onto `CatPlacement`, and each hole's
-`cells[]` map 1:1 onto `CatHolePlacement`. The genuinely new piece is
-`capacity`, which is per-*hole* rather than per-cell, so the Unity side
-needs some notion of a hole group (a shared id or a capacity counter on the
-shape) plus a change to `CatPuzzleController.ResolveHole`, which today
-collects a single cat and immediately completes the hole.
+`CatLevelJsonImporter` (`Cat Puzzle/Import Level JSON`) converts an export
+into `GridData` + `CatLevelData` assets. It accepts **v3 and v4**, since v4
+only added things v3 could not express.
+
+- **Cat stacks import as-is.** `BuildCats` maps entries 1:1 onto
+  `CatPlacement` in file order and never dedupes by cell, and the runtime
+  already stacks them — `CatLevelBuilder.RestackCats` lifts each cat on a
+  cell by `index * catStackHeight`, and `CatPuzzleController.TopCatAt`
+  exposes only the top one to a hole. So authoring order here is stack order
+  in game, end to end, with no Unity change needed.
+- **Gates do not import yet.** There is no gate on the Unity side — no data
+  class, prefab, builder or rule. The importer parses the `gates` array only
+  so it can *warn* how many gates and how many queued cats were dropped,
+  rather than losing authored content silently. A level exported with gates
+  will therefore be missing those cats in Unity until the runtime lands.
+
+Implementing gates in Unity means: a `CatGatePlacement` on `CatLevelData`, a
+gate prefab that replaces the wall segment `GridBuilder.BuildWalls` emits for
+that (cell, side), and a rule in `CatPuzzleController` that pops the head of
+the queue when a hole whose colour matches is parked on the gate's cell.

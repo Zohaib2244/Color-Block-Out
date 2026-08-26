@@ -1,6 +1,7 @@
 import { computePlayableMask, gridIndex } from "../grid/floodFill";
-import { cellKey } from "../types";
+import { DIRECTION_OFFSET, cellKey } from "../types";
 import type { BlockColor, SavedGrid, SavedLevel } from "../types";
+import { gateKey } from "./gates";
 
 export interface ValidationIssue {
   severity: "error" | "warning";
@@ -13,19 +14,15 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
   const isPlayable = (x: number, z: number) =>
     x >= 0 && x < grid.width && z >= 0 && z < grid.length && playable[gridIndex(grid.width, x, z)];
 
-  const occupied = new Map<string, string[]>();
-  const addOccupant = (x: number, z: number, label: string) => {
-    const key = cellKey(x, z);
-    const list = occupied.get(key) ?? [];
-    list.push(label);
-    occupied.set(key, list);
-  };
+  const gates = level.gates ?? [];
+
+  // Cats may share a cell (a stack) by design, so only a hole makes a cell contested.
+  const holeCells = new Map<string, string>();
 
   for (const cat of level.cats) {
     if (!isPlayable(cat.x, cat.z)) {
       issues.push({ severity: "error", message: `${cat.color} cat at (${cat.x}, ${cat.z}) is not on a playable cell.` });
     }
-    addOccupant(cat.x, cat.z, `${cat.color} cat`);
   }
 
   for (const hole of level.holes) {
@@ -39,18 +36,57 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
       if (!isPlayable(cell.x, cell.z)) {
         issues.push({ severity: "error", message: `${hole.color} hole covers (${cell.x}, ${cell.z}), which is not a playable cell.` });
       }
-      addOccupant(cell.x, cell.z, `${hole.color} hole`);
+      const key = cellKey(cell.x, cell.z);
+      const other = holeCells.get(key);
+      if (other) {
+        issues.push({ severity: "error", message: `Two holes (${other}, ${hole.color}) both cover cell (${key}); neither could move.` });
+      } else {
+        holeCells.set(key, hole.color);
+      }
     }
   }
 
-  for (const [key, labels] of occupied) {
-    if (labels.length > 1) {
-      issues.push({ severity: "error", message: `Multiple placements on cell (${key}): ${labels.join(", ")}.` });
+  // A cat standing where a hole already sits has nowhere to be.
+  for (const cat of level.cats) {
+    const key = cellKey(cat.x, cat.z);
+    if (holeCells.has(key)) {
+      issues.push({ severity: "error", message: `${cat.color} cat at (${key}) stands on a ${holeCells.get(key)} hole.` });
     }
   }
 
+  // ── gates ───────────────────────────────────────────────────────
+  const gateSlots = new Set<string>();
+  for (const gate of gates) {
+    const at = `(${gate.x}, ${gate.z})`;
+    if (!isPlayable(gate.x, gate.z)) {
+      issues.push({ severity: "error", message: `Gate at ${at} is not attached to a playable cell.` });
+      continue;
+    }
+
+    const offset = DIRECTION_OFFSET[gate.side];
+    if (isPlayable(gate.x + offset.x, gate.z + offset.z)) {
+      issues.push({
+        severity: "error",
+        message: `Gate at ${at} faces ${gate.side}, which is open board rather than a wall — a gate has to replace a wall.`,
+      });
+    }
+
+    const slot = gateKey(gate.x, gate.z, gate.side);
+    if (gateSlots.has(slot)) {
+      issues.push({ severity: "error", message: `Two gates share the ${gate.side} edge of ${at}.` });
+    }
+    gateSlots.add(slot);
+
+    if (gate.cats.length === 0) {
+      issues.push({ severity: "warning", message: `Gate at ${at} is empty, so it will never release a cat.` });
+    }
+  }
+
+  // ── colour budget: every cat, on the board or queued in a gate, needs hole capacity ──
   const catCounts = new Map<BlockColor, number>();
-  for (const cat of level.cats) catCounts.set(cat.color, (catCounts.get(cat.color) ?? 0) + 1);
+  const bump = (color: BlockColor) => catCounts.set(color, (catCounts.get(color) ?? 0) + 1);
+  for (const cat of level.cats) bump(cat.color);
+  for (const gate of gates) for (const color of gate.cats) bump(color);
 
   const holeCapacity = new Map<BlockColor, number>();
   for (const hole of level.holes) {

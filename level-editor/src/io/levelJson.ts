@@ -1,7 +1,8 @@
 import { computePlayableMask } from "../grid/floodFill";
 import { connectedComponents, makeHole } from "../level/holeShape";
 import { newId } from "../storage";
-import type { BlockColor, GridCell, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
+import { BLOCK_COLORS, DIRECTIONS } from "../types";
+import type { BlockColor, Direction, GridCell, HoleType, RotationQuarterTurns, SavedGrid, SavedLevel } from "../types";
 
 /**
  * Format history:
@@ -9,13 +10,15 @@ import type { BlockColor, GridCell, HoleType, RotationQuarterTurns, SavedGrid, S
  *  - v2: added `capacity` to each of those cells.
  *  - v3: a hole is one shape — `{ color, capacity, cells[] }` — because
  *    capacity belongs to the whole tunnel, not to each cell of it.
+ *  - v4: added `gates`, and cats may now share a cell as a stack (see
+ *    `LevelJson.cats`). Older files simply have no gates and no stacks.
  *
  * v1/v2 files still import: their loose cells are regrouped into
  * orthogonally-connected same-color shapes, and each shape takes the largest
  * capacity found among its cells (1 for v1, which had no capacity at all).
  */
-export const LEVEL_JSON_FORMAT_VERSION = 3 as const;
-const SUPPORTED_FORMAT_VERSIONS = [1, 2, 3];
+export const LEVEL_JSON_FORMAT_VERSION = 4 as const;
+const SUPPORTED_FORMAT_VERSIONS = [1, 2, 3, 4];
 
 export const DEFAULT_HOLE_CAPACITY = 1;
 
@@ -56,12 +59,32 @@ interface LegacyFlatHole extends LevelJsonHoleCell {
   capacity?: number;
 }
 
+/**
+ * A gate on one boundary edge of a playable cell, holding a queue of cats.
+ * A hole parked on (x, z) draws the topmost cat out if the colours match.
+ */
+export interface LevelJsonGate {
+  id: string;
+  x: number;
+  z: number;
+  /** Edge of (x, z) the gate replaces the wall on: Up=+z, Right=+x, Down=-z, Left=-x. */
+  side: Direction;
+  /** Queued cat colours. Index 0 is the topmost — the next one out. */
+  cats: BlockColor[];
+}
+
 export interface LevelJson {
   formatVersion: typeof LEVEL_JSON_FORMAT_VERSION;
   levelName: string;
   grid: LevelJsonGrid;
+  /**
+   * Cats on the board. Several entries may share a cell, forming a stack;
+   * within one cell, earlier entries sit LOWER and the last one is on top.
+   * Unity relies on exactly this order (`CatLevelBuilder.RestackCats`).
+   */
   cats: LevelJsonCat[];
   holes: LevelJsonHole[];
+  gates: LevelJsonGate[];
 }
 
 export function toLevelJson(level: SavedLevel, grid: SavedGrid): LevelJson {
@@ -86,6 +109,13 @@ export function toLevelJson(level: SavedLevel, grid: SavedGrid): LevelJson {
         holeType: c.holeType,
         rotationQuarterTurns: c.rotationQuarterTurns,
       })),
+    })),
+    gates: (level.gates ?? []).map((g) => ({
+      id: g.id,
+      x: g.x,
+      z: g.z,
+      side: g.side,
+      cats: [...g.cats],
     })),
   };
 }
@@ -124,7 +154,28 @@ export function parseLevelJson(raw: string): LevelJson {
         }))
       : regroupLegacyHoles(parsed.holes as LegacyFlatHole[]);
 
-  return { ...(parsed as LevelJson), formatVersion: LEVEL_JSON_FORMAT_VERSION, holes };
+  // Gates arrived in v4; anything older simply has none.
+  const gates = normalizeGates(parsed.gates);
+
+  return { ...(parsed as LevelJson), formatVersion: LEVEL_JSON_FORMAT_VERSION, holes, gates };
+}
+
+/** Keeps only well-formed gate entries, so a hand-edited file can't crash the editor. */
+function normalizeGates(raw: unknown): LevelJsonGate[] {
+  if (!Array.isArray(raw)) return [];
+  const gates: LevelJsonGate[] = [];
+  for (const entry of raw as Partial<LevelJsonGate>[]) {
+    if (!entry || typeof entry.x !== "number" || typeof entry.z !== "number") continue;
+    if (!DIRECTIONS.includes(entry.side as Direction)) continue;
+    gates.push({
+      id: entry.id || newId(),
+      x: entry.x,
+      z: entry.z,
+      side: entry.side as Direction,
+      cats: Array.isArray(entry.cats) ? entry.cats.filter((c): c is BlockColor => BLOCK_COLORS.includes(c as BlockColor)) : [],
+    });
+  }
+  return gates;
 }
 
 /**
@@ -163,6 +214,7 @@ export function fromLevelJson(json: LevelJson): {
   grid: Omit<SavedGrid, "id" | "updatedAt">;
   level: Omit<SavedLevel, "id" | "gridId" | "updatedAt">;
 } {
+  const gates = normalizeGates(json.gates);
   const wallToggles = json.grid.playableCells.map((playable) => !playable);
   return {
     grid: {
@@ -186,6 +238,7 @@ export function fromLevelJson(json: LevelJson): {
           rotationQuarterTurns: c.rotationQuarterTurns,
         })),
       })),
+      gates: gates.map((g) => ({ id: g.id, x: g.x, z: g.z, side: g.side, cats: [...g.cats] })),
     },
   };
 }

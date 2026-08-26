@@ -15,7 +15,13 @@ using UnityEngine;
 public static class CatLevelJsonImporter
 {
     /// <summary>Mirrors LEVEL_JSON_FORMAT_VERSION in level-editor/src/io/levelJson.ts.</summary>
-    public const int SupportedFormatVersion = 3;
+    public const int SupportedFormatVersion = 4;
+
+    /// <summary>
+    /// v3 files still import unchanged: v4 only *added* gates and cat stacking, so everything a v3
+    /// file can express means the same thing here.
+    /// </summary>
+    public const int MinSupportedFormatVersion = 3;
 
     #region Document
     // Field names mirror level-editor/src/io/levelJson.ts exactly, because JsonUtility matches by
@@ -29,6 +35,21 @@ public static class CatLevelJsonImporter
         public GridSection grid;
         public CatEntry[] cats;
         public HoleEntry[] holes;
+        public GateEntry[] gates;
+    }
+
+    /// <summary>
+    /// A v4 gate: a queue of cats on one boundary edge of a cell. Parsed so the count can be
+    /// reported, but there is no Unity-side gate yet, so importing drops them (with a warning).
+    /// </summary>
+    [Serializable]
+    public sealed class GateEntry
+    {
+        public string id;
+        public int x;
+        public int z;
+        public string side;
+        public string[] cats;
     }
 
     [Serializable]
@@ -179,8 +200,8 @@ public static class CatLevelJsonImporter
     {
         if (document == null) return "The file is empty, or is not a level export.";
 
-        if (document.formatVersion != SupportedFormatVersion)
-            return $"formatVersion {document.formatVersion} is not supported (expected {SupportedFormatVersion}). " +
+        if (document.formatVersion < MinSupportedFormatVersion || document.formatVersion > SupportedFormatVersion)
+            return $"formatVersion {document.formatVersion} is not supported (expected {MinSupportedFormatVersion}-{SupportedFormatVersion}). " +
                    "Older files upgrade when the web level editor imports them, so open it there and export again.";
 
         if (document.grid == null) return "The file has no grid.";
@@ -294,6 +315,7 @@ public static class CatLevelJsonImporter
         if (!replaced) level.levelTime = settings.levelTime;
         level.cats = BuildCats(document, colors);
         level.holes = BuildHoles(document, colors, result.issues);
+        WarnAboutGates(document, result.issues);
         EditorUtility.SetDirty(level);
 
         result.level = level;
@@ -425,6 +447,22 @@ public static class CatLevelJsonImporter
             if (!string.IsNullOrEmpty(displayName) && candidate.levelName == displayName) return candidate;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Gates are authored in the web tool but have no Unity counterpart yet, so they are dropped
+    /// on import. Silently losing authored content would be worse than saying so plainly.
+    /// </summary>
+    private static void WarnAboutGates(Document document, List<CatLevelValidator.Issue> issues)
+    {
+        if (document.gates == null || document.gates.Length == 0) return;
+
+        int queued = 0;
+        foreach (GateEntry gate in document.gates)
+            if (gate != null && gate.cats != null) queued += gate.cats.Length;
+
+        Warning(issues, $"The file has {document.gates.Length} gate(s) holding {queued} cat(s). Unity has no gate yet, " +
+                        "so they were not imported and those cats are missing from this level.");
     }
 
     private static List<CatPlacement> BuildCats(Document document, Dictionary<string, int> colors)

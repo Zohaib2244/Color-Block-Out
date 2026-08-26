@@ -662,3 +662,75 @@ button.destructive:hover:not(:disabled) {
   border-color: var(--accent-orange);
   background: color-mix(in srgb, var(--accent-orange) 10%, transparent);
 }
+
+/* ── gate queue editor ──────────────────────────────────────────── */
+
+.gate-queue-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.gate-queue {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.gate-queue li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
+/* The head of the queue is the one that actually decides the next move. */
+.gate-queue li.next {
+  border-color: var(--accent-cyan);
+}
+
+.gate-queue-index {
+  min-width: 2.4rem;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.gate-queue li.next .gate-queue-index {
+  color: var(--accent-cyan);
+}
+
+.gate-queue-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex: none;
+}
+
+.gate-queue-name {
+  flex: 1;
+}
+
+.gate-queue-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.gate-queue-actions button {
+  padding: 0 6px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}

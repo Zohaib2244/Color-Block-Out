@@ -7,15 +7,25 @@ const LABEL_MARGIN = 24;
 /** Every Nth line is drawn heavier, so counting cells on a big grid isn't a chore. */
 const MAJOR_EVERY = 5;
 
+/**
+ * Where inside a cell a pointer landed. `u` runs 0 (west edge) to 1 (east),
+ * `v` runs 0 (south edge) to 1 (north) — so it reads in grid space, not screen
+ * space. Only edge-anchored content (gates) needs it; cell-anchored modes ignore it.
+ */
+export interface CellLocal {
+  u: number;
+  v: number;
+}
+
 export interface GridCanvasProps {
   width: number;
   length: number;
   cellPx?: number;
   showLabels?: boolean;
   /** Start of a paint gesture (pointer down on a cell). */
-  onPaintStart?: (cell: GridCell) => void;
+  onPaintStart?: (cell: GridCell, local: CellLocal) => void;
   /** Each new cell the pointer enters while the button is held. */
-  onPaintDrag?: (cell: GridCell) => void;
+  onPaintDrag?: (cell: GridCell, local: CellLocal) => void;
   /** Draw a single cell's fill/content. Gridlines, crosshair and hover are drawn by GridCanvas. */
   renderCell: (ctx: CanvasRenderingContext2D, cell: GridCell, rect: { x: number; y: number; width: number; height: number }) => void;
   /**
@@ -59,17 +69,20 @@ export function GridCanvas({
   const interactive = !!onPaintStart;
 
   const cellFromEvent = useCallback(
-    (evt: { clientX: number; clientY: number }): GridCell | null => {
+    (evt: { clientX: number; clientY: number }): { cell: GridCell; local: CellLocal } | null => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
       const bounds = canvas.getBoundingClientRect();
       const px = evt.clientX - bounds.left - margin;
       const py = evt.clientY - bounds.top - margin;
       if (px < 0 || py < 0) return null;
-      const x = Math.floor(px / cellPx);
-      const z = length - 1 - Math.floor(py / cellPx);
+      const cx = px / cellPx;
+      const cy = py / cellPx;
+      const x = Math.floor(cx);
+      const z = length - 1 - Math.floor(cy);
       if (x < 0 || x >= width || z < 0 || z >= length) return null;
-      return { x, z };
+      // Screen y grows downward while z grows upward, so v is the flipped remainder.
+      return { cell: { x, z }, local: { u: cx - x, v: 1 - (cy - Math.floor(cy)) } };
     },
     [width, length, cellPx, margin]
   );
@@ -200,21 +213,21 @@ export function GridCanvas({
         style={{ cursor: interactive ? "crosshair" : "default" }}
         onPointerDown={(evt) => {
           if (!onPaintStart) return;
-          const cell = cellFromEvent(evt);
-          if (!cell || (isInteractive && !isInteractive(cell))) return;
+          const hit = cellFromEvent(evt);
+          if (!hit || (isInteractive && !isInteractive(hit.cell))) return;
           paintingRef.current = true;
-          lastPaintedRef.current = `${cell.x},${cell.z}`;
-          onPaintStart(cell);
+          lastPaintedRef.current = `${hit.cell.x},${hit.cell.z}`;
+          onPaintStart(hit.cell, hit.local);
         }}
         onPointerMove={(evt) => {
-          const cell = cellFromEvent(evt);
-          setHovered(cell);
-          if (!paintingRef.current || !cell) return;
-          const key = `${cell.x},${cell.z}`;
+          const hit = cellFromEvent(evt);
+          setHovered(hit?.cell ?? null);
+          if (!paintingRef.current || !hit) return;
+          const key = `${hit.cell.x},${hit.cell.z}`;
           if (key === lastPaintedRef.current) return;
-          if (isInteractive && !isInteractive(cell)) return;
+          if (isInteractive && !isInteractive(hit.cell)) return;
           lastPaintedRef.current = key;
-          (onPaintDrag ?? onPaintStart)?.(cell);
+          (onPaintDrag ?? onPaintStart)?.(hit.cell, hit.local);
         }}
         onPointerLeave={() => setHovered(null)}
       />

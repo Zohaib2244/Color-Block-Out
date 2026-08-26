@@ -4,7 +4,11 @@ import type { SavedLevel } from "../types";
 const STORAGE_KEY = "cbo-level-editor:levels";
 
 export function listLevels(): SavedLevel[] {
-  return loadJson<SavedLevel[]>(STORAGE_KEY, []).sort((a, b) => b.updatedAt - a.updatedAt);
+  return loadJson<SavedLevel[]>(STORAGE_KEY, [])
+    // Levels stored before gates existed have no `gates` key; fill it in so the
+    // rest of the app can treat the field as always present.
+    .map((level) => ({ ...level, gates: level.gates ?? [] }))
+    .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export function getLevel(id: string): SavedLevel | undefined {
@@ -18,6 +22,7 @@ export function createLevel(name: string, gridId: string): SavedLevel {
     gridId,
     cats: [],
     holes: [],
+    gates: [],
     updatedAt: Date.now(),
   };
   saveLevel(level);

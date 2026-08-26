@@ -1,7 +1,8 @@
 import { getCanvasPalette } from "../canvasPalette";
+import { BLOCK_COLOR_HEX } from "../colors";
 import { useTheme } from "../theme";
 import { GridCanvas } from "./GridCanvas";
-import { drawCat, drawHoleGroup } from "./drawShapes";
+import { drawCat, drawCatStack, drawGate, drawHoleGroup } from "./drawShapes";
 
 /** A flat color chip — for grid states whose meaning is just "this fill color". */
 export function SwatchLegend({ items }: { items: { color: string; label: string }[] }) {
@@ -68,6 +69,55 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
           />
         </span>
         Hole — one outline per hole, however many cells; the number is its cat capacity
+      </li>
+      <li>
+        <span className="legend-glyph">
+          <GridCanvas
+            width={1}
+            length={1}
+            cellPx={30}
+            showLabels={false}
+            renderCell={(ctx, _cell, rect) => {
+              ctx.fillStyle = palette.floor;
+              ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+            }}
+            renderOverlay={(ctx, cellRect) =>
+              drawCatStack(
+                ctx,
+                cellRect(0, 0),
+                [BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Yellow, accentHex],
+                palette.holeVoid,
+                palette.floor
+              )
+            }
+          />
+        </span>
+        Cat stack — the front-most cat is the top of the pile, and the only one a hole can take; the badge is how deep it goes
+      </li>
+      <li>
+        <span className="legend-glyph">
+          <GridCanvas
+            width={1}
+            length={1}
+            cellPx={30}
+            showLabels={false}
+            renderCell={(ctx, _cell, rect) => {
+              ctx.fillStyle = palette.floor;
+              ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+            }}
+            renderOverlay={(ctx, cellRect) =>
+              drawGate(
+                ctx,
+                cellRect(0, 0),
+                "Down",
+                [accentHex, BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Green],
+                palette.textMuted,
+                palette.holeVoid
+              )
+            }
+          />
+        </span>
+        Gate — replaces the wall on one edge; the ringed pip is the top cat, and the queue runs on from it
       </li>
     </ul>
   );
