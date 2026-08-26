@@ -44,8 +44,16 @@ Every grid canvas shares the same interactions:
 - **Click or drag to paint.** A drag stroke commits to whatever the first
   cell became, so sweeping a wall (or selecting a run of cells) is one
   motion instead of one click per cell.
-- **Zoom slider** — a multiplier over the auto-fit cell size, so resizing a
-  grid still fits on screen while your zoom preference sticks.
+- **The board is centred in its own viewport.** The page never scrolls: the
+  grid sits in the middle of a scrolling stage, the side panel scrolls
+  separately, and the toolbar stays put. A grid too big to fit scrolls from
+  its true top-left rather than having its top and left edges clipped off.
+- **Zoom dock**, floating at the stage's bottom-right: `−` / `+` step
+  buttons, a slider, the current percentage, **Fit** (sizes the grid to the
+  window) and **100%**. `Ctrl`/`Cmd` + scroll wheel over the grid zooms too.
+  Zoom is a multiplier over the auto-fit cell size, so resizing a grid still
+  fits on screen while your zoom preference sticks; picking a different grid
+  re-fits it to the window rather than opening it half off-screen.
 - **Hover crosshair** — the hovered row and column are tinted and their
   axis labels highlight, so reading a cell's coordinates off a large grid
   doesn't need finger-tracing. The exact `x, z` is printed under the canvas.
@@ -67,19 +75,35 @@ playable mask, not the raw wall toggles, since that's what
 
 ### Level Editor
 
-Everything is **direct manipulation** — pick a color from the swatch row
-(it drives both the cats and the holes you place next), then click the
-grid. There is no select-then-commit step except when drawing a hole
-outline, which genuinely needs the whole shape before it can become a hole.
+The tool panel asks the question in the order you actually think about it:
+**what kind of thing** — a Cat, a Hole, or nothing at all (Select) — and
+only then **which flavour** of it. Each family remembers the variant you
+last used, so Cat → Hole → Cat comes back to the cat tool you were on.
 
-- **Cats** — click a cell to drop a cat, click it again to take it away;
-  drag to place or clear a run of them. Cats **stack**: clicking an occupied
-  cell adds another cat on top of the pile rather than refusing, and
-  removing takes only the top one off. See *A stack of cats* below.
-- **Gates** — click a cell on the board's edge to put a gate on the wall
-  nearest your click; click that gate again to push the selected color onto
-  its queue, or use the inspector to reorder and trim it. See *Gates* below.
-- **Holes (shape)** — drag out the outline of a tunnel, then **Create
+    Add        [ Cat ]  [ Hole ]  |  [ Select ]
+    Cat type   [ Normal ]  [ Stack ]  [ Gate ]
+    Hole type  [ Single ]  [ Shape ]  [ Preset ]
+
+Placement is **direct manipulation** — pick a color from the swatch row (it
+drives the cats and holes you place next), then click the grid. Stacks and
+gates are the exception: you pick a cell or a wall, and the sequence itself
+is composed in the **Stack Visualizer** side panel, because a queue of nine
+cats is not something you want to enter one grid click at a time.
+
+**Cat tools**
+
+- **Normal** — click a cell to drop one cat, click it again to lift the top
+  one off; drag to place or clear a run of them. Cats **stack**, so clicking
+  an occupied cell adds another on top rather than refusing.
+- **Stack** — click any cell to open its pile in the Stack Visualizer, then
+  set the colors and their order there. See *A stack of cats* below.
+- **Gate** — click a cell on the board's edge to put a gate on the wall
+  nearest your click, or an existing gate to reopen it; the queue is composed
+  in the same Stack Visualizer. See *Gates* below.
+
+**Hole tools**
+
+- **Shape** — drag out the outline of a tunnel, then **Create
   Hole**. Each cell's `HoleType`
   (`Isolated`/`EndCap`/`Straight`/`Corner`/`OneSide`/`Middle`) is derived
   purely from how many of its 4 neighbors are in the shape, and its
@@ -87,22 +111,27 @@ outline, which genuinely needs the whole shape before it can become a hole.
   openings (`DEFAULT_HOLE_OPENINGS` in `src/level/holeShape.ts`) until it
   matches — the same algorithm as
   `CatLevelEditorWindow.GetHoleType`/`GetRotation`.
-- **Holes (single)** — click to cut a one-cell hole with an explicit type
+- **Single** — click to cut a one-cell hole with an explicit type
   and rotation; click it again to remove it.
-- **Holes (preset)** — click to stamp a saved shape from the Hole Presets
+- **Preset** — click to stamp a saved shape from the Hole Presets
   tab, using that cell as its anchor and the chosen placement rotation.
-- **Edit** — click a placed hole to select it (it gets a halo), then retune
-  it in the inspector: change its **color**, change its **capacity**, or
-  reshape it by clicking an empty cell touching it to grow it or one of its
-  own cells to carve that cell away. Every shape edit re-derives each
-  cell's `holeType`/`rotationQuarterTurns`, so a grown corner becomes a
-  `Corner` automatically. A hole must stay one connected shape, so a click
-  that isn't adjacent to the selection is ignored — but carving a *middle*
-  cell legitimately splits the hole, and both resulting pieces inherit the
-  original's color and capacity.
 
-Outside Edit mode, clicking any cell of a placed hole removes (or replaces)
-the **whole** hole, since a hole is one unit rather than a pile of cells.
+Any hole you place opens in the side panel straight away, so its color and
+capacity can be retuned without switching tools first.
+
+**Select** — click a hole, gate or stack to open it on the right. A selected
+hole gets a halo and can be reshaped in place: click an empty cell touching
+it to grow it, or one of its own cells to carve that cell away. Every shape
+edit re-derives each cell's `holeType`/`rotationQuarterTurns`, so a grown
+corner becomes a `Corner` automatically. A hole must stay one connected
+shape, so a click that isn't adjacent to it can't grow it — that click falls
+through and selects whatever it landed on instead. Carving a *middle* cell
+legitimately splits the hole, and both resulting pieces inherit the
+original's color and capacity.
+
+Outside the Select tool, clicking any cell of a placed hole removes (or
+replaces) the **whole** hole, since a hole is one unit rather than a pile of
+cells.
 
 ### A hole is one shape, not N cells
 
@@ -138,10 +167,23 @@ cat on a cell by `index * catStackHeight` in list order, and `TopCatAt`
 exposes only the highest one — so painting order here is stack order there.
 
 Only the top cat matters in play: it is the one a hole can take, and its
-color alone decides whether a hole may enter the cell at all. The canvas
-therefore draws the pile bottom-to-top so the top cat lands unoccluded and
-centred, with the ones beneath peeking out below it and a badge carrying the
-true depth.
+color alone decides whether a hole may enter the cell at all.
+
+A stack is drawn as a pile of **separately outlined bands, one per cat**,
+running up the cell in stack order, with the topmost band wearing the ears
+and a light rim, and a badge carrying the true total. Overlapping cat heads
+were tried first and answered none of the three questions a designer
+actually asks of a stacked cell — which colors, in what order, how many —
+so each cat gets its own band, ink-outlined and gapped so neighbouring
+colors stay countable even when they're near neighbours on the palette.
+Past five cats the bands stop and the badge carries the count, with a stub
+peeking out below the pile so "there's more under this" stays visible.
+
+The **Stack Visualizer** is the authoritative view: pick the Stack tool,
+click a cell, and it opens with a full-size preview drawn through the very
+same canvas routines the grid uses (so the panel can never disagree with the
+board) above a numbered list, top first. Add colors from the palette, drag
+the order around with `↑`/`↓`, remove with `×`, or reverse the whole run.
 
 ### Gates
 
@@ -151,10 +193,19 @@ holds an ordered queue of cats. In play the hole is moved onto the gate's own
 cell — the cell in front of the mouth — and if the gate's **topmost** cat
 matches that hole's color, the cat hops out into it.
 
-Queue index 0 is the topmost, the one that leaves next. The inspector shows
-the queue as a numbered list (head labelled `next`) rather than a color
-count, because the order *is* the content. On the canvas a gate is a bar laid
-along its edge with the queue as pips, the head drawn larger and ringed.
+Queue index 0 is the topmost, the one that leaves next. Gates share the
+**Stack Visualizer** with cat stacks — they are the same thing to a designer,
+an ordered run of colored cats where only one end is live — so it shows the
+queue as a numbered list (head labelled `next`) rather than a color count,
+because the order *is* the content. The two differ only in which end of the
+stored array is the live one, and the panel hides that split by always
+listing top-first and converting on the way in and out.
+
+On the canvas a gate is a bar laid along its edge showing only the **head**
+of the queue: the first few pips, ringed on the one that leaves next, plus a
+badge with the true length. A one-cell bar cannot legibly hold a queue of
+nine, so the full sequence is the panel's job and the bar is the at-a-glance
+summary.
 
 A gate is drawn just inside its own cell rather than out in the neighbouring
 blocked cell, so a gate on the outermost row stays on canvas instead of

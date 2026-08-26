@@ -90,6 +90,7 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
       </aside>
 
       <main className="editor-main">
+        <div className="editor-toolbar">
         <p className="hint">
           Click or <strong>drag</strong> to draw a connected hole shape, same as Level Editor's Holes (shape) mode,
           then save it as a reusable preset. A preset stores the shape only — grid, color and cat capacity are all
@@ -108,8 +109,10 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
             Save as Preset
           </button>
         </div>
+        </div>
 
-        <div className="canvas-wrap">
+        <div className="canvas-viewport">
+          <div className="canvas-wrap">
           <GridCanvas
             width={SANDBOX_SIZE}
             length={SANDBOX_SIZE}
@@ -125,6 +128,7 @@ export function PresetDesigner({ onPresetsChanged }: PresetDesignerProps) {
               }
             }}
           />
+          </div>
         </div>
       </main>
     </div>

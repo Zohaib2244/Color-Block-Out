@@ -37,7 +37,7 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
               ctx.fillStyle = palette.floor;
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
             }}
-            renderOverlay={(ctx, cellRect) => drawCat(ctx, cellRect(0, 0), accentHex, palette.holeVoid)}
+            renderOverlay={(ctx, cellRect) => drawCat(ctx, cellRect(0, 0), accentHex)}
           />
         </span>
         Cat — solid, with ears
@@ -82,17 +82,12 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
             }}
             renderOverlay={(ctx, cellRect) =>
-              drawCatStack(
-                ctx,
-                cellRect(0, 0),
-                [BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Yellow, accentHex],
-                palette.holeVoid,
-                palette.floor
-              )
+              drawCatStack(ctx, cellRect(0, 0), [BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Yellow, accentHex])
             }
           />
         </span>
-        Cat stack — the front-most cat is the top of the pile, and the only one a hole can take; the badge is how deep it goes
+        Cat stack — one band per cat, read bottom to top; the eared, light-rimmed band is the top cat and the only one a
+        hole can take, and the badge is how deep the pile really goes
       </li>
       <li>
         <span className="legend-glyph">
@@ -106,18 +101,12 @@ export function PieceLegend({ accentHex }: { accentHex: string }) {
               ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
             }}
             renderOverlay={(ctx, cellRect) =>
-              drawGate(
-                ctx,
-                cellRect(0, 0),
-                "Down",
-                [accentHex, BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Green],
-                palette.textMuted,
-                palette.holeVoid
-              )
+              drawGate(ctx, cellRect(0, 0), "Down", [accentHex, BLOCK_COLOR_HEX.Blue, BLOCK_COLOR_HEX.Green], palette.textMuted)
             }
           />
         </span>
-        Gate — replaces the wall on one edge; the ringed pip is the top cat, and the queue runs on from it
+        Gate — replaces the wall on one edge; the ringed pip is the cat that leaves next, and the badge is how many are
+        queued behind it
       </li>
     </ul>
   );

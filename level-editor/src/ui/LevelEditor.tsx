@@ -24,15 +24,35 @@ import type {
   SavedGrid,
   SavedLevel,
 } from "../types";
-import { GateInspector } from "./GateInspector";
 import { GridCanvas } from "./GridCanvas";
 import type { CellLocal } from "./GridCanvas";
 import { HoleInspector } from "./HoleInspector";
 import { PieceLegend } from "./Legend";
-import { ZoomControl, zoomedCellPx } from "./ZoomControl";
+import { StackVisualizer } from "./StackVisualizer";
+import { ToolPanel } from "./ToolPanel";
+import { ZoomControl } from "./ZoomControl";
+import { toolFor } from "./tools";
+import type { CatTool, HoleTool, ToolFamily } from "./tools";
+import { fitZoom, stepZoom, zoomedCellPx } from "./zoom";
 import { drawCatStack, drawGate, drawHoleGroup } from "./drawShapes";
 
-type Mode = "cats" | "holes-shape" | "holes-manual" | "holes-preset" | "gates" | "edit";
+/**
+ * Everything between the viewport's inner edge and the grid itself: the
+ * viewport's padding, the canvas card's padding and border, and the canvas'
+ * own axis-label margin. Subtracted before working out what zoom makes a grid
+ * fill the window.
+ */
+const CANVAS_CHROME_PX = 92;
+
+/**
+ * What the side panel is currently about. A stack has no id of its own — it is
+ * just "every cat on this cell" — so it is addressed by cell instead.
+ */
+type Selection =
+  | { kind: "hole"; id: string }
+  | { kind: "gate"; id: string }
+  | { kind: "stack"; x: number; z: number }
+  | null;
 
 interface LevelEditorProps {
   gridsVersion: number;
@@ -46,7 +66,14 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [levels, setLevels] = useState<SavedLevel[]>(() => listLevels());
   const [presets, setPresets] = useState<HoleShapePreset[]>(() => listPresets());
   const [draft, setDraft] = useState<SavedLevel>(() => makeBlankDraft(grids[0]?.id ?? ""));
-  const [mode, setMode] = useState<Mode>("cats");
+
+  // Tool is split three ways so that switching Cat -> Hole -> Cat comes back to
+  // the cat tool you were actually using rather than resetting to the default.
+  const [family, setFamily] = useState<ToolFamily>("cat");
+  const [catTool, setCatTool] = useState<CatTool>("cat");
+  const [holeTool, setHoleTool] = useState<HoleTool>("hole-single");
+  const tool = toolFor(family, catTool, holeTool);
+
   const [selectedColor, setSelectedColor] = useState<BlockColor>("Red");
   const [selectedHoleType, setSelectedHoleType] = useState<HoleType>("Isolated");
   const [manualRotation, setManualRotation] = useState<RotationQuarterTurns>(0);
@@ -55,12 +82,11 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
   /** Only used by shape mode, which needs the whole outline before it can become a hole. */
   const [shapeCells, setShapeCells] = useState<Set<string>>(new Set());
-  /** Edit mode's current subject. */
-  const [selectedHoleId, setSelectedHoleId] = useState<string | null>(null);
-  /** Gates mode's current subject. */
-  const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
   const [zoom, setZoom] = useState(1);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
   const dragActionRef = useRef<"add" | "remove">("add");
   const palette = getCanvasPalette(useTheme());
@@ -103,18 +129,38 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
   const cellPx = useMemo(() => (grid ? zoomedCellPx(grid.width, grid.length, zoom) : 32), [grid, zoom]);
   const issues = useMemo(() => (grid ? validateLevel(draft, grid) : []), [draft, grid]);
-  const isShapeMode = mode === "holes-shape";
-  const isEditMode = mode === "edit";
-  const isGateMode = mode === "gates";
-  const placesHoles = mode === "holes-shape" || mode === "holes-manual" || mode === "holes-preset";
+
   const selectedHole = useMemo(
-    () => draft.holes.find((h) => h.id === selectedHoleId) ?? null,
-    [draft.holes, selectedHoleId]
+    () => (selection?.kind === "hole" ? (draft.holes.find((h) => h.id === selection.id) ?? null) : null),
+    [draft.holes, selection]
   );
   const selectedGate = useMemo(
-    () => draft.gates.find((g) => g.id === selectedGateId) ?? null,
-    [draft.gates, selectedGateId]
+    () => (selection?.kind === "gate" ? (draft.gates.find((g) => g.id === selection.id) ?? null) : null),
+    [draft.gates, selection]
   );
+  const selectedStack = useMemo(
+    () =>
+      selection?.kind === "stack"
+        ? (catsByCell.get(cellKey(selection.x, selection.z)) ?? []).map((c) => c.color)
+        : [],
+    [catsByCell, selection]
+  );
+
+  // ── viewport: keep the board centred and sized to the window ────
+
+  const fitToViewport = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el || !grid) return;
+    setZoom(fitZoom(grid.width, grid.length, el.clientWidth, el.clientHeight, CANVAS_CHROME_PX));
+  }, [grid]);
+
+  // A newly picked grid starts sized to the window rather than at whatever zoom
+  // the previous one was left on, which for a big board meant opening off-screen.
+  useEffect(() => {
+    fitToViewport();
+  }, [fitToViewport]);
+
+  const onZoomStep = useCallback((direction: number) => setZoom((z) => stepZoom(z, direction)), []);
 
   function refreshLevels() {
     setLevels(listLevels());
@@ -125,16 +171,14 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     // Levels saved before gates existed have no `gates` field at all.
     setDraft({ ...level, cats: [...level.cats], holes: [...level.holes], gates: [...(level.gates ?? [])] });
     setShapeCells(new Set());
-    setSelectedGateId(null);
-    setSelectedHoleId(null);
+    setSelection(null);
   }
 
   function newLevel() {
     if (!grid) return;
     setDraft(makeBlankDraft(grid.id));
     setShapeCells(new Set());
-    setSelectedGateId(null);
-    setSelectedHoleId(null);
+    setSelection(null);
   }
 
   /**
@@ -173,18 +217,34 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     });
   }
 
+  /**
+   * Replaces every cat on one cell with `colors`, bottom-first. The cell's own
+   * order is all that matters to Unity, so dropping the old entries and
+   * appending the new run is enough — where they land in the level-wide list
+   * carries no meaning.
+   */
+  function setStackCats(x: number, z: number, colors: BlockColor[]) {
+    const key = cellKey(x, z);
+    setDraft((prev) => ({
+      ...prev,
+      cats: [...prev.cats.filter((c) => cellKey(c.x, c.z) !== key), ...colors.map((color) => ({ color, x, z }))],
+    }));
+  }
+
   function placeSingleHole(cell: GridCell) {
+    const id = newId();
     setDraft((prev) => {
       const keys = new Set([cellKey(cell.x, cell.z)]);
       const cleared = clearCells(prev, keys);
       const hole: HolePlacement = {
-        id: newId(),
+        id,
         color: selectedColor,
         capacity,
         cells: [{ x: cell.x, z: cell.z, holeType: selectedHoleType, rotationQuarterTurns: manualRotation }],
       };
       return { ...cleared, holes: [...cleared.holes, hole] };
     });
+    setSelection({ kind: "hole", id });
   }
 
   function removeHoleAt(cell: GridCell) {
@@ -193,16 +253,18 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       ...prev,
       holes: prev.holes.filter((h) => !h.cells.some((c) => cellKey(c.x, c.z) === key)),
     }));
+    setSelection(null);
   }
 
   function stampPresetAt(cell: GridCell) {
     if (!selectedPreset) return;
     const stamped = stampPreset(selectedPreset, cell, presetRotation);
+    const id = newId();
     setDraft((prev) => {
       const keys = new Set(stamped.map((c) => cellKey(c.x, c.z)));
       const cleared = clearCells(prev, keys);
       const hole: HolePlacement = {
-        id: newId(),
+        id,
         color: selectedColor,
         capacity,
         cells: stamped.map((c) => ({
@@ -214,20 +276,21 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       };
       return { ...cleared, holes: [...cleared.holes, hole] };
     });
+    setSelection({ kind: "hole", id });
   }
 
-  // ── edit mode: retune a placed hole's color, capacity or shape ──
+  // ── retune a placed hole's color, capacity or shape ─────────────
 
   function updateSelectedHole(patch: Partial<Pick<HolePlacement, "color" | "capacity">>) {
     setDraft((prev) => ({
       ...prev,
-      holes: prev.holes.map((h) => (h.id === selectedHoleId ? { ...h, ...patch } : h)),
+      holes: prev.holes.map((h) => (h.id === selectedHole?.id ? { ...h, ...patch } : h)),
     }));
   }
 
   function deleteSelectedHole() {
-    setDraft((prev) => ({ ...prev, holes: prev.holes.filter((h) => h.id !== selectedHoleId) }));
-    setSelectedHoleId(null);
+    setDraft((prev) => ({ ...prev, holes: prev.holes.filter((h) => h.id !== selectedHole?.id) }));
+    setSelection(null);
   }
 
   function growSelectedHole(hole: HolePlacement, cell: GridCell) {
@@ -255,7 +318,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       );
       return { ...prev, holes: [...others, ...pieces] };
     });
-    if (remaining.length === 0) setSelectedHoleId(null);
+    if (remaining.length === 0) setSelection(null);
   }
 
   // ── gates: one per boundary edge, holding an ordered queue of cats ──
@@ -263,98 +326,127 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   function updateSelectedGate(cats: BlockColor[]) {
     setDraft((prev) => ({
       ...prev,
-      gates: prev.gates.map((g) => (g.id === selectedGateId ? { ...g, cats } : g)),
+      gates: prev.gates.map((g) => (g.id === selectedGate?.id ? { ...g, cats } : g)),
     }));
   }
 
   function deleteSelectedGate() {
-    setDraft((prev) => ({ ...prev, gates: prev.gates.filter((g) => g.id !== selectedGateId) }));
-    setSelectedGateId(null);
+    setDraft((prev) => ({ ...prev, gates: prev.gates.filter((g) => g.id !== selectedGate?.id) }));
+    setSelection(null);
+  }
+
+  /** Whichever gate on this cell sits nearest the click, if any. */
+  function gateAt(cell: GridCell, local: CellLocal): GatePlacement | null {
+    const onCell = gatesByCell.get(cellKey(cell.x, cell.z)) ?? [];
+    if (onCell.length === 0) return null;
+    const nearest = nearestBoundarySide(
+      onCell.map((g) => g.side),
+      local.u,
+      local.v
+    );
+    return onCell.find((g) => g.side === nearest) ?? onCell[0];
   }
 
   /**
-   * Click a boundary cell to put a gate on the edge nearest the click; click
-   * that gate again to push the toolbar colour onto its queue. Interior cells
-   * have no wall to replace, so they do nothing.
+   * Click a boundary cell to put a gate on the edge nearest the click, or an
+   * existing one to open it. Either way the queue is composed in the panel, not
+   * by clicking the board — a sequence of nine cats is not something you want
+   * to enter one grid click at a time. Interior cells have no wall to replace.
    */
   function handleGateClick(cell: GridCell, local: CellLocal) {
-    const onCell = gatesByCell.get(cellKey(cell.x, cell.z)) ?? [];
-    const sides = boundarySides(cell, isPlayable);
-
-    if (onCell.length > 0) {
-      // Prefer whichever of this cell's gates is on the edge nearest the click.
-      const nearest = nearestBoundarySide(onCell.map((g) => g.side), local.u, local.v);
-      const hit = onCell.find((g) => g.side === nearest) ?? onCell[0];
-      if (hit.id === selectedGateId) {
-        setDraft((prev) => ({
-          ...prev,
-          gates: prev.gates.map((g) => (g.id === hit.id ? { ...g, cats: [...g.cats, selectedColor] } : g)),
-        }));
-      } else {
-        setSelectedGateId(hit.id);
-      }
+    const hit = gateAt(cell, local);
+    if (hit) {
+      setSelection({ kind: "gate", id: hit.id });
       return;
     }
-
-    const side = nearestBoundarySide(sides, local.u, local.v);
+    const side = nearestBoundarySide(boundarySides(cell, isPlayable), local.u, local.v);
     if (!side) return; // interior cell: no wall here to replace
     const gate: GatePlacement = { id: newId(), x: cell.x, z: cell.z, side, cats: [] };
     setDraft((prev) => ({ ...prev, gates: [...prev.gates, gate] }));
-    setSelectedGateId(gate.id);
+    setSelection({ kind: "gate", id: gate.id });
   }
 
-  function handleEditClick(cell: GridCell) {
+  function handleStackClick(cell: GridCell) {
+    const hole = holesByCell.get(cellKey(cell.x, cell.z));
+    // A cat can't stand on a hole. Showing what IS there beats a click that
+    // silently does nothing.
+    if (hole) setSelection({ kind: "hole", id: hole.id });
+    else setSelection({ kind: "stack", x: cell.x, z: cell.z });
+  }
+
+  /**
+   * Select whatever the click landed on. A selected hole keeps first claim on
+   * the click so its grow/carve editing still works; everything else is picked
+   * up in the order it sits on the cell.
+   */
+  function handleSelectClick(cell: GridCell, local: CellLocal) {
     const key = cellKey(cell.x, cell.z);
     const hitHole = holesByCell.get(key);
-    if (hitHole && hitHole.id !== selectedHoleId) {
-      setSelectedHoleId(hitHole.id);
+
+    // A selected hole keeps first claim, but only over the cells it can
+    // actually edit — its own, and the empty ones touching it. Anywhere else
+    // falls through to a normal selection rather than swallowing the click.
+    if (selectedHole) {
+      if (hitHole?.id === selectedHole.id) {
+        carveSelectedHole(selectedHole, cell);
+        return;
+      }
+      const touches = selectedHole.cells.some((c) => Math.abs(c.x - cell.x) + Math.abs(c.z - cell.z) === 1);
+      if (!hitHole && touches) {
+        growSelectedHole(selectedHole, cell);
+        return;
+      }
+    }
+    if (hitHole) {
+      setSelection({ kind: "hole", id: hitHole.id });
       return;
     }
-    if (!selectedHole) return;
-    if (hitHole && hitHole.id === selectedHoleId) carveSelectedHole(selectedHole, cell);
-    else if (!hitHole) growSelectedHole(selectedHole, cell);
+    const hitGate = gateAt(cell, local);
+    if (hitGate) {
+      setSelection({ kind: "gate", id: hitGate.id });
+      return;
+    }
+    setSelection(catsByCell.has(key) ? { kind: "stack", x: cell.x, z: cell.z } : null);
   }
 
   function handlePaintStart(cell: GridCell, local: CellLocal) {
     const key = cellKey(cell.x, cell.z);
-    if (isEditMode) {
-      handleEditClick(cell);
-      return;
+    switch (tool) {
+      case "select":
+        return handleSelectClick(cell, local);
+      case "gate":
+        return handleGateClick(cell, local);
+      case "stack":
+        return handleStackClick(cell);
+      case "cat":
+        dragActionRef.current = catsByCell.has(key) ? "remove" : "add";
+        if (dragActionRef.current === "remove") removeCat(cell);
+        else placeCat(cell);
+        return;
+      case "hole-single":
+        if (holesByCell.has(key)) removeHoleAt(cell);
+        else placeSingleHole(cell);
+        return;
+      case "hole-preset":
+        if (holesByCell.has(key)) removeHoleAt(cell);
+        else stampPresetAt(cell);
+        return;
+      case "hole-shape":
+        // shape mode: accumulate an outline first
+        dragActionRef.current = shapeCells.has(key) ? "remove" : "add";
+        applyShapeSelection(cell);
+        return;
     }
-    if (isGateMode) {
-      handleGateClick(cell, local);
-      return;
-    }
-    if (mode === "cats") {
-      dragActionRef.current = catsByCell.has(key) ? "remove" : "add";
-      if (dragActionRef.current === "remove") removeCat(cell);
-      else placeCat(cell);
-      return;
-    }
-    if (mode === "holes-manual") {
-      if (holesByCell.has(key)) removeHoleAt(cell);
-      else placeSingleHole(cell);
-      return;
-    }
-    if (mode === "holes-preset") {
-      if (holesByCell.has(key)) removeHoleAt(cell);
-      else stampPresetAt(cell);
-      return;
-    }
-    // shape mode: accumulate an outline first
-    dragActionRef.current = shapeCells.has(key) ? "remove" : "add";
-    applyShapeSelection(cell);
   }
 
   function handlePaintDrag(cell: GridCell) {
-    if (isEditMode || isGateMode) return; // edits and gate placement are deliberate single clicks
-    if (mode === "cats") {
+    // Selections, gates and single hole placements are deliberate single clicks.
+    if (tool === "cat") {
       if (dragActionRef.current === "add") placeCat(cell);
       else removeCat(cell);
       return;
     }
-    if (isShapeMode) applyShapeSelection(cell);
-    // manual/preset holes are single deliberate placements — no drag repeat
+    if (tool === "hole-shape") applyShapeSelection(cell);
   }
 
   function applyShapeSelection(cell: GridCell) {
@@ -375,11 +467,13 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       return { x, z };
     });
     if (cells.length === 0) return;
+    const id = newId();
     setDraft((prev) => {
       const cleared = clearCells(prev, shapeCells);
-      return { ...cleared, holes: [...cleared.holes, makeHole(newId(), selectedColor, capacity, cells)] };
+      return { ...cleared, holes: [...cleared.holes, makeHole(id, selectedColor, capacity, cells)] };
     });
     setShapeCells(new Set());
+    setSelection({ kind: "hole", id });
   }
 
   function handleSaveLevel() {
@@ -417,6 +511,8 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
   const totalCapacity = draft.holes.reduce((sum, h) => sum + h.capacity, 0);
   const gatedCats = draft.gates.reduce((sum, g) => sum + g.cats.length, 0);
+  const placesHoles = family === "hole";
+  const usesToolbarColor = tool === "cat" || placesHoles;
 
   return (
     <div className="screen">
@@ -458,285 +554,317 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       </aside>
 
       <main className="editor-main">
-        <div className="field-row">
-          <label>
-            Name
-            <input value={draft.name} onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))} placeholder="New Level" />
-          </label>
-          <label>
-            Grid
-            <select value={draft.gridId} onChange={(e) => setDraft((prev) => ({ ...prev, gridId: e.target.value }))}>
-              <option value="" disabled>
-                Select a grid…
-              </option>
-              {grids.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} ({g.width}×{g.length})
+        <div className="editor-toolbar">
+          <div className="field-row">
+            <label>
+              Name
+              <input
+                value={draft.name}
+                onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="New Level"
+              />
+            </label>
+            <label>
+              Grid
+              <select value={draft.gridId} onChange={(e) => setDraft((prev) => ({ ...prev, gridId: e.target.value }))}>
+                <option value="" disabled>
+                  Select a grid…
                 </option>
-              ))}
-            </select>
-          </label>
-          <button onClick={newLevel} disabled={!grid}>
-            New Level
-          </button>
-          <button className="primary" onClick={handleSaveLevel} disabled={!draft.name.trim() || !grid}>
-            Save Level
-          </button>
-          <button onClick={handleExport} disabled={!grid}>
-            Export JSON
-          </button>
+                {grids.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name} ({g.width}×{g.length})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button onClick={newLevel} disabled={!grid}>
+              New Level
+            </button>
+            <button className="primary" onClick={handleSaveLevel} disabled={!draft.name.trim() || !grid}>
+              Save Level
+            </button>
+            <button onClick={handleExport} disabled={!grid}>
+              Export JSON
+            </button>
+          </div>
+
+          {!grid && <p className="hint">Create a grid in the Grid Designer tab first, then pick it here.</p>}
+
+          {grid && (
+            <>
+              <ToolPanel
+                family={family}
+                catTool={catTool}
+                holeTool={holeTool}
+                onFamily={setFamily}
+                onCatTool={setCatTool}
+                onHoleTool={setHoleTool}
+              />
+
+              {/* Placement options. Stacks and gates take their colours from the
+                  Stack Visualizer instead, and selecting takes none at all. */}
+              {(usesToolbarColor || tool === "hole-single" || tool === "hole-preset") && (
+                <div className="field-row">
+                  {usesToolbarColor && (
+                    <label className="color-field">
+                      {family === "cat" ? "Cat colour" : "Hole colour"}
+                      <div className="color-picker">
+                        {BLOCK_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            title={c}
+                            aria-label={c}
+                            aria-pressed={selectedColor === c}
+                            className={selectedColor === c ? "color-chip active" : "color-chip"}
+                            style={{ background: BLOCK_COLOR_HEX[c] }}
+                            onClick={() => setSelectedColor(c)}
+                          />
+                        ))}
+                      </div>
+                    </label>
+                  )}
+                  {placesHoles && (
+                    <label title="How many cats this hole can swallow before it's full">
+                      Cat Capacity
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={capacity}
+                        onChange={(e) => setCapacity(Math.max(1, Math.floor(Number(e.target.value)) || 1))}
+                      />
+                    </label>
+                  )}
+                  {tool === "hole-single" && (
+                    <>
+                      <label>
+                        Hole Type
+                        <select
+                          value={selectedHoleType}
+                          onChange={(e) => setSelectedHoleType(e.target.value as HoleType)}
+                        >
+                          {HOLE_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Rotation
+                        <select
+                          value={manualRotation}
+                          onChange={(e) => setManualRotation(Number(e.target.value) as RotationQuarterTurns)}
+                        >
+                          {[0, 1, 2, 3].map((r) => (
+                            <option key={r} value={r}>
+                              {r * 90}°
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  )}
+                  {tool === "hole-preset" && (
+                    <>
+                      <label>
+                        Preset
+                        <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
+                          <option value="" disabled>
+                            Select a preset…
+                          </option>
+                          {presets.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} ({p.cells.length} cells)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Rotation
+                        <select
+                          value={presetRotation}
+                          onChange={(e) => setPresetRotation(Number(e.target.value) as RotationQuarterTurns)}
+                        >
+                          {[0, 1, 2, 3].map((r) => (
+                            <option key={r} value={r}>
+                              {r * 90}°
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {tool === "hole-shape" && (
+                <div className="field-row">
+                  <button onClick={() => setShapeCells(new Set())} disabled={shapeCells.size === 0}>
+                    Clear Outline ({shapeCells.size})
+                  </button>
+                  <button className="primary" onClick={commitShape} disabled={shapeCells.size === 0}>
+                    Create Hole
+                  </button>
+                </div>
+              )}
+
+              <p className="hint">{TOOL_HINTS[tool]}</p>
+            </>
+          )}
         </div>
 
-        {!grid && <p className="hint">Create a grid in the Grid Designer tab first, then pick it here.</p>}
-
         {grid && (
-          <>
-            <div className="field-row">
-              <div className="mode-toggle">
-                <button className={mode === "cats" ? "active" : ""} onClick={() => setMode("cats")}>
-                  Cats
-                </button>
-                <button className={mode === "holes-shape" ? "active" : ""} onClick={() => setMode("holes-shape")}>
-                  Holes (shape)
-                </button>
-                <button className={mode === "holes-manual" ? "active" : ""} onClick={() => setMode("holes-manual")}>
-                  Holes (single)
-                </button>
-                <button className={mode === "holes-preset" ? "active" : ""} onClick={() => setMode("holes-preset")}>
-                  Holes (preset)
-                </button>
-                <button className={mode === "gates" ? "active" : ""} onClick={() => setMode("gates")}>
-                  Gates
-                </button>
-                <button className={mode === "edit" ? "active" : ""} onClick={() => setMode("edit")}>
-                  Edit
-                </button>
-              </div>
-              <ZoomControl value={zoom} onChange={setZoom} />
-            </div>
-
-            {/* placement controls — irrelevant while editing an existing hole,
-                whose own color/capacity live in the inspector instead */}
-            {!isEditMode && (
-            <div className="field-row">
-              <label className="color-field">
-                Color — cats &amp; holes
-                <div className="color-picker">
-                  {BLOCK_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      title={c}
-                      aria-label={c}
-                      aria-pressed={selectedColor === c}
-                      className={selectedColor === c ? "color-chip active" : "color-chip"}
-                      style={{ background: BLOCK_COLOR_HEX[c] }}
-                      onClick={() => setSelectedColor(c)}
-                    />
-                  ))}
-                </div>
-              </label>
-              {placesHoles && (
-                <label title="How many cats this hole can swallow before it's full">
-                  Cat Capacity
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={capacity}
-                    onChange={(e) => setCapacity(Math.max(1, Math.floor(Number(e.target.value)) || 1))}
-                  />
-                </label>
-              )}
-              {mode === "holes-manual" && (
-                <>
-                  <label>
-                    Hole Type
-                    <select value={selectedHoleType} onChange={(e) => setSelectedHoleType(e.target.value as HoleType)}>
-                      {HOLE_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Rotation
-                    <select value={manualRotation} onChange={(e) => setManualRotation(Number(e.target.value) as RotationQuarterTurns)}>
-                      {[0, 1, 2, 3].map((r) => (
-                        <option key={r} value={r}>
-                          {r * 90}°
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </>
-              )}
-              {mode === "holes-preset" && (
-                <>
-                  <label>
-                    Preset
-                    <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
-                      <option value="" disabled>
-                        Select a preset…
-                      </option>
-                      {presets.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.cells.length} cells)
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Rotation
-                    <select value={presetRotation} onChange={(e) => setPresetRotation(Number(e.target.value) as RotationQuarterTurns)}>
-                      {[0, 1, 2, 3].map((r) => (
-                        <option key={r} value={r}>
-                          {r * 90}°
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </>
-              )}
-            </div>
-            )}
-
-            {isShapeMode && (
-              <div className="field-row">
-                <button onClick={() => setShapeCells(new Set())} disabled={shapeCells.size === 0}>
-                  Clear Outline ({shapeCells.size})
-                </button>
-                <button className="primary" onClick={commitShape} disabled={shapeCells.size === 0}>
-                  Create Hole
-                </button>
-              </div>
-            )}
-
-            <p className="hint">
-              {mode === "cats"
-                ? "Click a cell to drop a cat in the selected color; cats stack, so clicking again adds another on top and the topmost is the only one a hole can take. Click a stacked cell to lift its top cat off. Drag to place or clear a run of them."
-                : mode === "holes-manual"
-                  ? "Click a cell to cut a one-cell hole with the capacity above; click it again to remove it."
-                  : mode === "holes-preset"
-                    ? "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole."
-                    : mode === "gates"
-                      ? "Click a cell on the board's edge to put a gate on the wall nearest your click. Click that gate again to push the selected color onto its queue, and reorder or trim the queue on the right."
-                      : mode === "edit"
-                        ? "Click any hole to select it, then change its color or capacity on the right. Click a cell touching it to grow the shape, or one of its own cells to carve that cell away."
-                        : "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity. Click any cell of a placed hole to replace it."}
-            </p>
-
-            <div className="canvas-row">
-              <div className="canvas-wrap">
-                <GridCanvas
-                  width={grid.width}
-                  length={grid.length}
-                  cellPx={cellPx}
-                  isInteractive={isPlayable}
-                  onPaintStart={handlePaintStart}
-                  onPaintDrag={handlePaintDrag}
-                  renderCell={(ctx, cell, rect) => {
-                    const playable = isPlayable(cell);
-                    ctx.fillStyle = playable ? palette.floor : palette.inert;
-                    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-                    if (playable && isShapeMode && shapeCells.has(cellKey(cell.x, cell.z))) {
-                      ctx.fillStyle = palette.selectedTint;
+          <div className="canvas-row">
+            <div className="canvas-stage">
+              <div className="canvas-viewport" ref={viewportRef}>
+                <div className="canvas-wrap">
+                  <GridCanvas
+                    width={grid.width}
+                    length={grid.length}
+                    cellPx={cellPx}
+                    isInteractive={isPlayable}
+                    onPaintStart={handlePaintStart}
+                    onPaintDrag={handlePaintDrag}
+                    onZoomStep={onZoomStep}
+                    renderCell={(ctx, cell, rect) => {
+                      const playable = isPlayable(cell);
+                      ctx.fillStyle = playable ? palette.floor : palette.inert;
                       ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-                    }
-                  }}
-                  renderOverlay={(ctx, cellRect) => {
-                    // holes first: each is drawn as ONE shape across all its cells
-                    for (const hole of draft.holes) {
-                      drawHoleGroup(
-                        ctx,
-                        hole.cells,
-                        cellRect,
-                        BLOCK_COLOR_HEX[hole.color],
-                        palette.holeVoid,
-                        hole.capacity,
-                        isEditMode && hole.id === selectedHoleId ? palette.textAccent : undefined
-                      );
-                    }
-                    // gates sit on cell edges, under the cats so a cat on the mouth cell still reads
-                    for (const gate of draft.gates) {
-                      drawGate(
-                        ctx,
-                        cellRect(gate.x, gate.z),
-                        gate.side,
-                        gate.cats.map((c) => BLOCK_COLOR_HEX[c]),
-                        palette.textMuted,
-                        palette.holeVoid,
-                        isGateMode && gate.id === selectedGateId ? palette.textAccent : undefined
-                      );
-                    }
-                    for (const [key, stack] of catsByCell) {
-                      const [x, z] = key.split(",").map(Number);
-                      drawCatStack(
-                        ctx,
-                        cellRect(x, z),
-                        stack.map((c) => BLOCK_COLOR_HEX[c.color]),
-                        palette.holeVoid,
-                        palette.floor
-                      );
-                    }
-                  }}
-                />
+                      if (playable && tool === "hole-shape" && shapeCells.has(cellKey(cell.x, cell.z))) {
+                        ctx.fillStyle = palette.selectedTint;
+                        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                      }
+                    }}
+                    renderOverlay={(ctx, cellRect) => {
+                      // The cell a stack is being edited on gets a halo, since a
+                      // stack has no outline of its own to highlight.
+                      if (selection?.kind === "stack") {
+                        const r = cellRect(selection.x, selection.z);
+                        ctx.strokeStyle = palette.textAccent;
+                        ctx.lineWidth = Math.max(2, cellPx * 0.07);
+                        ctx.strokeRect(r.x + 1, r.y + 1, r.width - 2, r.height - 2);
+                      }
+                      // holes first: each is drawn as ONE shape across all its cells
+                      for (const hole of draft.holes) {
+                        drawHoleGroup(
+                          ctx,
+                          hole.cells,
+                          cellRect,
+                          BLOCK_COLOR_HEX[hole.color],
+                          palette.holeVoid,
+                          hole.capacity,
+                          hole.id === selectedHole?.id ? palette.textAccent : undefined
+                        );
+                      }
+                      // gates sit on cell edges, under the cats so a cat on the mouth cell still reads
+                      for (const gate of draft.gates) {
+                        drawGate(
+                          ctx,
+                          cellRect(gate.x, gate.z),
+                          gate.side,
+                          gate.cats.map((c) => BLOCK_COLOR_HEX[c]),
+                          palette.textMuted,
+                          gate.id === selectedGate?.id ? palette.textAccent : undefined
+                        );
+                      }
+                      for (const [key, stack] of catsByCell) {
+                        const [x, z] = key.split(",").map(Number);
+                        drawCatStack(
+                          ctx,
+                          cellRect(x, z),
+                          stack.map((c) => BLOCK_COLOR_HEX[c.color])
+                        );
+                      }
+                    }}
+                  />
+                </div>
               </div>
-
-              <div className="canvas-side">
-                {isEditMode &&
-                  (selectedHole ? (
-                    <HoleInspector
-                      hole={selectedHole}
-                      onColorChange={(color) => updateSelectedHole({ color })}
-                      onCapacityChange={(value) => updateSelectedHole({ capacity: value })}
-                      onDelete={deleteSelectedHole}
-                      onDeselect={() => setSelectedHoleId(null)}
-                    />
-                  ) : (
-                    <p className="hint">Click a hole on the grid to select and edit it.</p>
-                  ))}
-                {isGateMode &&
-                  (selectedGate ? (
-                    <GateInspector
-                      gate={selectedGate}
-                      selectedColor={selectedColor}
-                      onQueueChange={updateSelectedGate}
-                      onDelete={deleteSelectedGate}
-                      onDeselect={() => setSelectedGateId(null)}
-                    />
-                  ) : (
-                    <p className="hint">Click a cell on the board's edge to add a gate, or an existing gate to edit it.</p>
-                  ))}
-                <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
-                <p className="stat-line">
-                  <span className="stat-value">{draft.cats.length}</span>
-                  <span className="muted"> on board · </span>
-                  <span className="stat-value">{gatedCats}</span>
-                  <span className="muted"> in gates · </span>
-                  <span className="stat-value">{draft.holes.length}</span>
-                  <span className="muted"> holes · </span>
-                  <span className="stat-value">{totalCapacity}</span>
-                  <span className="muted"> capacity</span>
-                </p>
-                {issues.length > 0 && (
-                  <ul className="issues">
-                    {issues.map((issue, i) => (
-                      <li key={i} className={issue.severity}>
-                        {issue.message}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <div className="zoom-dock">
+                <ZoomControl value={zoom} onChange={setZoom} onFit={fitToViewport} />
               </div>
             </div>
-          </>
+
+            <div className="canvas-side">
+              {selectedHole ? (
+                <HoleInspector
+                  hole={selectedHole}
+                  onColorChange={(color) => updateSelectedHole({ color })}
+                  onCapacityChange={(value) => updateSelectedHole({ capacity: value })}
+                  onDelete={deleteSelectedHole}
+                  onDeselect={() => setSelection(null)}
+                />
+              ) : selectedGate ? (
+                <StackVisualizer
+                  kind="gate"
+                  side={selectedGate.side}
+                  location={`(${selectedGate.x}, ${selectedGate.z}) · ${selectedGate.side} edge`}
+                  cats={selectedGate.cats}
+                  onChange={updateSelectedGate}
+                  onDelete={deleteSelectedGate}
+                  onDeselect={() => setSelection(null)}
+                />
+              ) : selection?.kind === "stack" ? (
+                <StackVisualizer
+                  kind="stack"
+                  location={`(${selection.x}, ${selection.z})`}
+                  cats={selectedStack}
+                  onChange={(cats) => setStackCats(selection.x, selection.z, cats)}
+                  onDelete={() => setStackCats(selection.x, selection.z, [])}
+                  onDeselect={() => setSelection(null)}
+                />
+              ) : (
+                <p className="hint">{IDLE_PANEL_HINTS[tool]}</p>
+              )}
+
+              <PieceLegend accentHex={BLOCK_COLOR_HEX[selectedColor]} />
+              <p className="stat-line">
+                <span className="stat-value">{draft.cats.length}</span>
+                <span className="muted"> on board · </span>
+                <span className="stat-value">{gatedCats}</span>
+                <span className="muted"> in gates · </span>
+                <span className="stat-value">{draft.holes.length}</span>
+                <span className="muted"> holes · </span>
+                <span className="stat-value">{totalCapacity}</span>
+                <span className="muted"> capacity</span>
+              </p>
+              {issues.length > 0 && (
+                <ul className="issues">
+                  {issues.map((issue, i) => (
+                    <li key={i} className={issue.severity}>
+                      {issue.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         )}
       </main>
     </div>
   );
 }
+
+const TOOL_HINTS: Record<string, string> = {
+  cat: "Click a cell to drop one cat in the selected colour, and drag to lay a run. Clicking a cell that already has cats lifts the top one off — to build a pile deliberately, switch to Stack.",
+  stack: "Click any cell to open its pile in the Stack Visualizer, then set the colours and their order there. The top of the list is the top of the pile, and the only cat a hole can take.",
+  gate: "Click a cell on the board's edge to put a gate on the wall nearest your click, or click an existing gate to reopen it. The queue itself is composed in the Stack Visualizer.",
+  "hole-single": "Click a cell to cut a one-cell hole with the colour and capacity above; click it again to remove it. The new hole opens on the right for tuning.",
+  "hole-shape": "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity.",
+  "hole-preset": "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole.",
+  select: "Click a hole, gate or stack to open it on the right. With a hole selected, click a cell touching it to grow the shape, or one of its own cells to carve that cell away.",
+};
+
+const IDLE_PANEL_HINTS: Record<string, string> = {
+  cat: "Cats go straight onto the grid in the colour picked above. Switch to Stack to compose a pile instead.",
+  stack: "Click any cell on the grid to open its stack here.",
+  gate: "Click a cell on the board's edge to add a gate, or an existing gate to edit its queue.",
+  "hole-single": "Place a hole and it opens here, ready to retune.",
+  "hole-shape": "Draw an outline and commit it; the finished hole opens here.",
+  "hole-preset": "Stamp a preset and the finished hole opens here.",
+  select: "Click a hole, gate or stack on the grid to select it.",
+};
 
 function makeBlankDraft(gridId: string): SavedLevel {
   return { id: "", name: "", gridId, cats: [], holes: [], gates: [], updatedAt: 0 };

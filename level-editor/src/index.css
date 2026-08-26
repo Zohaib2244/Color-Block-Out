@@ -151,7 +151,8 @@ button.primary:hover:not(:disabled) {
 }
 
 .tabs button.active,
-.mode-toggle button.active {
+.tool-chip.active,
+.tool-variant.active {
   border-color: var(--accent-orange);
   color: var(--accent-orange);
   box-shadow: 3px 3px 0 var(--shadow);
@@ -338,15 +339,32 @@ input[type="checkbox"] {
   white-space: nowrap;
 }
 
+/*
+  A column of fixed-height chrome above one flexible canvas row. The page
+  itself never scrolls: the board scrolls inside its own viewport and the side
+  panel inside its own, so the toolbar and the grid can't be pushed off screen
+  by a long list of validation issues.
+*/
 .editor-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 16px 20px;
-  overflow-y: auto;
+  overflow: hidden;
   min-width: 0;
+  min-height: 0;
   background: var(--bg-card);
   border: 1.5px solid var(--border);
   border-radius: 14px;
   box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.editor-toolbar {
+  flex: none;
+}
+
+.editor-toolbar .hint {
+  margin-bottom: 10px;
 }
 
 .field-row {
@@ -368,9 +386,74 @@ input[type="checkbox"] {
   color: var(--text-muted);
 }
 
-.mode-toggle {
+/* ─── tool panel ────────────────────────────────────────────────── */
+
+.tool-panel {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tool-family,
+.tool-variants {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-panel-label {
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  min-width: 4.5rem;
+}
+
+.tool-panel-divider {
+  width: 1.5px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+.tool-chip {
+  display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+/* A variant carries its own one-line explanation, so the grid hint below
+   doesn't have to be read before every click. */
+.tool-variant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 0.4rem 0.7rem;
+}
+
+.tool-variant-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tool-variant-body strong {
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.tool-variant-body em {
+  font-style: normal;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.tool-variant.active .tool-variant-body em {
+  color: var(--text-muted-dim);
 }
 
 /* ─── color picker ──────────────────────────────────────────────── */
@@ -428,25 +511,68 @@ input[type="checkbox"] {
 
 .canvas-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Holds the scrolling viewport plus the zoom dock floating over it, so the
+   dock stays put while the board underneath pans. */
+.canvas-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.canvas-viewport {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  padding: 18px;
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+}
+
+/*
+  `margin: auto` — not `place-content: center` — is what centres the board.
+  Auto margins collapse to zero once the board is larger than the viewport, so
+  an over-sized grid scrolls from its true top-left instead of having the
+  overflowing top and left edges clipped away where they can't be reached.
+*/
+.canvas-wrap {
+  margin: auto;
+  flex: none;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--bg-nested);
+  box-shadow: 3px 3px 0 var(--shadow);
 }
 
 .canvas-side {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 15rem;
-  flex: 1 1 15rem;
+  flex: 0 0 21rem;
+  width: 21rem;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
-.canvas-wrap {
-  display: inline-block;
+.zoom-dock {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background: var(--bg-card);
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  padding: 10px;
-  background: var(--bg-nested);
+  padding: 6px 8px;
   box-shadow: 3px 3px 0 var(--shadow);
 }
 
@@ -488,36 +614,45 @@ canvas.grid-canvas {
 
 .zoom-control {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-family: "DotGothic16", monospace;
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-muted);
-}
-
-.zoom-control-row {
-  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .zoom-control input[type="range"] {
-  width: 7rem;
+  width: 8rem;
   padding: 0;
   accent-color: var(--accent-orange);
   background: transparent;
   border: none;
 }
 
+.zoom-control .zoom-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.45rem;
+  line-height: 1;
+}
+
+.zoom-control .zoom-preset {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.7rem;
+}
+
 .zoom-value {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-primary);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  min-width: 2.4rem;
+  min-width: 3.1rem;
+  text-align: right;
+}
+
+/* The Grid Designer keeps its zoom inline in a field row rather than docked. */
+.field-row .zoom-control {
+  align-self: end;
+  padding-bottom: 1px;
 }
 
 /* ─── legend ────────────────────────────────────────────────────── */
@@ -663,31 +798,71 @@ button.destructive:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent-orange) 10%, transparent);
 }
 
-/* ── gate queue editor ──────────────────────────────────────────── */
+/* ── stack visualizer (cat stacks and gate queues) ──────────────── */
 
-.gate-queue-header {
+/* The preview is drawn by the same canvas routines as the board, just larger,
+   so what the panel shows and what the grid shows can never disagree. */
+.stack-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+}
+
+.stack-preview .grid-canvas-shell {
+  flex: none;
+}
+
+.stack-preview-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+}
+
+.stack-preview-note strong {
+  font-family: "DotGothic16", monospace;
+  font-size: 1.35rem;
+  color: var(--accent-cyan);
+  font-weight: 400;
+}
+
+.stack-preview-note p {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.stack-list-header {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 0.68rem;
+  gap: 10px;
+  font-family: "DotGothic16", monospace;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-muted);
 }
 
-.gate-queue {
+.stack-list-header span {
+  margin-right: auto;
+}
+
+.stack-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 15rem;
+  max-height: 17rem;
   overflow-y: auto;
 }
 
-.gate-queue li {
+.stack-list li {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -697,40 +872,62 @@ button.destructive:hover:not(:disabled) {
   font-size: 0.78rem;
 }
 
-/* The head of the queue is the one that actually decides the next move. */
-.gate-queue li.next {
+/* The head of the list is the cat that decides the next move on its own. */
+.stack-list li.top {
   border-color: var(--accent-cyan);
 }
 
-.gate-queue-index {
+.stack-list-index {
   min-width: 2.4rem;
   font-family: "DotGothic16", monospace;
   font-size: 0.7rem;
   color: var(--text-muted);
 }
 
-.gate-queue li.next .gate-queue-index {
+.stack-list li.top .stack-list-index {
   color: var(--accent-cyan);
 }
 
-.gate-queue-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+.stack-list-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
   flex: none;
+  /* Ink outline, matching the canvas: nine saturated colours next to each
+     other need a hard edge or the neighbouring pairs blur together. */
+  border: 1.5px solid #12100b;
+  box-shadow: 0 0 0 1px rgba(247, 241, 227, 0.35);
 }
 
-.gate-queue-name {
+.stack-list-name {
   flex: 1;
 }
 
-.gate-queue-actions {
+.stack-list-actions {
   display: flex;
   gap: 2px;
 }
 
-.gate-queue-actions button {
+.stack-list-actions button {
   padding: 0 6px;
   font-size: 0.75rem;
   line-height: 1.6;
+}
+
+.link-action {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 0.68rem;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.link-action:hover:not(:disabled) {
+  border: none;
+  box-shadow: none;
+  transform: none;
+  text-decoration: underline;
 }

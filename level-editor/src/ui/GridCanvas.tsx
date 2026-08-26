@@ -39,6 +39,12 @@ export interface GridCanvasProps {
   ) => void;
   /** Cells the pointer may interact with; others still render but ignore paint/hover. Defaults to all cells. */
   isInteractive?: (cell: GridCell) => boolean;
+  /**
+   * Ctrl/Cmd + wheel over the canvas. `direction` is +1 in, -1 out. Given a
+   * handler, the canvas swallows those events so the browser's own page zoom
+   * doesn't fire instead; a plain wheel is always left alone to scroll.
+   */
+  onZoomStep?: (direction: number) => void;
 }
 
 /**
@@ -56,6 +62,7 @@ export function GridCanvas({
   renderCell,
   renderOverlay,
   isInteractive,
+  onZoomStep,
 }: GridCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState<GridCell | null>(null);
@@ -99,6 +106,21 @@ export function GridCanvas({
       window.removeEventListener("pointercancel", stopPainting);
     };
   }, []);
+
+  // Registered by hand rather than as onWheel, because React's wheel listener
+  // is passive and a passive listener may not preventDefault — without which
+  // Ctrl+wheel zooms the whole browser page instead of the grid.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !onZoomStep) return;
+    const onWheel = (evt: WheelEvent) => {
+      if (!evt.ctrlKey && !evt.metaKey) return;
+      evt.preventDefault();
+      if (evt.deltaY !== 0) onZoomStep(evt.deltaY < 0 ? 1 : -1);
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, [onZoomStep]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

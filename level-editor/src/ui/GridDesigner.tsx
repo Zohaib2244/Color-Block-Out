@@ -7,7 +7,11 @@ import { useTheme } from "../theme";
 import type { SavedGrid } from "../types";
 import { GridCanvas } from "./GridCanvas";
 import { SwatchLegend } from "./Legend";
-import { ZoomControl, zoomedCellPx } from "./ZoomControl";
+import { ZoomControl } from "./ZoomControl";
+import { fitZoom, stepZoom, zoomedCellPx } from "./zoom";
+
+/** Viewport padding + canvas card padding/border + the canvas' axis-label margin. */
+const CANVAS_CHROME_PX = 92;
 
 interface GridDesignerProps {
   onGridsChanged?: () => void;
@@ -20,6 +24,15 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
   const palette = getCanvasPalette(useTheme());
   /** Value the current drag gesture is painting, so dragging never flip-flops cells. */
   const paintValueRef = useRef(true);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  const fitToViewport = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    setZoom(fitZoom(draft.width, draft.length, el.clientWidth, el.clientHeight, CANVAS_CHROME_PX));
+  }, [draft.width, draft.length]);
+
+  const onZoomStep = useCallback((direction: number) => setZoom((z) => stepZoom(z, direction)), []);
 
   const refreshGrids = useCallback(() => {
     setGrids(listGrids());
@@ -124,6 +137,7 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
       </aside>
 
       <main className="editor-main">
+        <div className="editor-toolbar">
         <div className="field-row">
           <label>
             Name
@@ -151,7 +165,6 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
               onChange={(e) => setDraft((prev) => ({ ...prev, cellSize: Number(e.target.value) }))}
             />
           </label>
-          <ZoomControl value={zoom} onChange={setZoom} />
         </div>
 
         <div className="field-row">
@@ -168,26 +181,35 @@ export function GridDesigner({ onGridsChanged }: GridDesignerProps) {
           cell became, so you can sweep a wall in one motion. A cell is only playable if it's sealed off from the
           grid border, exactly like GridCreatorTool's flood fill.
         </p>
+        </div>
 
         <div className="canvas-row">
-          <div className="canvas-wrap">
-            <GridCanvas
-              width={draft.width}
-              length={draft.length}
-              cellPx={cellPx}
-              onPaintStart={({ x, z }) => {
-                paintValueRef.current = !draft.wallToggles[gridIndex(draft.width, x, z)];
-                paintCell(x, z, paintValueRef.current);
-              }}
-              onPaintDrag={({ x, z }) => paintCell(x, z, paintValueRef.current)}
-              renderCell={(ctx, cell, rect) => {
-                const idx = gridIndex(draft.width, cell.x, cell.z);
-                const isWall = draft.wallToggles[idx];
-                const isPlayable = playableMask[idx];
-                ctx.fillStyle = isWall ? palette.wall : isPlayable ? palette.playable : palette.exterior;
-                ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-              }}
-            />
+          <div className="canvas-stage">
+            <div className="canvas-viewport" ref={viewportRef}>
+              <div className="canvas-wrap">
+                <GridCanvas
+                  width={draft.width}
+                  length={draft.length}
+                  cellPx={cellPx}
+                  onPaintStart={({ x, z }) => {
+                    paintValueRef.current = !draft.wallToggles[gridIndex(draft.width, x, z)];
+                    paintCell(x, z, paintValueRef.current);
+                  }}
+                  onPaintDrag={({ x, z }) => paintCell(x, z, paintValueRef.current)}
+                  onZoomStep={onZoomStep}
+                  renderCell={(ctx, cell, rect) => {
+                    const idx = gridIndex(draft.width, cell.x, cell.z);
+                    const isWall = draft.wallToggles[idx];
+                    const isPlayable = playableMask[idx];
+                    ctx.fillStyle = isWall ? palette.wall : isPlayable ? palette.playable : palette.exterior;
+                    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                  }}
+                />
+              </div>
+            </div>
+            <div className="zoom-dock">
+              <ZoomControl value={zoom} onChange={setZoom} onFit={fitToViewport} />
+            </div>
           </div>
 
           <div className="canvas-side">
