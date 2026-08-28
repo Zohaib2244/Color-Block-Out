@@ -21,11 +21,11 @@ MonoBehaviour:
     catMaterial: {fileID: 2100000, guid: 41087519d8e4a0b4c8f519a9ba9589d8, type: 2}
   - type: 1
     displayName: Orange
-    color: {r: 0.9843137, g: 0.54901963, b: 0, a: 1}
+    color: {r: 0.9843137, g: 0.4264066, b: 0, a: 1}
     catMaterial: {fileID: 2100000, guid: 649bfa3f77debd244a2ebb63fc939b03, type: 2}
   - type: 2
     displayName: Yellow
-    color: {r: 0.99215686, g: 0.84705883, b: 0.20784314, a: 1}
+    color: {r: 0.9245283, g: 0.7534906, b: 0, a: 1}
     catMaterial: {fileID: 2100000, guid: 1ae650a94e7599f4a8657224dd46851f, type: 2}
   - type: 3
     displayName: Blue
@@ -37,7 +37,7 @@ MonoBehaviour:
     catMaterial: {fileID: 2100000, guid: a126458432b6f444da6eb8902565a466, type: 2}
   - type: 5
     displayName: Green
-    color: {r: 0.2627451, g: 0.627451, b: 0.2784314, a: 1}
+    color: {r: 0.22022964, g: 0.9528302, b: 0.2507547, a: 1}
     catMaterial: {fileID: 2100000, guid: 0a312866f9d6bc642a1511a0663cbb45, type: 2}
   - type: 6
     displayName: Purple
