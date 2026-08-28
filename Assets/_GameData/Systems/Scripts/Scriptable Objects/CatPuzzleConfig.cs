@@ -19,14 +19,20 @@ public sealed class CatPuzzleConfig : ScriptableObject
     public Material cellMaterialA;
     public Material cellMaterialB;
 
-    [Header("Grid Metrics")]
-    [Tooltip("Local Y of the Cats parent inside a grid. Boards authored on the web carry no heights, " +
-             "so this is what they get; a grid file that names its own overrides it.")]
+    [Header("Container Heights")]
+    [Tooltip("Local Y of the GridCells parent inside every grid.")]
+    public float cellParentHeight;
+
+    [Tooltip("Local Y of the Walls parent inside every grid.")]
+    public float wallParentHeight;
+
+    [Tooltip("Local Y of the Cats parent inside every grid. Every cat sits at this height.")]
     public float catParentHeight = 0.178f;
 
-    [Tooltip("Local Y of the Holes parent inside a grid. Same fallback as the cats height.")]
+    [Tooltip("Local Y of the Holes parent inside every grid. Every hole sits at this height.")]
     public float holeParentHeight = 0.08f;
 
+    [Header("Grid Metrics")]
     public float wallHeight = 0.17f;
     public float straightWallThickness = 0.35f;
     public float wallOffset = 0.4f;

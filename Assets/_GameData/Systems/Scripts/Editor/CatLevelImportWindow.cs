@@ -190,7 +190,7 @@ public sealed class CatLevelImportWindow : EditorWindow
         }
 
         // Not a level; a grid file is the other thing the web tool exports.
-        if (CatLevelJson.TryParseGrid(text, entry.title, config, out GridData grid, out _))
+        if (CatLevelJson.TryParseGrid(text, entry.title, out GridData grid, out _))
         {
             entry.isGrid = true;
             entry.title = string.IsNullOrEmpty(grid.gridName) ? entry.title : grid.gridName;

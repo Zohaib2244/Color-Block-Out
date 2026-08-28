@@ -274,11 +274,16 @@ public sealed class CatPuzzleController : MonoBehaviour
         ? LevelSpawner.Instance.Config.catStackHeight
         : 0f;
 
-    /// <summary>Where the hole surface sits in the Cats parent's space, which cats fall through.</summary>
+    /// <summary>
+    /// Where the hole surface sits in the Cats parent's space, which cats fall through. Read off the
+    /// two containers themselves rather than the config, so nudging either in the scene still lands
+    /// the cat on the hole.
+    /// </summary>
     private float HoleSurfaceY()
     {
-        GridData data = GridManager != null ? GridManager.SavedGridData : null;
-        return data != null ? data.holeParentHeight - data.catParentHeight : 0f;
+        GridManager grid = GridManager;
+        if (grid == null || grid.CatParent == null || grid.HoleParent == null) return 0f;
+        return grid.HoleParent.localPosition.y - grid.CatParent.localPosition.y;
     }
     #endregion
 }

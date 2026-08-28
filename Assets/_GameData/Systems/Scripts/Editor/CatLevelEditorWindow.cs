@@ -529,7 +529,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     {
         if (file == null) return;
 
-        if (!CatLevelJson.TryParseGrid(file.text, file.name, config, out GridData data, out string error))
+        if (!CatLevelJson.TryParseGrid(file.text, file.name, out GridData data, out string error))
         {
             EditorUtility.DisplayDialog("Cat Level Editor", $"'{file.name}' could not be opened as a grid.\n\n{error}", "OK");
             return;
@@ -659,7 +659,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         }
 
         if (level == null && gridFile != null && grid == null &&
-            CatLevelJson.TryParseGrid(gridFile.text, gridFile.name, config, out GridData board, out _))
+            CatLevelJson.TryParseGrid(gridFile.text, gridFile.name, out GridData board, out _))
             grid = board;
     }
 

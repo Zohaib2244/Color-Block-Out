@@ -24,8 +24,6 @@ public sealed class GridCreatorTool : EditorWindow
     [SerializeField] private int gridWidth = 10;
     [SerializeField] private int gridLength = 10;
     [SerializeField] private float cellSize = 0.57f;
-    [SerializeField] private float catParentHeight = 0.178f;
-    [SerializeField] private float holeParentHeight = 0.08f;
 
     /// <summary>The painted layout, flattened. Unity cannot serialize a bool[,], so it travels as one.</summary>
     [SerializeField] private bool[] savedCells;
@@ -51,12 +49,6 @@ public sealed class GridCreatorTool : EditorWindow
     {
         bool fresh = savedCells == null || savedCells.Length != gridWidth * gridLength;
         if (config == null) config = CatPuzzleAssetCreator.FindConfig();
-        // Only seed the heights from the config on a genuinely new window; a reload keeps what was typed.
-        if (config != null && fresh)
-        {
-            catParentHeight = config.catParentHeight;
-            holeParentHeight = config.holeParentHeight;
-        }
 
         EnsureCells();
         if (fresh) return;
@@ -117,12 +109,8 @@ public sealed class GridCreatorTool : EditorWindow
         cellSize = Mathf.Max(0.01f, EditorGUILayout.FloatField("Cell Size", cellSize));
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Content Heights", EditorStyles.boldLabel);
-        catParentHeight = EditorGUILayout.FloatField("Cats Parent Y", catParentHeight);
-        holeParentHeight = EditorGUILayout.FloatField("Holes Parent Y", holeParentHeight);
-        EditorGUILayout.HelpBox("Local Y of the Cats and Holes parents created inside the grid. The web tool does not export these, " +
-                                "so a board drawn there takes the defaults on the puzzle config; a board saved here writes its own.",
-                                MessageType.None);
+        EditorGUILayout.HelpBox("How high the cells, walls, cats and holes parents sit inside a grid is project wide: it lives on the " +
+                                "puzzle config, so changing it there moves every grid at once.", MessageType.None);
         EditorGUILayout.EndVertical();
     }
 
@@ -241,7 +229,7 @@ public sealed class GridCreatorTool : EditorWindow
     #region File and preview
     private void LoadFromFile(TextAsset file)
     {
-        if (!CatLevelJson.TryParseGrid(file.text, file.name, config, out GridData data, out string error))
+        if (!CatLevelJson.TryParseGrid(file.text, file.name, out GridData data, out string error))
         {
             EditorUtility.DisplayDialog("Grid Creator", $"'{file.name}' is not a grid file that can be opened.\n\n{error}", "OK");
             gridFile = null;
@@ -257,8 +245,6 @@ public sealed class GridCreatorTool : EditorWindow
         gridWidth = data.gridWidth;
         gridLength = data.gridLength;
         cellSize = data.cellSize;
-        catParentHeight = data.catParentHeight;
-        holeParentHeight = data.holeParentHeight;
         gridName = name;
         blockedCells = new bool[gridWidth, gridLength];
         for (int x = 0; x < gridWidth; x++)
@@ -274,9 +260,7 @@ public sealed class GridCreatorTool : EditorWindow
         GridData data = new GridData(gridWidth, gridLength)
         {
             gridName = string.IsNullOrWhiteSpace(gridName) ? "New Grid" : gridName.Trim(),
-            cellSize = cellSize,
-            catParentHeight = catParentHeight,
-            holeParentHeight = holeParentHeight
+            cellSize = cellSize
         };
 
         for (int x = 0; x < gridWidth; x++)
@@ -322,7 +306,7 @@ public sealed class GridCreatorTool : EditorWindow
                 : null;
             if (string.IsNullOrEmpty(boardName) || boardName != grid.gridName) continue;
 
-            GridData embedded = CatLevelJson.GridFromSection(document.grid, config);
+            GridData embedded = CatLevelJson.GridFromSection(document.grid);
             if (!grid.SameShapeAs(embedded)) stale.Add($"• {file.name}");
         }
 

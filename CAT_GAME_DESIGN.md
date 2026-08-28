@@ -16,9 +16,9 @@ game as they are. `GridData` and `CatLevelData` are plain serializable classes, 
 
 | What | What it holds | Made with |
 | --- | --- | --- |
-| Grid JSON | Board shape (which cells are playable), width/length, cell size, content heights | `Cat Puzzle/Grid Creator`, or the web tool |
+| Grid JSON | Board shape (which cells are playable), width/length, cell size | `Cat Puzzle/Grid Creator`, or the web tool |
 | Level JSON | Cat placements, hole placements, timer, and its own copy of the board | `Cat Puzzle/Cat Level Editor`, or the web tool |
-| `CatPuzzleConfig` | Project-wide prefabs, metrics and the colour palette | `Cat Puzzle/Create Default Assets` |
+| `CatPuzzleConfig` | Project-wide prefabs, metrics (including the four container heights) and the colour palette | `Cat Puzzle/Create Default Assets` |
 | `CatHoleConfiguration` | The six hole piece prefabs and the sides each one is open on | same |
 | `LevelData` | Ordered list of level JSON files for play order | inspector |
 

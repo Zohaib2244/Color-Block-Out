@@ -2,8 +2,9 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// A reusable board layout: which cells of a width x length board are playable, how big a cell is,
-/// and how high the cat and hole parents sit inside it.
+/// A reusable board layout: which cells of a width x length board are playable and how big a cell
+/// is. How high the cell, wall, cat and hole parents sit inside a grid is project wide and lives on
+/// <see cref="CatPuzzleConfig"/>, so it is deliberately not part of a board.
 ///
 /// This is plain data, not an asset. Boards are authored in the web level editor and shipped as
 /// JSON; <see cref="CatLevelJson"/> turns that JSON into one of these. A level carries its own
@@ -18,13 +19,6 @@ public class GridData
     public int gridWidth = 10;
     public int gridLength = 10;
     public float cellSize = 0.57f;
-
-    [Header("Content Heights")]
-    [Tooltip("Local Y of the Cats parent inside the grid. Every cat sits at this height.")]
-    public float catParentHeight = 0.178f;
-
-    [Tooltip("Local Y of the Holes parent inside the grid. Every hole sits at this height.")]
-    public float holeParentHeight = 0.08f;
 
     [Serializable]
     public class SerializableGridData
@@ -52,8 +46,6 @@ public class GridData
             gridWidth = gridWidth,
             gridLength = gridLength,
             cellSize = cellSize,
-            catParentHeight = catParentHeight,
-            holeParentHeight = holeParentHeight,
             gridData = new SerializableGridData { wallCells = (bool[])gridData.wallCells.Clone() }
         };
         return copy;

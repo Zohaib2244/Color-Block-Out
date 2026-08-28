@@ -39,8 +39,9 @@ public static class LevelJsonFormat
     /// A board inside a level file. Deliberately the same fields as <see cref="GridDocument"/>
     /// (minus the format version, plus the web tool's grid id) so the two never drift.
     ///
-    /// The two heights are Unity-only presentation and the web tool does not write them; a file
-    /// without them falls back to the project defaults on <see cref="CatPuzzleConfig"/>.
+    /// A board is shape only. How high the content parents sit inside a grid is project wide and
+    /// lives on <see cref="CatPuzzleConfig"/>, so no file carries it; heights written by older
+    /// versions of the Unity tools are ignored.
     /// </summary>
     [Serializable]
     public sealed class GridSection
@@ -53,9 +54,6 @@ public static class LevelJsonFormat
 
         /// <summary>Flat, index = z * width + x. True where a cat or hole may stand.</summary>
         public bool[] playableCells;
-
-        public float catParentHeight;
-        public float holeParentHeight;
     }
 
     [Serializable]
@@ -114,8 +112,5 @@ public static class LevelJsonFormat
 
         /// <summary>Flat, index = z * width + x. True where a cat or hole may stand.</summary>
         public bool[] playableCells;
-
-        public float catParentHeight;
-        public float holeParentHeight;
     }
 }

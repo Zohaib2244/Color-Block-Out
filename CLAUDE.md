@@ -75,9 +75,10 @@ and exported as JSON; Unity's own tools read and write that same format. `GridDa
 `CatLevelData` are plain `[Serializable]` classes — *not* ScriptableObjects, and there are no
 `.asset` files behind them any more.
 
-- `GridData` — board shape only (which cells are playable), width/length, cell size, plus the two
-  content-parent heights. Lives in a grid JSON file (`gridJson.ts`, formatVersion 1) so a shape can
-  be drawn once and reused. Authored by `Cat Puzzle/Grid Creator`.
+- `GridData` — board shape only: which cells are playable, width/length, cell size. Lives in a grid
+  JSON file (`gridJson.ts`, formatVersion 1) so a shape can be drawn once and reused. Authored by
+  `Cat Puzzle/Grid Creator`. How high the content parents sit is *not* part of a board — see the
+  container heights on `CatPuzzleConfig` below.
 - `CatLevelData` — cat placements, hole placements, timer, and **its own copy of the board**. A
   level JSON (`levelJson.ts`, formatVersion 4) is therefore self-contained: reshaping the grid file
   it started from does not reach back into levels already made from it. Authored by
@@ -101,9 +102,12 @@ ScriptableObject), writes the JSON beside it, and repoints each `LevelData` coll
 and holds every shared prefab and metric (cell/wall prefabs, cat prefab, `CatHoleConfiguration`,
 heights and offsets) plus the `CatColorPalette`. Nothing loads it implicitly — it is wired onto the
 scene's `LevelSpawner` and onto each authoring window — so what ships is always what someone
-assigned. Parsing a level needs it twice over: the palette turns colour names into ids, and
-`catParentHeight`/`holeParentHeight` are the fallback for boards drawn on the web, which carry no
-heights of their own. `Cat Puzzle/Create Default Assets` creates and repairs it.
+assigned. Parsing a level needs its palette to turn colour names into ids, and `GridBuilder` reads
+the four **container heights** (`cellParentHeight`, `wallParentHeight`, `catParentHeight`,
+`holeParentHeight`) from it for every grid it builds: those are project wide, so changing one moves
+that container in every level rather than in one board. They land when a grid is next built, so a
+grid already in the scene needs a reload to pick them up. `Cat Puzzle/Create Default Assets` creates
+and repairs it.
 
 ### Scene ownership
 

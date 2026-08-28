@@ -87,7 +87,7 @@ public static class CatLevelJson
         CatLevelData level = new CatLevelData
         {
             levelName = DisplayName(document, sourceName),
-            grid = GridFromSection(document.grid, config),
+            grid = GridFromSection(document.grid),
             cats = BuildCats(document, colors),
             holes = BuildHoles(document, colors, result.issues)
         };
@@ -181,7 +181,7 @@ public static class CatLevelJson
     /// Parses a standalone grid file. Levels carry their own board, so this is for the authoring
     /// tools: a shape drawn once and reused across levels.
     /// </summary>
-    public static bool TryParseGrid(string json, string sourceName, CatPuzzleConfig config, out GridData grid, out string error)
+    public static bool TryParseGrid(string json, string sourceName, out GridData grid, out string error)
     {
         grid = null;
         error = null;
@@ -224,10 +224,8 @@ public static class CatLevelJson
             width = document.width,
             length = document.length,
             cellSize = document.cellSize,
-            playableCells = document.playableCells,
-            catParentHeight = document.catParentHeight,
-            holeParentHeight = document.holeParentHeight
-        }, config);
+            playableCells = document.playableCells
+        });
         return true;
     }
 
@@ -235,18 +233,14 @@ public static class CatLevelJson
     /// The file holds the post flood fill playable mask, the same mask the Grid Creator saves, so it
     /// inverts straight into <c>wallCells</c> with nothing to redo.
     /// </summary>
-    public static GridData GridFromSection(LevelJsonFormat.GridSection section, CatPuzzleConfig config)
+    public static GridData GridFromSection(LevelJsonFormat.GridSection section)
     {
         if (section == null) return null;
 
         GridData grid = new GridData(section.width, section.length)
         {
             gridName = string.IsNullOrEmpty(section.gridName) ? section.id : section.gridName,
-            cellSize = section.cellSize > 0f ? section.cellSize : 0.57f,
-            // The two heights are Unity-side presentation and the web tool does not export them, so
-            // a file without them takes the project defaults.
-            catParentHeight = section.catParentHeight > 0f ? section.catParentHeight : DefaultCatHeight(config),
-            holeParentHeight = section.holeParentHeight > 0f ? section.holeParentHeight : DefaultHoleHeight(config)
+            cellSize = section.cellSize > 0f ? section.cellSize : 0.57f
         };
 
         // Both sides index a flat array as z * width + x, so the mask copies across as it stands.
@@ -256,10 +250,6 @@ public static class CatLevelJson
 
         return grid;
     }
-
-    private static float DefaultCatHeight(CatPuzzleConfig config) => config != null ? config.catParentHeight : 0.178f;
-
-    private static float DefaultHoleHeight(CatPuzzleConfig config) => config != null ? config.holeParentHeight : 0.08f;
     #endregion
 
     #region Writing
@@ -325,9 +315,7 @@ public static class CatLevelJson
             width = grid.gridWidth,
             length = grid.gridLength,
             cellSize = grid.cellSize,
-            playableCells = PlayableMask(grid),
-            catParentHeight = grid.catParentHeight,
-            holeParentHeight = grid.holeParentHeight
+            playableCells = PlayableMask(grid)
         };
         return JsonUtility.ToJson(document, true);
     }
@@ -344,9 +332,7 @@ public static class CatLevelJson
             width = grid.gridWidth,
             length = grid.gridLength,
             cellSize = grid.cellSize,
-            playableCells = PlayableMask(grid),
-            catParentHeight = grid.catParentHeight,
-            holeParentHeight = grid.holeParentHeight
+            playableCells = PlayableMask(grid)
         };
     }
 

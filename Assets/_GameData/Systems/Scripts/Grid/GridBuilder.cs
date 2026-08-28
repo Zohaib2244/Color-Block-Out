@@ -12,6 +12,12 @@ public static class GridBuilder
     private const string CatsContainerName = "Cats";
     private const string HolesContainerName = "Holes";
 
+    // Container heights live on the config, so these only stand in for a build with no config.
+    private const float DefaultCellHeight = 0f;
+    private const float DefaultWallHeight = 0f;
+    private const float DefaultCatHeight = 0.178f;
+    private const float DefaultHoleHeight = 0.08f;
+
     private enum Side { North = 0, East = 1, South = 2, West = 3 }
 
     /// <summary>
@@ -34,13 +40,14 @@ public static class GridBuilder
             : Vector3.zero;
 
         GridManager manager = gridObject.AddComponent<GridManager>();
-        Transform cells = CreateContainer(gridObject.transform, CellsContainerName, 0f);
-        Transform walls = CreateContainer(gridObject.transform, WallsContainerName, 0f);
 
-        // Content parents belong to the grid, so cats and holes share its cell space and
-        // sit at the heights this grid asset asks for.
-        Transform cats = CreateContainer(gridObject.transform, CatsContainerName, data.catParentHeight);
-        Transform holes = CreateContainer(gridObject.transform, HolesContainerName, data.holeParentHeight);
+        // The four containers belong to the grid, so everything under them shares its cell space.
+        // How high each one sits is project wide and comes from the config, not from the board, so
+        // every grid in the game stacks the same way.
+        Transform cells = CreateContainer(gridObject.transform, CellsContainerName, config != null ? config.cellParentHeight : DefaultCellHeight);
+        Transform walls = CreateContainer(gridObject.transform, WallsContainerName, config != null ? config.wallParentHeight : DefaultWallHeight);
+        Transform cats = CreateContainer(gridObject.transform, CatsContainerName, config != null ? config.catParentHeight : DefaultCatHeight);
+        Transform holes = CreateContainer(gridObject.transform, HolesContainerName, config != null ? config.holeParentHeight : DefaultHoleHeight);
 
         for (int x = 0; x < data.gridWidth; x++)
             for (int z = 0; z < data.gridLength; z++)

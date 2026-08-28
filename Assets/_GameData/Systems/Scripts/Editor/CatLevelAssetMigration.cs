@@ -53,7 +53,7 @@ public static class CatLevelAssetMigration
 
         // Deliberately not batched with StartAssetEditing: each file has to come back as a
         // TextAsset the moment it is written, so a collection can be repointed at it below.
-        Dictionary<string, GridData> gridsByGuid = WriteGrids(gridAssets, config);
+        Dictionary<string, GridData> gridsByGuid = WriteGrids(gridAssets);
         Dictionary<string, string> levelPathsByGuid = WriteLevels(levelAssets, gridsByGuid, config, out int failed);
         AssetDatabase.Refresh();
 
@@ -68,13 +68,13 @@ public static class CatLevelAssetMigration
     }
 
     #region Writing
-    private static Dictionary<string, GridData> WriteGrids(List<YamlAsset> gridAssets, CatPuzzleConfig config)
+    private static Dictionary<string, GridData> WriteGrids(List<YamlAsset> gridAssets)
     {
         Dictionary<string, GridData> byGuid = new Dictionary<string, GridData>();
 
         foreach (YamlAsset asset in gridAssets)
         {
-            GridData grid = ParseGrid(asset, config);
+            GridData grid = ParseGrid(asset);
             if (grid == null)
             {
                 Debug.LogError($"Could not read the board out of {asset.path}.");
@@ -253,18 +253,18 @@ public static class CatLevelAssetMigration
         return assets;
     }
 
-    private static GridData ParseGrid(YamlAsset asset, CatPuzzleConfig config)
+    private static GridData ParseGrid(YamlAsset asset)
     {
         int width = ParseInt(Scalar(asset.lines, "gridWidth"), 0);
         int length = ParseInt(Scalar(asset.lines, "gridLength"), 0);
         if (width <= 0 || length <= 0) return null;
 
+        // The old assets carried their own cat and hole parent heights. Those are project wide now
+        // and live on the config, so a board comes across as shape only and the heights are dropped.
         GridData grid = new GridData(width, length)
         {
             gridName = asset.name,
-            cellSize = ParseFloat(Scalar(asset.lines, "cellSize"), 0.57f),
-            catParentHeight = ParseFloat(Scalar(asset.lines, "catParentHeight"), config.catParentHeight),
-            holeParentHeight = ParseFloat(Scalar(asset.lines, "holeParentHeight"), config.holeParentHeight)
+            cellSize = ParseFloat(Scalar(asset.lines, "cellSize"), 0.57f)
         };
 
         // Unity writes a bool[] as one hex string, two characters per entry.
