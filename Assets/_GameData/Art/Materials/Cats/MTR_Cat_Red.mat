@@ -126,7 +126,7 @@ Material:
     - _ShadowStrength: 0.583
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
-    - _SpecSize: 0.77
+    - _SpecSize: 0.936
     - _SpecStrength: 0.85
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -139,7 +139,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BottomTint: {r: 0.5849056, g: 0, b: 0, a: 1}
+    - _BottomTint: {r: 0.13207549, g: 0.13207549, b: 0.13207549, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 0.7529412}

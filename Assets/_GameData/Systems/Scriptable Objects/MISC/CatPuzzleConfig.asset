@@ -17,7 +17,7 @@ MonoBehaviour:
     type: 3}
   straightWallPrefab: {fileID: 9042015500247193137, guid: 798f69a2910ba2143830c3a1a3b979be,
     type: 3}
-  wallEndPrefab: {fileID: 8226419235237542158, guid: 835d3a4f46e557c4b901317705419925,
+  wallEndPrefab: {fileID: 9042015500247193137, guid: 798f69a2910ba2143830c3a1a3b979be,
     type: 3}
   cornerWallPrefab: {fileID: 1887646972528988384, guid: 7275fb8591f6c48449905a6c09a9dbcf,
     type: 3}
@@ -27,8 +27,9 @@ MonoBehaviour:
   straightWallThickness: 0.35
   wallOffset: 0.4
   cornerWallHeight: 0.225
-  cornerWallOffset: 0.17
-  interiorCornerOffset: 0.13
+  cornerWallOffset: 5
+  interiorCornerOffset: 0.3
   catPrefab: {fileID: 5511372133153427065, guid: b9a5ff152a7505d478370ed1b90acc52,
     type: 3}
+  catStackHeight: 0.3
   holeConfiguration: {fileID: 11400000, guid: feddebdf9580e2846a83d7ea117f98b7, type: 2}

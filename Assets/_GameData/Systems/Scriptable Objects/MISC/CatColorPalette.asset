@@ -21,23 +21,23 @@ MonoBehaviour:
     catMaterial: {fileID: 2100000, guid: 41087519d8e4a0b4c8f519a9ba9589d8, type: 2}
   - type: 1
     displayName: Orange
-    color: {r: 0.9843137, g: 0.54901963, b: 0, a: 1}
-    catMaterial: {fileID: 2100000, guid: 1ae650a94e7599f4a8657224dd46851f, type: 2}
+    color: {r: 0.9843137, g: 0.4264066, b: 0, a: 1}
+    catMaterial: {fileID: 2100000, guid: 649bfa3f77debd244a2ebb63fc939b03, type: 2}
   - type: 2
     displayName: Yellow
-    color: {r: 0.99215686, g: 0.84705883, b: 0.20784314, a: 1}
+    color: {r: 0.9245283, g: 0.7534906, b: 0, a: 1}
     catMaterial: {fileID: 2100000, guid: 1ae650a94e7599f4a8657224dd46851f, type: 2}
   - type: 3
     displayName: Blue
-    color: {r: 0.11764706, g: 0.53333336, b: 0.8980392, a: 1}
+    color: {r: 0, g: 0.45226133, b: 0.8490566, a: 1}
     catMaterial: {fileID: 2100000, guid: e08be131ab731cb468e0cf222a3cb72e, type: 2}
   - type: 4
     displayName: Cyan
-    color: {r: 0, g: 0.6745098, b: 0.75686276, a: 1}
-    catMaterial: {fileID: 2100000, guid: e08be131ab731cb468e0cf222a3cb72e, type: 2}
+    color: {r: 0, g: 0.81640786, b: 0.9150943, a: 1}
+    catMaterial: {fileID: 2100000, guid: a126458432b6f444da6eb8902565a466, type: 2}
   - type: 5
     displayName: Green
-    color: {r: 0.2627451, g: 0.627451, b: 0.2784314, a: 1}
+    color: {r: 0.22022964, g: 0.9528302, b: 0.2507547, a: 1}
     catMaterial: {fileID: 2100000, guid: 0a312866f9d6bc642a1511a0663cbb45, type: 2}
   - type: 6
     displayName: Purple
@@ -46,8 +46,8 @@ MonoBehaviour:
   - type: 7
     displayName: Pink
     color: {r: 0.9254902, g: 0.2509804, b: 0.47843137, a: 1}
-    catMaterial: {fileID: 2100000, guid: abb0b41b21d829141b69674bb705d483, type: 2}
+    catMaterial: {fileID: 2100000, guid: d656e906b28b11e47b1fe1c0c95d616e, type: 2}
   - type: 8
     displayName: Teal
     color: {r: 0, g: 0.5372549, b: 0.48235294, a: 1}
-    catMaterial: {fileID: 2100000, guid: 0a312866f9d6bc642a1511a0663cbb45, type: 2}
+    catMaterial: {fileID: 2100000, guid: 0d5f90a98cfab534e9382d6091ab9e1d, type: 2}
