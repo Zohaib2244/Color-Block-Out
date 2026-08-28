@@ -15,7 +15,7 @@ import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
 import { newId } from "../storage";
 import { useTheme } from "../theme";
-import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
+import { BLOCK_COLORS, cellKey } from "../types";
 import type {
   BlockColor,
   CatPlacement,
@@ -23,7 +23,6 @@ import type {
   GridCell,
   HolePlacement,
   HoleShapePreset,
-  HoleType,
   RotationQuarterTurns,
   SavedGrid,
   SavedLevel,
@@ -75,12 +74,10 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   // the cat tool you were actually using rather than resetting to the default.
   const [family, setFamily] = useState<ToolFamily>("cat");
   const [catTool, setCatTool] = useState<CatTool>("cat");
-  const [holeTool, setHoleTool] = useState<HoleTool>("hole-single");
+  const [holeTool, setHoleTool] = useState<HoleTool>("hole-shape");
   const tool = toolFor(family, catTool, holeTool);
 
   const [selectedColor, setSelectedColor] = useState<BlockColor>("Red");
-  const [selectedHoleType, setSelectedHoleType] = useState<HoleType>("Isolated");
-  const [manualRotation, setManualRotation] = useState<RotationQuarterTurns>(0);
   const [capacity, setCapacity] = useState(1);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [presetRotation, setPresetRotation] = useState<RotationQuarterTurns>(0);
@@ -234,22 +231,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
       ...prev,
       cats: [...prev.cats.filter((c) => cellKey(c.x, c.z) !== key), ...colors.map((color) => ({ color, x, z }))],
     }));
-  }
-
-  function placeSingleHole(cell: GridCell) {
-    const id = newId();
-    setDraft((prev) => {
-      const keys = new Set([cellKey(cell.x, cell.z)]);
-      const cleared = clearCells(prev, keys);
-      const hole: HolePlacement = {
-        id,
-        color: selectedColor,
-        capacity,
-        cells: [{ x: cell.x, z: cell.z, holeType: selectedHoleType, rotationQuarterTurns: manualRotation }],
-      };
-      return { ...cleared, holes: [...cleared.holes, hole] };
-    });
-    setSelection({ kind: "hole", id });
   }
 
   function removeHoleAt(cell: GridCell) {
@@ -428,10 +409,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
         if (dragActionRef.current === "remove") removeCat(cell);
         else placeCat(cell);
         return;
-      case "hole-single":
-        if (holesByCell.has(key)) removeHoleAt(cell);
-        else placeSingleHole(cell);
-        return;
       case "hole-preset":
         if (holesByCell.has(key)) removeHoleAt(cell);
         else stampPresetAt(cell);
@@ -445,7 +422,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   }
 
   function handlePaintDrag(cell: GridCell) {
-    // Selections, gates and single hole placements are deliberate single clicks.
+    // Selections, gates and preset placements are deliberate single clicks.
     if (tool === "cat") {
       if (dragActionRef.current === "add") placeCat(cell);
       else removeCat(cell);
@@ -662,7 +639,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
 
               {/* Placement options. Stacks and gates take their colours from the
                   Stack Visualizer instead, and selecting takes none at all. */}
-              {(usesToolbarColor || tool === "hole-single" || tool === "hole-preset") && (
+              {usesToolbarColor && (
                 <div className="field-row">
                   {usesToolbarColor && (
                     <label className="color-field">
@@ -694,36 +671,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
                         onChange={(e) => setCapacity(Math.max(1, Math.floor(Number(e.target.value)) || 1))}
                       />
                     </label>
-                  )}
-                  {tool === "hole-single" && (
-                    <>
-                      <label>
-                        Hole Type
-                        <select
-                          value={selectedHoleType}
-                          onChange={(e) => setSelectedHoleType(e.target.value as HoleType)}
-                        >
-                          {HOLE_TYPES.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Rotation
-                        <select
-                          value={manualRotation}
-                          onChange={(e) => setManualRotation(Number(e.target.value) as RotationQuarterTurns)}
-                        >
-                          {[0, 1, 2, 3].map((r) => (
-                            <option key={r} value={r}>
-                              {r * 90}°
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </>
                   )}
                   {tool === "hole-preset" && (
                     <>
@@ -908,7 +855,6 @@ const TOOL_HINTS: Record<string, string> = {
   cat: "Click a cell to drop one cat in the selected colour, and drag to lay a run. Clicking a cell that already has cats lifts the top one off — to build a pile deliberately, switch to Stack.",
   stack: "Click any cell to open its pile in the Stack Visualizer, then set the colours and their order there. The top of the list is the top of the pile, and the only cat a hole can take.",
   gate: "Click a cell on the board's edge to put a gate on the wall nearest your click, or click an existing gate to reopen it. The queue itself is composed in the Stack Visualizer.",
-  "hole-single": "Click a cell to cut a one-cell hole with the colour and capacity above; click it again to remove it. The new hole opens on the right for tuning.",
   "hole-shape": "Drag out the outline of a tunnel, then Create Hole — the whole connected shape becomes ONE hole with a single shared capacity.",
   "hole-preset": "Click a cell to stamp the selected preset with that cell as its anchor; click any cell of a placed hole to remove the whole hole.",
   select: "Click a hole, gate or stack to open it on the right. With a hole selected, click a cell touching it to grow the shape, or one of its own cells to carve that cell away.",
@@ -918,7 +864,6 @@ const IDLE_PANEL_HINTS: Record<string, string> = {
   cat: "Cats go straight onto the grid in the colour picked above. Switch to Stack to compose a pile instead.",
   stack: "Click any cell on the grid to open its stack here.",
   gate: "Click a cell on the board's edge to add a gate, or an existing gate to edit its queue.",
-  "hole-single": "Place a hole and it opens here, ready to retune.",
   "hole-shape": "Draw an outline and commit it; the finished hole opens here.",
   "hole-preset": "Stamp a preset and the finished hole opens here.",
   select: "Click a hole, gate or stack on the grid to select it.",

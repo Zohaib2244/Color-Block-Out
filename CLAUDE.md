@@ -70,18 +70,40 @@ in `#if UNITY_EDITOR`. Runtime code that needs editor APIs guards them inline (s
 
 ### Level data pipeline
 
-Content is assets, not prefabs. Three layers, each authored by a different tool:
+**Content is JSON files, not assets.** Levels are authored in the web tool under `level-editor/`
+and exported as JSON; Unity's own tools read and write that same format. `GridData` and
+`CatLevelData` are plain `[Serializable]` classes — *not* ScriptableObjects, and there are no
+`.asset` files behind them any more.
 
-- `GridData` — board shape only (which cells are playable), width/length, cell size. Reusable: one
-  grid backs many levels. Authored by `Cat Puzzle/Grid Creator`.
-- `CatLevelData` — a `GridData` reference plus cat placements, hole placements, camera and timer.
-  Authored by `Cat Puzzle/Cat Level Editor`.
-- `LevelData` — ordered `List<CatLevelData>` for play order, assigned to `GameManager`.
+- `GridData` — board shape only (which cells are playable), width/length, cell size, plus the two
+  content-parent heights. Lives in a grid JSON file (`gridJson.ts`, formatVersion 1) so a shape can
+  be drawn once and reused. Authored by `Cat Puzzle/Grid Creator`.
+- `CatLevelData` — cat placements, hole placements, timer, and **its own copy of the board**. A
+  level JSON (`levelJson.ts`, formatVersion 4) is therefore self-contained: reshaping the grid file
+  it started from does not reach back into levels already made from it. Authored by
+  `Cat Puzzle/Cat Level Editor`.
+- `LevelData` — still a ScriptableObject, but now only the play order: `List<TextAsset>` of level
+  JSON files, assigned to `GameManager`. It parses on demand and caches; `Get` hands out a `Clone()`
+  so a retry restarts from the file.
 
-`CatPuzzleConfig` lives at `Assets/Resources/CatPuzzleConfig.asset` and holds every shared prefab and
-metric (cell/wall prefabs, cat prefab, `CatHoleConfiguration`, heights and offsets). It is fetched via
-`Resources.Load`, so nothing else needs to carry prefab references. `Cat Puzzle/Create Default Assets`
-creates and repairs it.
+`CatLevelJson` (runtime, `Scripts/Level/Json/`) is the only thing that reads or writes that format —
+in play mode as well as in the editor. Two things it translates rather than copies: colour **names**
+in the file map to palette **ids** via `CatColorEntry.displayName` (an unknown name is a hard error,
+never a silent default), and a JSON hole's absolute cells become a `CatHolePlacement` origin plus
+offsets. Gates exist in v4 files but have no Unity counterpart, so they are dropped with a warning.
+`LevelJsonFormat` holds the DTOs and must stay field-for-field in step with `level-editor/src/io/`.
+
+Old ScriptableObject content is recovered by `Cat Puzzle/Migrate Level Assets To JSON`, which reads
+the orphaned `.asset` YAML directly (nothing can load it as an object once the class stops being a
+ScriptableObject), writes the JSON beside it, and repoints each `LevelData` collection.
+
+`CatPuzzleConfig` lives at `Assets/_GameData/Systems/Scriptable Objects/MISC/CatPuzzleConfig.asset`
+and holds every shared prefab and metric (cell/wall prefabs, cat prefab, `CatHoleConfiguration`,
+heights and offsets) plus the `CatColorPalette`. Nothing loads it implicitly — it is wired onto the
+scene's `LevelSpawner` and onto each authoring window — so what ships is always what someone
+assigned. Parsing a level needs it twice over: the palette turns colour names into ids, and
+`catParentHeight`/`holeParentHeight` are the fallback for boards drawn on the web, which carry no
+heights of their own. `Cat Puzzle/Create Default Assets` creates and repairs it.
 
 ### Scene ownership
 
@@ -131,11 +153,23 @@ rather than by activating objects directly.
 
 ## Editor tooling conventions
 
-All menu items live under `Cat Puzzle/`.
+All menu items live under `Cat Puzzle/`: `Grid Creator`, `Cat Level Editor`, `Import Level JSON`
+(files dropped in from the web tool), `Validate Level Files`, `Migrate Level Assets To JSON` and
+`Create Default Assets`.
 
 In the level editor, **the scene is the working document**: painting creates real GameObjects, holes
-can be nudged with the normal move tool, and `Save Level` snaps everything to cells and captures the
-scene back into the asset. `Load Into Scene` rebuilds from the asset.
+can be nudged with the normal move tool, and `Save Level` snaps everything to cells, captures the
+scene, and writes the level JSON. `Load Into Scene` rebuilds from that file. The file is the export —
+there is no separate export step, and no asset in between.
+
+Both windows take `TextAsset` object fields rather than typed asset fields, since a level and a grid
+are both just `.json` now. A picked file is only adopted once it parses, so choosing the wrong file
+does not lose the one already open or repoint where `Save Level` writes.
+
+`CatLevelInstance` and `GridManager` each keep what they were built from as a serialized JSON
+*string* rather than a plain serialized field. Unity rebuilds a serializable class field as a default
+instance instead of leaving it null, so "no level" and "an empty level" would be indistinguishable
+across a domain reload. Do the same for any new field of this kind.
 
 `CatLevelEditorWindow` routes every scene mutation through `Defer(...)`, which runs the action on the
 next `EventType.Layout` pass. Creating or destroying objects mid-event changes the control count

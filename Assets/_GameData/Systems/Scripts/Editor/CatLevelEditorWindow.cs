@@ -6,20 +6,34 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// Authoring tool for cat levels. Pick a GridData asset, build it in the scene, then
-/// paint cats and draw holes straight onto the board. The scene is the working document:
-/// anything you drag around afterwards is picked up again when you save.
+/// Authoring tool for cat levels. Start from a grid file, build it in the scene, then paint cats and
+/// draw holes straight onto the board. The scene is the working document: anything you drag around
+/// afterwards is picked up again when you save.
+///
+/// A level is a JSON file - the same format the web level editor exports and the game loads - so
+/// Save Level writes that file and Load Into Scene reads it back. The level carries its own copy of
+/// the board, so it is a single self-contained file once saved.
 /// </summary>
 public sealed class CatLevelEditorWindow : EditorWindow
 {
     private enum Tool { Cats, Holes, Erase }
 
-    private CatPuzzleConfig config;
-    private GridData gridAsset;
-    private CatLevelData levelAsset;
+    // Serialized so the window still knows which files it was working on after a domain reload.
+    // The parsed level does not survive - it is read back from levelFile in RefreshSceneReferences.
+    [SerializeField] private CatPuzzleConfig config;
+    [SerializeField] private TextAsset gridFile;
+    [SerializeField] private TextAsset levelFile;
+    [SerializeField] private LevelData collection;
+
     private CatPuzzleController controller;
     private LevelSpawner spawner;
     private CatLevelInstance instance;
+
+    /// <summary>The level being edited, in memory. The file only changes when Save Level is pressed.</summary>
+    private CatLevelData level;
+
+    /// <summary>The board the level stands on: the level's own copy once there is a level.</summary>
+    private GridData grid;
 
     private Tool tool = Tool.Holes;
     private string newLevelName = "Level_1";
@@ -78,10 +92,11 @@ public sealed class CatLevelEditorWindow : EditorWindow
             foreach (System.Action action in pending) action();
         }
 
-        DrawAssets();
-        if (levelAsset == null && gridAsset == null)
+        DrawFiles();
+        if (level == null && grid == null)
         {
-            EditorGUILayout.HelpBox("Pick a GridData asset to start a new level, or a CatLevelData asset to edit an existing one.", MessageType.Info);
+            EditorGUILayout.HelpBox("Pick a grid file to start a new level, or a level file to edit an existing one. " +
+                                    "Both are the JSON the web level editor exports.", MessageType.Info);
             return;
         }
 
@@ -95,7 +110,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void DrawIssues()
     {
-        if (levelAsset == null) return;
+        if (level == null) return;
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.BeginHorizontal();
         showIssues = EditorGUILayout.Foldout(showIssues, $"Validation — {issues.Count} issue(s)", true);
@@ -114,24 +129,29 @@ public sealed class CatLevelEditorWindow : EditorWindow
     /// <summary>Captures the scene into a scratch copy first, so what is checked is what would save.</summary>
     private void Validate()
     {
-        if (levelAsset == null) return;
-        if (instance != null)
-        {
-            CatLevelData snapshot = CreateInstance<CatLevelData>();
-            snapshot.grid = levelAsset.grid != null ? levelAsset.grid : gridAsset;
-            CatLevelBuilder.Capture(instance, snapshot);
-            issues = CatLevelValidator.Validate(snapshot, Palette);
-            DestroyImmediate(snapshot);
-        }
-        else issues = CatLevelValidator.Validate(levelAsset, Palette);
+        if (level == null) return;
+        issues = CatLevelValidator.Validate(instance != null ? Snapshot() : level, Palette);
         Repaint();
     }
 
+    /// <summary>The level as the scene currently has it, without touching what is being edited.</summary>
+    private CatLevelData Snapshot()
+    {
+        CatLevelData snapshot = new CatLevelData
+        {
+            levelName = level.levelName,
+            levelTime = level.levelTime,
+            grid = grid != null ? grid.Clone() : null
+        };
+        CatLevelBuilder.Capture(instance, snapshot);
+        return snapshot;
+    }
+
     #region Sections
-    private void DrawAssets()
+    private void DrawFiles()
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        EditorGUILayout.LabelField("Assets", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Files", EditorStyles.boldLabel);
 
         config = (CatPuzzleConfig)EditorGUILayout.ObjectField("Puzzle Config", config, typeof(CatPuzzleConfig), false);
         if (config == null)
@@ -142,26 +162,61 @@ public sealed class CatLevelEditorWindow : EditorWindow
             return;
         }
 
+        // A picked file is only adopted once it has been read, so one that turns out not to be a
+        // level leaves the level already open - and the path Save Level writes to - untouched.
         EditorGUI.BeginChangeCheck();
-        levelAsset = (CatLevelData)EditorGUILayout.ObjectField("Level Asset", levelAsset, typeof(CatLevelData), false);
-        if (EditorGUI.EndChangeCheck() && levelAsset != null && levelAsset.grid != null) gridAsset = levelAsset.grid;
+        TextAsset pickedLevel = (TextAsset)EditorGUILayout.ObjectField("Level File", levelFile, typeof(TextAsset), false);
+        if (EditorGUI.EndChangeCheck() && pickedLevel != levelFile) Defer(() => LoadLevelFile(pickedLevel));
 
-        gridAsset = (GridData)EditorGUILayout.ObjectField("Grid Asset", gridAsset, typeof(GridData), false);
-        if (gridAsset != null) EditorGUILayout.LabelField("Board", $"{gridAsset.gridWidth} x {gridAsset.gridLength}, cell {gridAsset.cellSize}");
+        EditorGUI.BeginChangeCheck();
+        TextAsset pickedGrid = (TextAsset)EditorGUILayout.ObjectField("Grid File", gridFile, typeof(TextAsset), false);
+        if (EditorGUI.EndChangeCheck() && pickedGrid != gridFile) Defer(() => LoadGridFile(pickedGrid));
+
+        if (grid != null) EditorGUILayout.LabelField("Board", $"{grid.gridWidth} x {grid.gridLength}, cell {grid.cellSize}");
 
         newLevelName = EditorGUILayout.TextField("New Level Name", newLevelName);
-        EditorGUILayout.LabelField(" ", $"Saved to {CatPuzzleAssetCreator.LevelFolder}", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField(" ", $"Saved as JSON to {CatLevelFiles.LevelFolder}", EditorStyles.miniLabel);
 
         EditorGUILayout.BeginHorizontal();
-        using (new EditorGUI.DisabledScope(gridAsset == null))
-            if (GUILayout.Button("New Level")) Defer(CreateLevelAsset);
-        using (new EditorGUI.DisabledScope(levelAsset == null))
+        using (new EditorGUI.DisabledScope(grid == null))
+            if (GUILayout.Button("New Level")) Defer(CreateLevel);
+        using (new EditorGUI.DisabledScope(level == null))
         {
             if (GUILayout.Button("Load Into Scene")) Defer(BuildScene);
             if (GUILayout.Button("Save Level")) Defer(SaveLevel);
         }
         EditorGUILayout.EndHorizontal();
+
+        DrawCollection();
         EditorGUILayout.EndVertical();
+    }
+
+    /// <summary>A level only reaches the game once its file is in a collection's play order.</summary>
+    private void DrawCollection()
+    {
+        collection = (LevelData)EditorGUILayout.ObjectField("Play Order", collection, typeof(LevelData), false);
+        if (collection == null) return;
+
+        bool alreadyIn = levelFile != null && collection.levelFiles.Contains(levelFile);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField(" ", alreadyIn
+            ? $"In '{collection.name}' at #{collection.levelFiles.IndexOf(levelFile) + 1} of {collection.Count}"
+            : $"Not in '{collection.name}' ({collection.Count} levels)", EditorStyles.miniLabel);
+
+        using (new EditorGUI.DisabledScope(levelFile == null || alreadyIn))
+            if (GUILayout.Button("Add To Play Order", GUILayout.Width(140f))) Defer(AddToCollection);
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void AddToCollection()
+    {
+        if (collection == null || levelFile == null || collection.levelFiles.Contains(levelFile)) return;
+        Undo.RecordObject(collection, "Add Level To Play Order");
+        collection.levelFiles.Add(levelFile);
+        collection.ClearCache();
+        EditorUtility.SetDirty(collection);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Added '{levelFile.name}' to '{collection.name}' as level {collection.Count}.", collection);
     }
 
     private void DrawSceneActions()
@@ -181,7 +236,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
         EditorGUILayout.ObjectField("Loaded Level", instance, typeof(CatLevelInstance), true);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Rebuild From Asset")) Defer(BuildScene);
+        if (GUILayout.Button("Rebuild From File")) Defer(BuildScene);
         if (GUILayout.Button("Snap To Grid")) Defer(SnapContentToGrid);
         if (GUILayout.Button("Clear Scene")) Defer(ClearScene);
         EditorGUILayout.EndHorizontal();
@@ -190,14 +245,20 @@ public sealed class CatLevelEditorWindow : EditorWindow
 
     private void DrawLevelSettings()
     {
-        if (levelAsset == null) return;
+        if (level == null) return;
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.LabelField("Level Settings", EditorStyles.boldLabel);
 
-        EditorGUI.BeginChangeCheck();
-        levelAsset.levelName = EditorGUILayout.TextField("Level Name", levelAsset.levelName);
-        levelAsset.levelTime = EditorGUILayout.IntField("Level Time", levelAsset.levelTime);
-        if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(levelAsset);
+        level.levelName = EditorGUILayout.TextField("Level Name", level.levelName);
+        level.levelTime = EditorGUILayout.IntField("Level Time", level.levelTime);
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Board", grid != null && !string.IsNullOrEmpty(grid.gridName) ? grid.gridName : "(unnamed)");
+        using (new EditorGUI.DisabledScope(grid == null))
+            if (GUILayout.Button("Save Board As Grid File", GUILayout.Width(170f))) Defer(SaveBoardAsGridFile);
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.HelpBox("Level settings are written when Save Level is pressed. The level carries its own copy of the board, " +
+                                "so reshaping the grid file later leaves this level as it is.", MessageType.None);
         EditorGUILayout.EndVertical();
     }
 
@@ -315,9 +376,9 @@ public sealed class CatLevelEditorWindow : EditorWindow
     #region Board
     private void DrawBoard()
     {
-        if (gridAsset == null) return;
-        int width = gridAsset.gridWidth;
-        int height = gridAsset.gridLength;
+        if (grid == null) return;
+        int width = grid.gridWidth;
+        int height = grid.gridLength;
         float boardWidth = width * cellSize + 24f;
         float boardHeight = height * cellSize + 24f;
 
@@ -335,7 +396,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
             {
                 Vector2Int cell = new Vector2Int(x, z);
                 Rect rect = CellRect(board, cell, height);
-                bool playable = gridAsset.IsPlayable(x, z);
+                bool playable = grid.IsPlayable(x, z);
                 EditorGUI.DrawRect(rect, playable ? ((x + z) % 2 == 0 ? EmptyColor : EmptyAltColor) : WallColor);
 
                 if (holesByCell.TryGetValue(cell, out CatHole hole)) DrawHoleCell(rect, board, cell, height, hole, holesByCell);
@@ -424,7 +485,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
                 Defer(() => PlaceCat(cell, stackOnTop));
                 break;
             case Tool.Holes:
-                if (!gridAsset.IsPlayable(cell)) break;
+                if (!grid.IsPlayable(cell)) break;
                 if (evt.type == EventType.MouseDrag) selection.Add(cell);
                 else if (!selection.Add(cell)) selection.Remove(cell);
                 break;
@@ -435,17 +496,171 @@ public sealed class CatLevelEditorWindow : EditorWindow
     }
     #endregion
 
+    #region Files
+    private void LoadLevelFile(TextAsset file)
+    {
+        if (file == null)
+        {
+            levelFile = null;
+            level = null;
+            issues.Clear();
+            Repaint();
+            return;
+        }
+
+        CatLevelJson.LevelResult result = CatLevelJson.ParseLevel(file.text, file.name, config);
+        if (!result.Succeeded)
+        {
+            EditorUtility.DisplayDialog("Cat Level Editor", $"'{file.name}' could not be opened as a level.\n\n{result.Describe()}", "OK");
+            return;
+        }
+
+        levelFile = file;
+        level = result.level;
+        grid = level.grid;
+        newLevelName = level.DisplayName;
+        issues = result.issues;
+        showIssues = issues.Count > 0;
+        selection.Clear();
+        BuildScene();
+    }
+
+    private void LoadGridFile(TextAsset file)
+    {
+        if (file == null) return;
+
+        if (!CatLevelJson.TryParseGrid(file.text, file.name, config, out GridData data, out string error))
+        {
+            EditorUtility.DisplayDialog("Cat Level Editor", $"'{file.name}' could not be opened as a grid.\n\n{error}", "OK");
+            return;
+        }
+
+        // Picking a board is how a new level starts; it does not reshape the one already open.
+        if (level != null &&
+            !EditorUtility.DisplayDialog("Cat Level Editor",
+                $"Rebuild '{level.DisplayName}' on board '{data.gridName}'?\n\n" +
+                "Cats and holes stay where they are, so anything now standing on a blocked cell will be flagged.",
+                "Rebuild", "Keep Current Board"))
+        {
+            gridFile = file;
+            return;
+        }
+
+        gridFile = file;
+        grid = data;
+        if (level != null)
+        {
+            level.grid = data.Clone();
+            BuildScene();
+        }
+        selection.Clear();
+        Repaint();
+    }
+
+    private void CreateLevel()
+    {
+        if (grid == null) return;
+
+        string safeName = string.IsNullOrWhiteSpace(newLevelName) ? "New Cat Level" : newLevelName.Trim();
+        level = new CatLevelData { levelName = safeName, grid = grid.Clone() };
+
+        TextAsset written = CatLevelFiles.WriteLevel(level, config, CatLevelFiles.UniquePath(CatLevelFiles.LevelFolder, safeName), out string error);
+        if (written == null)
+        {
+            EditorUtility.DisplayDialog("Cat Level Editor", $"The level file could not be created.\n\n{error}", "OK");
+            level = null;
+            return;
+        }
+
+        levelFile = written;
+        Selection.activeObject = written;
+        selection.Clear();
+        BuildScene();
+    }
+
+    private void SaveLevel()
+    {
+        if (level == null) { CreateLevel(); return; }
+        if (instance == null) { EditorUtility.DisplayDialog("Cat Level Editor", "Nothing is loaded in the scene to save.", "OK"); return; }
+
+        SnapContentToGrid();
+        CatLevelBuilder.Capture(instance, level);
+        if (grid != null) level.grid = grid.Clone();
+
+        string path = levelFile != null ? AssetDatabase.GetAssetPath(levelFile) : null;
+        TextAsset written = CatLevelFiles.WriteLevel(level, config, path, out string error);
+        if (written == null)
+        {
+            EditorUtility.DisplayDialog("Cat Level Editor", $"The level could not be saved.\n\n{error}", "OK");
+            return;
+        }
+
+        levelFile = written;
+        if (collection != null) collection.ClearCache();
+
+        issues = CatLevelValidator.Validate(level, Palette);
+        string summary = $"Saved '{level.DisplayName}' to {AssetDatabase.GetAssetPath(written)}: {level.cats.Count} cats, {level.holes.Count} holes.";
+        if (CatLevelValidator.HasErrors(issues))
+        {
+            showIssues = true;
+            Debug.LogError($"{summary}\nThe level has problems that will break it:\n{CatLevelValidator.Describe(issues)}", written);
+        }
+        else Debug.Log(summary, written);
+    }
+
+    /// <summary>Writes this level's board out on its own, so another level can be started from it.</summary>
+    private void SaveBoardAsGridFile()
+    {
+        if (grid == null) return;
+        if (string.IsNullOrEmpty(grid.gridName)) grid.gridName = level != null ? $"{level.DisplayName} Grid" : "New Grid";
+
+        TextAsset written = CatLevelFiles.WriteGrid(grid, CatLevelFiles.UniquePath(CatLevelFiles.GridFolder, grid.gridName), out string error);
+        if (written == null)
+        {
+            EditorUtility.DisplayDialog("Cat Level Editor", $"The board could not be written.\n\n{error}", "OK");
+            return;
+        }
+
+        gridFile = written;
+        Selection.activeObject = written;
+        Debug.Log($"Wrote board '{grid.gridName}' to {AssetDatabase.GetAssetPath(written)}.", written);
+    }
+    #endregion
+
     #region Scene operations
     private void RefreshSceneReferences()
     {
         if (controller == null) controller = FindFirstObjectByType<CatPuzzleController>();
         if (spawner == null) spawner = FindFirstObjectByType<LevelSpawner>();
         instance = spawner != null ? spawner.LevelRoot.GetComponentInChildren<CatLevelInstance>(true) : null;
-        if (instance != null && instance.Source != null)
+
+        // A domain reload drops the parsed level but keeps the file, so read it back rather than
+        // starting over - otherwise Save Level would file a second copy instead of updating this one.
+        if (level == null && levelFile != null)
         {
-            if (levelAsset == null) levelAsset = instance.Source;
-            if (gridAsset == null) gridAsset = instance.Source.grid;
+            CatLevelJson.LevelResult result = CatLevelJson.ParseLevel(levelFile.text, levelFile.name, config);
+            if (result.Succeeded)
+            {
+                level = result.level;
+                grid = level.grid;
+                newLevelName = level.DisplayName;
+                issues = result.issues;
+            }
         }
+
+        // Failing that, a level left in the scene carries its own copy of what it was built from,
+        // so editing can pick up where it left off even with no file to hand. Saving it files a new
+        // one, which is the honest outcome: nothing here knows where it came from.
+        if (level == null && instance != null && instance.Source != null)
+        {
+            level = instance.Source;
+            grid = level.grid;
+            newLevelName = level.DisplayName;
+        }
+
+        if (level == null && gridFile != null && grid == null &&
+            CatLevelJson.TryParseGrid(gridFile.text, gridFile.name, config, out GridData board, out _))
+            grid = board;
     }
 
     /// <summary>Builds the whole scene rig: rules, level ownership and spawning, wired together.</summary>
@@ -476,32 +691,16 @@ public sealed class CatLevelEditorWindow : EditorWindow
         MarkSceneDirty();
     }
 
-    private void CreateLevelAsset()
-    {
-        // Levels are filed automatically; the name field is the only decision.
-        CatPuzzleAssetCreator.EnsureFolder(CatPuzzleAssetCreator.LevelFolder);
-        string safeName = string.IsNullOrWhiteSpace(newLevelName) ? "New Cat Level" : newLevelName.Trim();
-        string path = AssetDatabase.GenerateUniqueAssetPath($"{CatPuzzleAssetCreator.LevelFolder}/{safeName}.asset");
-
-        levelAsset = CreateInstance<CatLevelData>();
-        levelAsset.levelName = System.IO.Path.GetFileNameWithoutExtension(path);
-        levelAsset.grid = gridAsset;
-        AssetDatabase.CreateAsset(levelAsset, path);
-        AssetDatabase.SaveAssets();
-        Selection.activeObject = levelAsset;
-        BuildScene();
-    }
-
     private void BuildScene()
     {
-        if (levelAsset == null || spawner == null) { EditorUtility.DisplayDialog("Cat Level Editor", "A level asset and a scene LevelSpawner are both needed.", "OK"); return; }
-        if (levelAsset.grid == null) levelAsset.grid = gridAsset;
-        if (levelAsset.grid == null) { EditorUtility.DisplayDialog("Cat Level Editor", "Assign a GridData asset to this level first.", "OK"); return; }
+        if (level == null || spawner == null) { EditorUtility.DisplayDialog("Cat Level Editor", "A level and a scene LevelSpawner are both needed.", "OK"); return; }
+        if (level.grid == null) level.grid = grid != null ? grid.Clone() : null;
+        if (level.grid == null) { EditorUtility.DisplayDialog("Cat Level Editor", "Pick a grid file for this level first.", "OK"); return; }
 
         ClearScene();
-        instance = CatLevelBuilder.Build(levelAsset, spawner.LevelRoot, config);
+        instance = CatLevelBuilder.Build(level, spawner.LevelRoot, config);
         if (instance != null && controller != null) controller.SetLevel(instance);
-        gridAsset = levelAsset.grid;
+        grid = level.grid;
         selection.Clear();
         MarkSceneDirty();
     }
@@ -514,28 +713,6 @@ public sealed class CatLevelEditorWindow : EditorWindow
         if (controller != null) controller.ClearLevel();
         instance = null;
         MarkSceneDirty();
-    }
-
-    private void SaveLevel()
-    {
-        if (levelAsset == null) { CreateLevelAsset(); return; }
-        if (instance == null) { EditorUtility.DisplayDialog("Cat Level Editor", "Nothing is loaded in the scene to save.", "OK"); return; }
-
-        Undo.RecordObject(levelAsset, "Save Cat Level");
-        SnapContentToGrid();
-        CatLevelBuilder.Capture(instance, levelAsset);
-        levelAsset.grid = gridAsset;
-        EditorUtility.SetDirty(levelAsset);
-        AssetDatabase.SaveAssets();
-
-        issues = CatLevelValidator.Validate(levelAsset, Palette);
-        string summary = $"Saved '{levelAsset.DisplayName}': {levelAsset.cats.Count} cats, {levelAsset.holes.Count} holes.";
-        if (CatLevelValidator.HasErrors(issues))
-        {
-            showIssues = true;
-            Debug.LogError($"{summary}\nThe level has problems that will break it:\n{CatLevelValidator.Describe(issues)}", levelAsset);
-        }
-        else Debug.Log(summary, levelAsset);
     }
 
     /// <summary>Re-snaps everything the designer dragged around back onto whole cells.</summary>
@@ -569,7 +746,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
     /// </summary>
     private void PlaceCat(Vector2Int cell, bool stackOnTop)
     {
-        if (!EnsureSceneLevel() || !gridAsset.IsPlayable(cell)) return;
+        if (!EnsureSceneLevel() || !grid.IsPlayable(cell)) return;
 
         // The instance keeps serialized lists of its content, so undo has to cover it too.
         Undo.RecordObject(instance, "Edit Cat Level");

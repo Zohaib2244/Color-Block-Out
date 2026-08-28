@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
     {
         if (levelData == null || levelData.Count == 0)
         {
-            Debug.LogError("No level collection assigned to GameManager.");
+            Debug.LogError("No level collection assigned to GameManager, or it holds no level files.");
             return;
         }
         if (spawner == null)
@@ -57,7 +57,11 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        CurrentLevel = levelData.Get(levelIndex);
+        // Levels are JSON files now, so this is where one is turned into something playable. The
+        // collection reports what went wrong, so a failure here just stops rather than half loading.
+        CurrentLevel = levelData.Get(levelIndex, spawner.Config);
+        if (CurrentLevel == null) return;
+
         spawner.Spawn(CurrentLevel);
         if (GameUIManager.Instance != null) GameUIManager.Instance.ShowScreen(ScreenType.GamePlay);
         onLevelLoaded?.Invoke();

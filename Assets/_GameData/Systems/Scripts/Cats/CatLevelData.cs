@@ -40,13 +40,19 @@ public sealed class CatHolePlacement
 }
 
 /// <summary>
-/// One playable level. The board shape comes from a shared <see cref="GridData"/>
-/// asset, so many levels can be authored on top of the same grid.
+/// One playable level: a board plus the cats and holes standing on it.
+///
+/// This is plain data, not an asset. Levels are authored in the web level editor and shipped as
+/// JSON files; <see cref="CatLevelJson"/> parses one into this, and <see cref="LevelData"/> holds
+/// the play order as a list of those files. The board travels inside the level rather than being
+/// referenced, so a level is a single self-contained file.
 /// </summary>
-[CreateAssetMenu(fileName = "New Cat Level", menuName = "Cat Puzzle/Level")]
-public sealed class CatLevelData : ScriptableObject
+[Serializable]
+public sealed class CatLevelData
 {
     public string levelName;
+
+    /// <summary>The board this level is played on. Owned by the level - see <see cref="GridData.Clone"/>.</summary>
     public GridData grid;
 
     [Header("Presentation")]
@@ -56,5 +62,33 @@ public sealed class CatLevelData : ScriptableObject
     public List<CatPlacement> cats = new List<CatPlacement>();
     public List<CatHolePlacement> holes = new List<CatHolePlacement>();
 
-    public string DisplayName => string.IsNullOrEmpty(levelName) ? name : levelName;
+    public string DisplayName => string.IsNullOrEmpty(levelName) ? "Untitled Level" : levelName;
+
+    /// <summary>A deep copy, so editing a loaded level never writes back into the one it came from.</summary>
+    public CatLevelData Clone()
+    {
+        CatLevelData copy = new CatLevelData
+        {
+            levelName = levelName,
+            grid = grid != null ? grid.Clone() : null,
+            levelTime = levelTime,
+            cats = new List<CatPlacement>(),
+            holes = new List<CatHolePlacement>()
+        };
+
+        if (cats != null)
+            foreach (CatPlacement cat in cats)
+                if (cat != null) copy.cats.Add(new CatPlacement { colorId = cat.colorId, cell = cat.cell });
+
+        if (holes != null)
+            foreach (CatHolePlacement hole in holes)
+                if (hole != null) copy.holes.Add(new CatHolePlacement
+                {
+                    colorId = hole.colorId,
+                    origin = hole.origin,
+                    offsets = new List<Vector2Int>(hole.offsets)
+                });
+
+        return copy;
+    }
 }

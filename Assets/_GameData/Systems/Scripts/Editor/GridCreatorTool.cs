@@ -5,22 +5,30 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// Authors the reusable board shapes. A grid is saved as a <see cref="GridData"/> asset
-/// and can back any number of levels; the meshes are rebuilt from that asset by
-/// <see cref="GridBuilder"/> whenever a level is loaded.
+/// Authors the reusable board shapes. A board is saved as a grid JSON file - the same format the
+/// web level editor exports - and the Cat Level Editor starts a level from one of these.
+///
+/// A level keeps its own copy of the board it was built on, exactly as the web tool's export does,
+/// so re-saving a board here does not reshape levels that were already made from it. Saving reports
+/// which of those levels no longer fit, so they can be rebuilt deliberately.
 /// </summary>
 public sealed class GridCreatorTool : EditorWindow
 {
     private const string PreviewName = "Grid Preview";
 
-    private CatPuzzleConfig config;
-    private GridData gridAsset;
-    private string gridName = "New Grid";
-    private int gridWidth = 10;
-    private int gridLength = 10;
-    private float cellSize = 0.57f;
-    private float catParentHeight = 0.178f;
-    private float holeParentHeight = 0.08f;
+    // Serialized so a domain reload does not quietly lose which file is open - saving after that
+    // would file a second copy of the board instead of updating this one.
+    [SerializeField] private CatPuzzleConfig config;
+    [SerializeField] private TextAsset gridFile;
+    [SerializeField] private string gridName = "New Grid";
+    [SerializeField] private int gridWidth = 10;
+    [SerializeField] private int gridLength = 10;
+    [SerializeField] private float cellSize = 0.57f;
+    [SerializeField] private float catParentHeight = 0.178f;
+    [SerializeField] private float holeParentHeight = 0.08f;
+
+    /// <summary>The painted layout, flattened. Unity cannot serialize a bool[,], so it travels as one.</summary>
+    [SerializeField] private bool[] savedCells;
 
     private bool[,] blockedCells;
     private Vector2 scroll;
@@ -41,13 +49,36 @@ public sealed class GridCreatorTool : EditorWindow
 
     private void OnEnable()
     {
+        bool fresh = savedCells == null || savedCells.Length != gridWidth * gridLength;
         if (config == null) config = CatPuzzleAssetCreator.FindConfig();
+        // Only seed the heights from the config on a genuinely new window; a reload keeps what was typed.
+        if (config != null && fresh)
+        {
+            catParentHeight = config.catParentHeight;
+            holeParentHeight = config.holeParentHeight;
+        }
+
         EnsureCells();
+        if (fresh) return;
+
+        for (int x = 0; x < gridWidth; x++)
+            for (int z = 0; z < gridLength; z++)
+                blockedCells[x, z] = savedCells[z * gridWidth + x];
+    }
+
+    /// <summary>Flattens the painted layout so it survives the domain reload a recompile brings.</summary>
+    private void OnDisable()
+    {
+        if (blockedCells == null) return;
+        savedCells = new bool[gridWidth * gridLength];
+        for (int x = 0; x < gridWidth; x++)
+            for (int z = 0; z < gridLength; z++)
+                savedCells[z * gridWidth + x] = blockedCells[x, z];
     }
 
     private void OnGUI()
     {
-        DrawAsset();
+        DrawFile();
         DrawSize();
         DrawPaintTools();
         DrawLayout();
@@ -55,20 +86,21 @@ public sealed class GridCreatorTool : EditorWindow
     }
 
     #region Sections
-    private void DrawAsset()
+    private void DrawFile()
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        EditorGUILayout.LabelField("Grid Asset", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Grid File", EditorStyles.boldLabel);
 
         config = (CatPuzzleConfig)EditorGUILayout.ObjectField("Puzzle Config", config, typeof(CatPuzzleConfig), false);
 
         EditorGUI.BeginChangeCheck();
-        gridAsset = (GridData)EditorGUILayout.ObjectField("Edit Existing Grid", gridAsset, typeof(GridData), false);
-        if (EditorGUI.EndChangeCheck() && gridAsset != null) LoadFromAsset(gridAsset);
+        gridFile = (TextAsset)EditorGUILayout.ObjectField("Edit Existing Grid", gridFile, typeof(TextAsset), false);
+        if (EditorGUI.EndChangeCheck() && gridFile != null) LoadFromFile(gridFile);
 
         gridName = EditorGUILayout.TextField("Grid Name", gridName);
-        EditorGUILayout.LabelField(" ", $"Saved to {CatPuzzleAssetCreator.GridFolder}", EditorStyles.miniLabel);
-        EditorGUILayout.HelpBox("One grid can back many levels. Draw the playable shape here, then build levels on it in the Cat Level Editor.", MessageType.None);
+        EditorGUILayout.LabelField(" ", $"Saved as JSON to {CatLevelFiles.GridFolder}", EditorStyles.miniLabel);
+        EditorGUILayout.HelpBox("Draw the playable shape here and save it. The Cat Level Editor starts a level from a grid file, " +
+                                "and the level then carries its own copy of the board.", MessageType.None);
         EditorGUILayout.EndVertical();
     }
 
@@ -88,7 +120,9 @@ public sealed class GridCreatorTool : EditorWindow
         EditorGUILayout.LabelField("Content Heights", EditorStyles.boldLabel);
         catParentHeight = EditorGUILayout.FloatField("Cats Parent Y", catParentHeight);
         holeParentHeight = EditorGUILayout.FloatField("Holes Parent Y", holeParentHeight);
-        EditorGUILayout.HelpBox("Local Y of the Cats and Holes parents created inside the grid. Saved with the grid, so every level built on it lines up.", MessageType.None);
+        EditorGUILayout.HelpBox("Local Y of the Cats and Holes parents created inside the grid. The web tool does not export these, " +
+                                "so a board drawn there takes the defaults on the puzzle config; a board saved here writes its own.",
+                                MessageType.None);
         EditorGUILayout.EndVertical();
     }
 
@@ -113,9 +147,9 @@ public sealed class GridCreatorTool : EditorWindow
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button(gridAsset != null ? "Save To Asset" : "Create Grid Asset", GUILayout.Height(30))) SaveAsset(false);
-        using (new EditorGUI.DisabledScope(gridAsset == null))
-            if (GUILayout.Button("Save As New", GUILayout.Height(30))) SaveAsset(true);
+        if (GUILayout.Button(gridFile != null ? "Save To File" : "Create Grid File", GUILayout.Height(30))) SaveFile(false);
+        using (new EditorGUI.DisabledScope(gridFile == null))
+            if (GUILayout.Button("Save As New", GUILayout.Height(30))) SaveFile(true);
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
@@ -204,8 +238,20 @@ public sealed class GridCreatorTool : EditorWindow
     }
     #endregion
 
-    #region Asset and preview
-    private void LoadFromAsset(GridData data)
+    #region File and preview
+    private void LoadFromFile(TextAsset file)
+    {
+        if (!CatLevelJson.TryParseGrid(file.text, file.name, config, out GridData data, out string error))
+        {
+            EditorUtility.DisplayDialog("Grid Creator", $"'{file.name}' is not a grid file that can be opened.\n\n{error}", "OK");
+            gridFile = null;
+            return;
+        }
+
+        AdoptGrid(data, string.IsNullOrEmpty(data.gridName) ? file.name : data.gridName);
+    }
+
+    private void AdoptGrid(GridData data, string name)
     {
         data.EnsureArrays();
         gridWidth = data.gridWidth;
@@ -213,7 +259,7 @@ public sealed class GridCreatorTool : EditorWindow
         cellSize = data.cellSize;
         catParentHeight = data.catParentHeight;
         holeParentHeight = data.holeParentHeight;
-        gridName = data.name;
+        gridName = name;
         blockedCells = new bool[gridWidth, gridLength];
         for (int x = 0; x < gridWidth; x++)
             for (int z = 0; z < gridLength; z++)
@@ -221,80 +267,77 @@ public sealed class GridCreatorTool : EditorWindow
         Repaint();
     }
 
-    private void SaveAsset(bool forceNew)
+    /// <summary>Builds the board as it is drawn, with the flood fill already applied.</summary>
+    private GridData BuildGridData()
     {
         bool[,] interior = FindInteriorCells();
-        GridData target = forceNew ? null : gridAsset;
-
-        if (target == null)
+        GridData data = new GridData(gridWidth, gridLength)
         {
-            // Grids are filed automatically; the name field is the only decision.
-            CatPuzzleAssetCreator.EnsureFolder(CatPuzzleAssetCreator.GridFolder);
-            string safeName = string.IsNullOrWhiteSpace(gridName) ? "New Grid" : gridName.Trim();
-            string path = AssetDatabase.GenerateUniqueAssetPath($"{CatPuzzleAssetCreator.GridFolder}/{safeName}.asset");
-            target = CreateInstance<GridData>();
-            AssetDatabase.CreateAsset(target, path);
-            gridName = System.IO.Path.GetFileNameWithoutExtension(path);
-        }
+            gridName = string.IsNullOrWhiteSpace(gridName) ? "New Grid" : gridName.Trim(),
+            cellSize = cellSize,
+            catParentHeight = catParentHeight,
+            holeParentHeight = holeParentHeight
+        };
 
-        Undo.RecordObject(target, "Save Grid");
-        target.Initialize(gridWidth, gridLength);
-        target.cellSize = cellSize;
-        target.catParentHeight = catParentHeight;
-        target.holeParentHeight = holeParentHeight;
         for (int x = 0; x < gridWidth; x++)
             for (int z = 0; z < gridLength; z++)
-                target.SetWall(x, z, blockedCells[x, z] || !interior[x, z]);
+                data.SetWall(x, z, blockedCells[x, z] || !interior[x, z]);
+        return data;
+    }
 
-        EditorUtility.SetDirty(target);
-        AssetDatabase.SaveAssets();
-        gridAsset = target;
-        Selection.activeObject = target;
-        Debug.Log($"Saved grid '{target.name}' ({gridWidth}x{gridLength}).", target);
-        ReportAffectedLevels(target);
+    private void SaveFile(bool forceNew)
+    {
+        GridData data = BuildGridData();
+        string path = forceNew || gridFile == null ? null : AssetDatabase.GetAssetPath(gridFile);
+
+        TextAsset written = CatLevelFiles.WriteGrid(data, path, out string error);
+        if (written == null)
+        {
+            EditorUtility.DisplayDialog("Grid Creator", $"The board could not be saved.\n\n{error}", "OK");
+            return;
+        }
+
+        gridFile = written;
+        gridName = data.gridName;
+        Selection.activeObject = written;
+        Debug.Log($"Saved grid '{data.gridName}' ({gridWidth}x{gridLength}) to {AssetDatabase.GetAssetPath(written)}.", written);
+        ReportStaleLevels(data);
     }
 
     /// <summary>
-    /// A grid backs many levels, so reshaping one can strand content that was authored on the old
-    /// shape. Re-check every level built on this grid and say which ones broke.
+    /// A level carries its own copy of the board, so re-saving one here leaves existing levels
+    /// alone. That is the safe behaviour, but it does mean a level can quietly fall out of step, so
+    /// every level file that names this board and no longer matches it is reported.
     /// </summary>
-    private void ReportAffectedLevels(GridData grid)
+    private void ReportStaleLevels(GridData grid)
     {
-        CatColorPalette palette = config != null ? config.palette : null;
-        List<string> broken = new List<string>();
+        List<string> stale = new List<string>();
 
-        foreach (string guid in AssetDatabase.FindAssets("t:CatLevelData"))
+        foreach (TextAsset file in CatLevelFiles.FindIn(CatLevelFiles.LevelFolder))
         {
-            CatLevelData level = AssetDatabase.LoadAssetAtPath<CatLevelData>(AssetDatabase.GUIDToAssetPath(guid));
-            if (level == null || level.grid != grid) continue;
+            if (!CatLevelJson.TryReadLevelDocument(file.text, out LevelJsonFormat.LevelDocument document, out _)) continue;
 
-            List<CatLevelValidator.Issue> issues = CatLevelValidator.Validate(level, palette);
-            if (CatLevelValidator.HasErrors(issues)) broken.Add($"• {level.DisplayName}\n{CatLevelValidator.Describe(issues)}");
+            string boardName = document.grid != null
+                ? (string.IsNullOrEmpty(document.grid.gridName) ? document.grid.id : document.grid.gridName)
+                : null;
+            if (string.IsNullOrEmpty(boardName) || boardName != grid.gridName) continue;
+
+            GridData embedded = CatLevelJson.GridFromSection(document.grid, config);
+            if (!grid.SameShapeAs(embedded)) stale.Add($"• {file.name}");
         }
 
-        if (broken.Count == 0) return;
-        string report = string.Join("\n", broken);
-        Debug.LogError($"Saving grid '{grid.name}' broke {broken.Count} level(s) built on it:\n{report}", grid);
-        EditorUtility.DisplayDialog("Grid Creator",
-            $"{broken.Count} level(s) built on this grid no longer fit it. Details are in the console.\n\nOpen each in the Cat Level Editor and fix the flagged cells.", "OK");
+        if (stale.Count == 0) return;
+        string report = string.Join("\n", stale);
+        Debug.LogWarning($"{stale.Count} level file(s) were built on an earlier version of grid '{grid.gridName}' and still carry it:\n{report}\n" +
+                         "Open each in the Cat Level Editor and rebuild it on the saved grid to bring it up to date.");
     }
 
     private void BuildPreview()
     {
         RemovePreview();
-        GridData data = CreateInstance<GridData>();
-        data.Initialize(gridWidth, gridLength);
-        data.cellSize = cellSize;
-        data.catParentHeight = catParentHeight;
-        data.holeParentHeight = holeParentHeight;
-        bool[,] interior = FindInteriorCells();
-        for (int x = 0; x < gridWidth; x++)
-            for (int z = 0; z < gridLength; z++)
-                data.SetWall(x, z, blockedCells[x, z] || !interior[x, z]);
-
         GameObject root = new GameObject(PreviewName);
         Undo.RegisterCreatedObjectUndo(root, "Grid Preview");
-        GridBuilder.Build(data, root.transform, config);
+        GridBuilder.Build(BuildGridData(), root.transform, config);
         preview = root.transform;
         Selection.activeGameObject = root;
         EditorSceneManager.MarkSceneDirty(root.scene);

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Spawns a <see cref="CatLevelData"/> asset into the scene and reads it back out again.
+/// Spawns a <see cref="CatLevelData"/> into the scene and reads it back out again.
 /// The editor tool and runtime level loading both go through here, so what a designer
 /// sees while authoring is exactly what ships.
 /// </summary>
@@ -14,16 +14,16 @@ public static class CatLevelBuilder
         if (level == null) return null;
         if (config == null)
         {
-            Debug.LogError($"No CatPuzzleConfig supplied, level '{level.name}' cannot be built. Assign one on the CatPuzzleController.");
+            Debug.LogError($"No CatPuzzleConfig supplied, level '{level.DisplayName}' cannot be built. Assign one on the LevelSpawner.");
             return null;
         }
         if (level.grid == null)
         {
-            Debug.LogError($"Level '{level.name}' has no GridData assigned.");
+            Debug.LogError($"Level '{level.DisplayName}' has no board, so it cannot be built.");
             return null;
         }
 
-        GameObject root = new GameObject(string.IsNullOrEmpty(level.levelName) ? level.name : level.levelName);
+        GameObject root = new GameObject(level.DisplayName);
         GridBuilder.RegisterCreated(root, "Build Cat Level");
         root.transform.SetParent(parent, false);
 
@@ -31,8 +31,8 @@ public static class CatLevelBuilder
         GridManager grid = GridBuilder.Build(level.grid, root.transform, config);
         instance.Initialize(level, grid, grid.CatParent, grid.HoleParent);
 
-        foreach (CatPlacement placement in level.cats) SpawnCat(placement, instance, config);
-        foreach (CatHolePlacement placement in level.holes) SpawnHole(placement, instance, config);
+        if (level.cats != null) foreach (CatPlacement placement in level.cats) SpawnCat(placement, instance, config);
+        if (level.holes != null) foreach (CatHolePlacement placement in level.holes) SpawnHole(placement, instance, config);
 
         instance.RefreshContents();
         RestackCats(instance.Cats, grid, config.catStackHeight);
@@ -119,7 +119,7 @@ public static class CatLevelBuilder
         }
     }
 
-    /// <summary>Writes the scene back into the level asset, including holes the designer dragged around.</summary>
+    /// <summary>Writes the scene back into a level, including holes the designer dragged around.</summary>
     public static void Capture(CatLevelInstance instance, CatLevelData target)
     {
         if (instance == null || target == null) return;
@@ -143,9 +143,7 @@ public static class CatLevelBuilder
             target.holes.Add(CatHoleBuilder.Capture(hole));
         }
 
-        if (instance.Source != null && instance.Source != target) target.grid = instance.Source.grid;
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(target);
-#endif
+        // The board is the level's own, so a capture that came from another level takes a copy.
+        if (target.grid == null && instance.Source != null && instance.Source.grid != null) target.grid = instance.Source.grid.Clone();
     }
 }

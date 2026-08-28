@@ -8,7 +8,6 @@ const CAT_TOOLS: { id: CatTool; label: string; note: string }[] = [
 ];
 
 const HOLE_TOOLS: { id: HoleTool; label: string; note: string }[] = [
-  { id: "hole-single", label: "Single", note: "one cell, one hole" },
   { id: "hole-shape", label: "Shape", note: "drag an outline, then commit it" },
   { id: "hole-preset", label: "Preset", note: "stamp a saved hole shape" },
 ];

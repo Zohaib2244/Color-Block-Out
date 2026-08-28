@@ -1,5 +1,5 @@
 export type CatTool = "cat" | "stack" | "gate";
-export type HoleTool = "hole-single" | "hole-shape" | "hole-preset";
+export type HoleTool = "hole-shape" | "hole-preset";
 export type ToolFamily = "cat" | "hole" | "select";
 export type Tool = CatTool | HoleTool | "select";
 

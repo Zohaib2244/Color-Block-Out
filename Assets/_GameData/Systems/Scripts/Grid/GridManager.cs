@@ -3,11 +3,20 @@ using UnityEngine;
 /// <summary>
 /// Grid services shared by the cat puzzle and its editor. The component sits on the
 /// object placed at grid cell (0,0), so world positions follow the transform and the
-/// same <see cref="GridData"/> asset can be reused by levels anywhere in the scene.
+/// same board can be reused by levels anywhere in the scene.
 /// </summary>
 public sealed class GridManager : MonoBehaviour
 {
-    [SerializeField] private GridData savedGridData;
+    /// <summary>
+    /// The board this grid was built from, kept as its own JSON so it survives a scene save and a
+    /// script recompile. See <see cref="CatLevelInstance.Source"/> for why a serialized
+    /// <see cref="GridData"/> field would not: Unity would rebuild it as a default 10x10 board
+    /// rather than leaving it null, and a grid with no board would look like an empty one.
+    /// </summary>
+    [SerializeField, HideInInspector] private string savedGridJson;
+
+    [System.NonSerialized] private GridData savedGridData;
+
     [SerializeField] private float gridSpacing = 0.57f;
     [SerializeField] private int gridWidth = 10;
     [SerializeField] private int gridLength = 10;
@@ -19,7 +28,15 @@ public sealed class GridManager : MonoBehaviour
     public Transform CatParent;
     public Transform HoleParent;
 
-    public GridData SavedGridData => savedGridData;
+    public GridData SavedGridData
+    {
+        get
+        {
+            if (savedGridData == null && !string.IsNullOrEmpty(savedGridJson)) savedGridData = JsonUtility.FromJson<GridData>(savedGridJson);
+            return savedGridData;
+        }
+    }
+
     public Vector3 GridStartPosition => transform.position;
 
     private bool[,] wallCells;
@@ -30,7 +47,7 @@ public sealed class GridManager : MonoBehaviour
         // saved into the scene and is coming back with the level already assembled.
         if (wallCells == null)
         {
-            if (savedGridData != null) LoadGridData();
+            if (SavedGridData != null) LoadGridData();
             else InitializeGridFromChildren();
         }
     }
@@ -112,56 +129,24 @@ public sealed class GridManager : MonoBehaviour
 
     public void LoadGridData()
     {
-        if (savedGridData == null) return;
-        savedGridData.EnsureArrays();
-        gridWidth = savedGridData.gridWidth;
-        gridLength = savedGridData.gridLength;
-        gridSpacing = savedGridData.cellSize;
+        GridData data = SavedGridData;
+        if (data == null) return;
+        data.EnsureArrays();
+        gridWidth = data.gridWidth;
+        gridLength = data.gridLength;
+        gridSpacing = data.cellSize;
         wallCells = null;
         EnsureArrays();
         for (int x = 0; x < gridWidth; x++)
             for (int z = 0; z < gridLength; z++)
-                wallCells[x, z] = savedGridData.IsWall(x, z);
+                wallCells[x, z] = data.IsWall(x, z);
     }
 
+    /// <summary>Adopts a board. The grid keeps its own copy, so the level it came from is never written through.</summary>
     public void ApplyGridData(GridData data)
     {
-        savedGridData = data;
+        savedGridData = data != null ? data.Clone() : null;
+        savedGridJson = savedGridData != null ? JsonUtility.ToJson(savedGridData) : null;
         LoadGridData();
     }
-
-#if UNITY_EDITOR
-    /// <summary>Writes the current wall layout to a new GridData asset and adopts it.</summary>
-    public GridData SaveGridDataToAsset(string assetName, string folder = "Assets/_GameData/Systems/Data/Grids")
-    {
-        EnsureArrays();
-        CreateFolderTree(folder);
-
-        GridData data = ScriptableObject.CreateInstance<GridData>();
-        data.Initialize(gridWidth, gridLength);
-        data.cellSize = gridSpacing;
-        for (int x = 0; x < gridWidth; x++)
-            for (int z = 0; z < gridLength; z++)
-                data.gridData.wallCells[data.GetIndex(x, z)] = wallCells[x, z];
-
-        UnityEditor.AssetDatabase.CreateAsset(data, UnityEditor.AssetDatabase.GenerateUniqueAssetPath($"{folder}/{assetName}.asset"));
-        savedGridData = data;
-        UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.AssetDatabase.SaveAssets();
-        return data;
-    }
-
-    private static void CreateFolderTree(string folder)
-    {
-        if (UnityEditor.AssetDatabase.IsValidFolder(folder)) return;
-        string[] parts = folder.Split('/');
-        string current = parts[0];
-        for (int i = 1; i < parts.Length; i++)
-        {
-            string next = $"{current}/{parts[i]}";
-            if (!UnityEditor.AssetDatabase.IsValidFolder(next)) UnityEditor.AssetDatabase.CreateFolder(current, parts[i]);
-            current = next;
-        }
-    }
-#endif
 }

@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Builds a level and hands it over. Everything about getting a <see cref="CatLevelData"/> asset
-/// into the scene lives here: the grid, the cats, the holes and their colours. Once it is standing
+/// Builds a level and hands it over. Everything about getting a <see cref="CatLevelData"/> into
+/// the scene lives here: the grid, the cats, the holes and their colours. Once it is standing
 /// up the finished <see cref="CatLevelInstance"/> goes to <see cref="CatPuzzleController"/> for the
 /// rules and to <see cref="LevelManager"/>, which owns it from then on.
 /// </summary>
@@ -41,7 +41,32 @@ public sealed class LevelSpawner : MonoBehaviour
         if (existing != null) HandOver(existing);
     }
 
-    /// <summary>Clears whatever is loaded and builds the given level asset in its place.</summary>
+    /// <summary>
+    /// Clears whatever is loaded and builds the level in the given file in its place. Levels ship as
+    /// JSON, so this is the usual way in; the parse uses this spawner's own config for the palette.
+    /// </summary>
+    public CatLevelInstance Spawn(TextAsset levelJson)
+    {
+        if (levelJson == null)
+        {
+            Debug.LogError("No level file to spawn.");
+            return null;
+        }
+
+        CatLevelJson.LevelResult result = CatLevelJson.ParseLevel(levelJson.text, levelJson.name, config);
+        if (!result.Succeeded)
+        {
+            Debug.LogError($"Level '{levelJson.name}' could not be loaded:\n{result.Describe()}", levelJson);
+            return null;
+        }
+
+        // Built even when it validates badly - see LevelData.Get for why that beats refusing it.
+        if (result.HasErrors) Debug.LogError($"Level '{levelJson.name}' has problems that will break it:\n{result.Describe()}", levelJson);
+        else if (result.issues.Count > 0) Debug.LogWarning($"Level '{levelJson.name}' loaded with warnings:\n{result.Describe()}", levelJson);
+        return Spawn(result.level);
+    }
+
+    /// <summary>Clears whatever is loaded and builds the given level in its place.</summary>
     public CatLevelInstance Spawn(CatLevelData level)
     {
         Despawn();

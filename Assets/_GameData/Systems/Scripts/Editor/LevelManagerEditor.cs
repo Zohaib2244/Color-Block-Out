@@ -25,7 +25,9 @@ public class LevelManagerEditor : Editor
             return;
         }
 
-        EditorGUILayout.ObjectField("Level Asset", level, typeof(CatLevelData), false);
+        // A level is plain data parsed from a JSON file now, so there is no asset to point at.
+        EditorGUILayout.LabelField("Level", level.DisplayName);
+        EditorGUILayout.LabelField("Contents", $"{level.cats.Count} cats, {level.holes.Count} holes, {level.levelTime}s");
         if (GUILayout.Button("Open Cat Level Editor", GUILayout.Height(24))) CatLevelEditorWindow.ShowWindow();
     }
 }
