@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MTR_Cat_Green
+  m_Name: MTR_Cat_Teal
   m_Shader: {fileID: 4800000, guid: 53c80648e4cf0d34996a3bc5529419cd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -39,7 +39,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 9ddee67d9c0b7ce438573cb35ecec654, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3d53de03259aedc499597b637eb92bac, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
