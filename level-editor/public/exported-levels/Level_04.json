@@ -1,0 +1,68 @@
+{
+  "formatVersion": 3,
+  "levelName": "Level_04",
+  "grid": {
+    "id": "Grid4x4_Preset",
+    "width": 4,
+    "length": 4,
+    "cellSize": 0.57,
+    "playableCells": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "cats": [
+    {
+      "color": "Green",
+      "x": 2,
+      "z": 3
+    },
+    {
+      "color": "Pink",
+      "x": 3,
+      "z": 3
+    }
+  ],
+  "holes": [
+    {
+      "id": "Level_04_hole_0",
+      "color": "Green",
+      "capacity": 1,
+      "cells": [
+        {
+          "x": 0,
+          "z": 3,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "Level_04_hole_1",
+      "color": "Pink",
+      "capacity": 1,
+      "cells": [
+        {
+          "x": 1,
+          "z": 3,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    }
+  ]
+}

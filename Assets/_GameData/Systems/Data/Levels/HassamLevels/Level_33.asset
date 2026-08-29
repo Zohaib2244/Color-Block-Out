@@ -12,70 +12,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37d9ba77988ef914797f097b4a69b4a5, type: 3}
   m_Name: Level_33
   m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
-  levelName: 
-  grid: {fileID: 11400000, guid: 2d522563abbbb5645815c7d268ca3d51, type: 2}
+  levelName: Level_33
+  grid: {fileID: 11400000, guid: 1ffeaa959c4d2d741a81fae1748d8d63, type: 2}
   levelTime: 95
   cats:
-  - colorId: 0
-    cell: {x: 0, y: 7}
-  - colorId: 0
-    cell: {x: 1, y: 6}
-  - colorId: 3
-    cell: {x: 4, y: 7}
-  - colorId: 3
-    cell: {x: 1, y: 3}
+  - colorId: 2
+    cell: {x: 1, y: 5}
+  - colorId: 2
+    cell: {x: 2, y: 5}
+  - colorId: 2
+    cell: {x: 2, y: 4}
   - colorId: 5
-    cell: {x: 0, y: 6}
-  - colorId: 2
-    cell: {x: 2, y: 6}
-  - colorId: 2
+    cell: {x: 3, y: 4}
+  - colorId: 5
+    cell: {x: 4, y: 4}
+  - colorId: 5
     cell: {x: 0, y: 3}
-  - colorId: 2
-    cell: {x: 1, y: 1}
-  - colorId: 2
-    cell: {x: 4, y: 0}
-  - colorId: 6
-    cell: {x: 0, y: 5}
-  - colorId: 7
-    cell: {x: 4, y: 3}
-  - colorId: 7
-    cell: {x: 1, y: 2}
-  - colorId: 8
-    cell: {x: 0, y: 2}
-  holes:
-  - colorId: 0
-    origin: {x: 2, y: 7}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: 1, y: 0}
-  - colorId: 3
-    origin: {x: 0, y: 1}
-    offsets:
-    - {x: 0, y: 0}
   - colorId: 5
-    origin: {x: 4, y: 4}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: 0, y: 1}
+    cell: {x: 1, y: 3}
+  - colorId: 3
+    cell: {x: 2, y: 3}
+  - colorId: 3
+    cell: {x: 3, y: 3}
+  - colorId: 3
+    cell: {x: 4, y: 3}
+  holes:
   - colorId: 2
-    origin: {x: 2, y: 1}
+    origin: {x: 0, y: 6}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
     - {x: 2, y: 0}
-    - {x: 1, y: 1}
-    - {x: 2, y: 1}
-  - colorId: 6
-    origin: {x: 2, y: 4}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: 0, y: 1}
-  - colorId: 7
-    origin: {x: 3, y: 6}
+  - colorId: 5
+    origin: {x: 3, y: 5}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
-  - colorId: 8
-    origin: {x: 1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+  - colorId: 3
+    origin: {x: 0, y: 4}
     offsets:
     - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}

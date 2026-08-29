@@ -12,78 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37d9ba77988ef914797f097b4a69b4a5, type: 3}
   m_Name: Level_25
   m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
-  levelName: 
-  grid: {fileID: 11400000, guid: 78fe05e4575c98943a89ce8df5fedbea, type: 2}
+  levelName: Level_25
+  grid: {fileID: 11400000, guid: de3200373662d594fadb44548474edeb, type: 2}
   levelTime: 80
   cats:
-  - colorId: 4
-    cell: {x: 0, y: 7}
-  - colorId: 4
-    cell: {x: 1, y: 7}
-  - colorId: 4
-    cell: {x: 0, y: 6}
-  - colorId: 0
-    cell: {x: 3, y: 6}
   - colorId: 6
-    cell: {x: 5, y: 7}
-  - colorId: 7
     cell: {x: 0, y: 5}
-  - colorId: 7
-    cell: {x: 0, y: 4}
-  - colorId: 7
-    cell: {x: 0, y: 3}
-  - colorId: 7
-    cell: {x: 0, y: 2}
-  - colorId: 1
-    cell: {x: 2, y: 5}
-  - colorId: 1
-    cell: {x: 3, y: 5}
-  - colorId: 1
-    cell: {x: 2, y: 4}
-  - colorId: 8
-    cell: {x: 2, y: 3}
-  - colorId: 8
-    cell: {x: 2, y: 2}
-  - colorId: 5
-    cell: {x: 1, y: 1}
-  - colorId: 3
-    cell: {x: 5, y: 0}
-  holes:
-  - colorId: 4
-    origin: {x: 2, y: 7}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: 1, y: 0}
-  - colorId: 0
-    origin: {x: 2, y: 6}
-    offsets:
-    - {x: 0, y: 0}
   - colorId: 6
-    origin: {x: 4, y: 7}
-    offsets:
-    - {x: 0, y: 0}
-  - colorId: 7
-    origin: {x: 4, y: 4}
+    cell: {x: 4, y: 5}
+  - colorId: 6
+    cell: {x: 3, y: 4}
+  - colorId: 6
+    cell: {x: 4, y: 4}
+  - colorId: 6
+    cell: {x: 0, y: 3}
+  - colorId: 4
+    cell: {x: 2, y: 3}
+  - colorId: 4
+    cell: {x: 3, y: 3}
+  holes:
+  - colorId: 6
+    origin: {x: 0, y: 3}
     offsets:
     - {x: 1, y: 0}
+    - {x: 0, y: 1}
     - {x: 1, y: 1}
-    - {x: 0, y: 2}
+    - {x: 2, y: 1}
     - {x: 1, y: 2}
-  - colorId: 1
-    origin: {x: 1, y: 4}
+  - colorId: 4
+    origin: {x: 2, y: 5}
     offsets:
     - {x: 0, y: 0}
-    - {x: 0, y: 1}
-  - colorId: 8
-    origin: {x: 1, y: 2}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: 0, y: 1}
-  - colorId: 5
-    origin: {x: 0, y: 1}
-    offsets:
-    - {x: 0, y: 0}
-  - colorId: 3
-    origin: {x: 4, y: 0}
-    offsets:
-    - {x: 0, y: 0}
+    - {x: 1, y: 0}

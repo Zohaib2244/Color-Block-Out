@@ -13,25 +13,31 @@ MonoBehaviour:
   m_Name: Level_02
   m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
   levelName: Level_02
-  grid: {fileID: 11400000, guid: 6f10984041e54b3c83eebf70db375c0d, type: 2}
+  grid: {fileID: 11400000, guid: 249074f298a25af478d3f1287a95d8d5, type: 2}
   levelTime: 50
   cats:
-  - colorId: 3
-    cell: {x: 5, y: 2}
-  - colorId: 3
-    cell: {x: 1, y: 1}
-  - colorId: 4
-    cell: {x: 4, y: 5}
-  - colorId: 4
-    cell: {x: 5, y: 5}
+  - colorId: 2
+    cell: {x: 1, y: 4}
+  - colorId: 2
+    cell: {x: 3, y: 4}
+  - colorId: 2
+    cell: {x: 4, y: 4}
+  - colorId: 8
+    cell: {x: 4, y: 3}
+  - colorId: 8
+    cell: {x: 0, y: 2}
+  - colorId: 8
+    cell: {x: 1, y: 2}
   holes:
-  - colorId: 3
-    origin: {x: 4, y: 2}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: -1, y: 0}
-  - colorId: 4
-    origin: {x: 3, y: 3}
+  - colorId: 2
+    origin: {x: 0, y: 3}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
+    - {x: 0, y: 1}
+  - colorId: 8
+    origin: {x: 2, y: 3}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}
