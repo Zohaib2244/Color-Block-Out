@@ -12,47 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37d9ba77988ef914797f097b4a69b4a5, type: 3}
   m_Name: Level_30
   m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
-  levelName: Level_30
-  grid: {fileID: 11400000, guid: 65934a890ba64ef2baf3eb06dfb1a2bd, type: 2}
+  levelName: 
+  grid: {fileID: 11400000, guid: 4a519ee79af3fbc4ca8fd92ca2c0ecd1, type: 2}
   levelTime: 80
   cats:
-  - colorId: 6
-    cell: {x: 4, y: 7}
-  - colorId: 6
-    cell: {x: 4, y: 7}
-  - colorId: 6
-    cell: {x: 4, y: 7}
-  - colorId: 7
-    cell: {x: 5, y: 6}
-  - colorId: 7
-    cell: {x: 5, y: 6}
-  - colorId: 7
-    cell: {x: 5, y: 6}
-  - colorId: 8
-    cell: {x: 5, y: 3}
-  - colorId: 8
-    cell: {x: 5, y: 3}
-  - colorId: 8
-    cell: {x: 5, y: 3}
-  - colorId: 8
-    cell: {x: 7, y: 5}
+  - colorId: 0
+    cell: {x: 2, y: 4}
+  - colorId: 0
+    cell: {x: 3, y: 4}
+  - colorId: 0
+    cell: {x: 4, y: 4}
+  - colorId: 0
+    cell: {x: 0, y: 0}
+  - colorId: 0
+    cell: {x: 1, y: 0}
+  - colorId: 0
+    cell: {x: 2, y: 0}
   holes:
-  - colorId: 6
-    origin: {x: 3, y: 7}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: -1, y: 0}
-    - {x: 0, y: -1}
-  - colorId: 7
-    origin: {x: 1, y: 4}
+  - colorId: 0
+    origin: {x: 1, y: 2}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
-    - {x: 0, y: 1}
-  - colorId: 8
-    origin: {x: 6, y: 6}
+  - colorId: 0
+    origin: {x: 2, y: 3}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
-    - {x: 0, y: 1}
-    - {x: 0, y: -1}

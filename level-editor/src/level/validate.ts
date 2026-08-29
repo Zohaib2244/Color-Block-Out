@@ -13,19 +13,21 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
   const isPlayable = (x: number, z: number) =>
     x >= 0 && x < grid.width && z >= 0 && z < grid.length && playable[gridIndex(grid.width, x, z)];
 
-  const occupied = new Map<string, string[]>();
-  const addOccupant = (x: number, z: number, label: string) => {
+  // Cats are allowed to stack — more than one cat may share a cell by design
+  // (see CatLevelValidator.ValidateCats in the Unity project) — so only holes
+  // (which must each move independently) and cat/hole overlaps are flagged.
+  const holeOccupants = new Map<string, string[]>();
+  const addHoleOccupant = (x: number, z: number, label: string) => {
     const key = cellKey(x, z);
-    const list = occupied.get(key) ?? [];
+    const list = holeOccupants.get(key) ?? [];
     list.push(label);
-    occupied.set(key, list);
+    holeOccupants.set(key, list);
   };
 
   for (const cat of level.cats) {
     if (!isPlayable(cat.x, cat.z)) {
       issues.push({ severity: "error", message: `${cat.color} cat at (${cat.x}, ${cat.z}) is not on a playable cell.` });
     }
-    addOccupant(cat.x, cat.z, `${cat.color} cat`);
   }
 
   for (const hole of level.holes) {
@@ -39,13 +41,24 @@ export function validateLevel(level: SavedLevel, grid: SavedGrid): ValidationIss
       if (!isPlayable(cell.x, cell.z)) {
         issues.push({ severity: "error", message: `${hole.color} hole covers (${cell.x}, ${cell.z}), which is not a playable cell.` });
       }
-      addOccupant(cell.x, cell.z, `${hole.color} hole`);
+      addHoleOccupant(cell.x, cell.z, `${hole.color} hole`);
     }
   }
 
-  for (const [key, labels] of occupied) {
+  for (const [key, labels] of holeOccupants) {
     if (labels.length > 1) {
-      issues.push({ severity: "error", message: `Multiple placements on cell (${key}): ${labels.join(", ")}.` });
+      issues.push({ severity: "error", message: `Multiple holes occupy cell (${key}): ${labels.join(", ")}; neither could move.` });
+    }
+  }
+
+  for (const cat of level.cats) {
+    const key = cellKey(cat.x, cat.z);
+    const holesHere = holeOccupants.get(key);
+    if (holesHere) {
+      issues.push({
+        severity: "error",
+        message: `${cat.color} cat at (${key}) starts under ${holesHere.join(", ")}.`,
+      });
     }
   }
 

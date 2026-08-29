@@ -1,0 +1,233 @@
+{
+  "formatVersion": 3,
+  "grid": {
+    "id": "Level_32_Grid",
+    "width": 6,
+    "length": 8,
+    "cellSize": 0.57,
+    "playableCells": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "cats": [
+    {
+      "color": "Yellow",
+      "x": 0,
+      "z": 7
+    },
+    {
+      "color": "Yellow",
+      "x": 1,
+      "z": 5
+    },
+    {
+      "color": "Yellow",
+      "x": 1,
+      "z": 4
+    },
+    {
+      "color": "White",
+      "x": 0,
+      "z": 6
+    },
+    {
+      "color": "White",
+      "x": 4,
+      "z": 6
+    },
+    {
+      "color": "White",
+      "x": 0,
+      "z": 4
+    },
+    {
+      "color": "White",
+      "x": 0,
+      "z": 1
+    },
+    {
+      "color": "Orange",
+      "x": 4,
+      "z": 7
+    },
+    {
+      "color": "Orange",
+      "x": 4,
+      "z": 5
+    },
+    {
+      "color": "Orange",
+      "x": 4,
+      "z": 4
+    },
+    {
+      "color": "Pink",
+      "x": 1,
+      "z": 6
+    },
+    {
+      "color": "Pink",
+      "x": 1,
+      "z": 1
+    },
+    {
+      "color": "Pink",
+      "x": 1,
+      "z": 0
+    },
+    {
+      "color": "Green",
+      "x": 3,
+      "z": 2
+    },
+    {
+      "color": "Green",
+      "x": 0,
+      "z": 0
+    }
+  ],
+  "holes": [
+    {
+      "id": "hole_0",
+      "color": "White",
+      "capacity": 4,
+      "cells": [
+        {
+          "x": 2,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 3,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "hole_1",
+      "color": "Orange",
+      "capacity": 3,
+      "cells": [
+        {
+          "x": 1,
+          "z": 7,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 7,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "hole_2",
+      "color": "Pink",
+      "capacity": 3,
+      "cells": [
+        {
+          "x": 0,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "hole_3",
+      "color": "Green",
+      "capacity": 2,
+      "cells": [
+        {
+          "x": 3,
+          "z": 1,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "hole_4",
+      "color": "Yellow",
+      "capacity": 3,
+      "cells": [
+        {
+          "x": 2,
+          "z": 2,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 0,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    }
+  ]
+}

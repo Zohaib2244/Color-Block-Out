@@ -8,6 +8,7 @@ import { listPresets } from "../level/holePresetLibrary";
 import { connectedComponents, holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
+import type { ValidationIssue } from "../level/validate";
 import { newId } from "../storage";
 import { useTheme } from "../theme";
 import { BLOCK_COLORS, HOLE_TYPES, cellKey } from "../types";
@@ -54,6 +55,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
   const [selectedHoleId, setSelectedHoleId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importSummary, setImportSummary] = useState<{ imported: number; failed: string[] } | null>(null);
   /** What the in-progress drag is doing, so a stroke never flip-flops a cell. */
   const dragActionRef = useRef<"add" | "remove">("add");
   const palette = getCanvasPalette(useTheme());
@@ -309,7 +311,7 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     downloadLevelJson(toLevelJson(draft, grid));
   }
 
-  async function handleImportFile(file: File) {
+  async function importOne(file: File): Promise<SavedLevel> {
     const text = await file.text();
     const json = parseLevelJson(text);
     const { grid: gridDraft, level: levelDraft } = fromLevelJson(json);
@@ -317,13 +319,71 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
     saveGrid(importedGrid);
     const importedLevel: SavedLevel = { ...levelDraft, id: newId(), gridId: importedGrid.id, updatedAt: Date.now() };
     saveLevel(importedLevel);
+    return importedLevel;
+  }
+
+  async function handleImportFiles(files: FileList) {
+    const jsonFiles = [...files].filter((f) => f.name.toLowerCase().endsWith(".json"));
+    let lastImported: SavedLevel | null = null;
+    const failures: string[] = [];
+    for (const file of jsonFiles) {
+      try {
+        lastImported = await importOne(file);
+      } catch (err) {
+        failures.push(`${file.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
     setGrids(listGrids());
     onGridsChanged?.();
     refreshLevels();
-    loadLevel(importedLevel);
+    if (lastImported) loadLevel(lastImported);
+    setImportSummary({ imported: jsonFiles.length - failures.length, failed: failures });
+  }
+
+  async function handleLoadBundledLevels() {
+    const failures: string[] = [];
+    let importedCount = 0;
+    let lastImported: SavedLevel | null = null;
+    try {
+      const manifestRes = await fetch("/exported-levels/manifest.json");
+      if (!manifestRes.ok) throw new Error(`manifest.json: ${manifestRes.status}`);
+      const manifest = (await manifestRes.json()) as { files: string[] };
+      for (const fileName of manifest.files) {
+        try {
+          const res = await fetch(`/exported-levels/${fileName}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const text = await res.text();
+          const json = parseLevelJson(text);
+          const { grid: gridDraft, level: levelDraft } = fromLevelJson(json);
+          const importedGrid: SavedGrid = { ...gridDraft, id: newId(), updatedAt: Date.now() };
+          saveGrid(importedGrid);
+          const importedLevel: SavedLevel = { ...levelDraft, id: newId(), gridId: importedGrid.id, updatedAt: Date.now() };
+          saveLevel(importedLevel);
+          lastImported = importedLevel;
+          importedCount++;
+        } catch (err) {
+          failures.push(`${fileName}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    } catch (err) {
+      failures.push(err instanceof Error ? err.message : String(err));
+    }
+    setGrids(listGrids());
+    onGridsChanged?.();
+    refreshLevels();
+    if (lastImported) loadLevel(lastImported);
+    setImportSummary({ imported: importedCount, failed: failures });
   }
 
   const totalCapacity = draft.holes.reduce((sum, h) => sum + h.capacity, 0);
+  const levelPlayability = useMemo(() => {
+    const map = new Map<string, ValidationIssue[]>();
+    for (const level of levels) {
+      const levelGrid = grids.find((g) => g.id === level.gridId);
+      map.set(level.id, levelGrid ? validateLevel(level, levelGrid) : [{ severity: "error", message: "Grid not found." }]);
+    }
+    return map;
+  }, [levels, grids]);
 
   return (
     <div className="screen">
@@ -332,19 +392,30 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
           <h2>Levels</h2>
         </div>
         <ul className="library-list">
-          {levels.map((level) => (
-            <li key={level.id} className={level.id === draft.id ? "active" : ""}>
-              <button className="library-item" onClick={() => loadLevel(level)}>
-                <span>{level.name}</span>
-                <span className="muted">
-                  {level.cats.length}c · {level.holes.length}h
-                </span>
-              </button>
-              <button className="danger-link" onClick={() => handleDeleteLevel(level.id)} title="Delete level">
-                ×
-              </button>
-            </li>
-          ))}
+          {levels.map((level) => {
+            const levelIssues = levelPlayability.get(level.id) ?? [];
+            const errorCount = levelIssues.filter((i) => i.severity === "error").length;
+            const status = errorCount > 0 ? `not playable — ${errorCount} error(s)` : "playable";
+            return (
+              <li key={level.id} className={level.id === draft.id ? "active" : ""}>
+                <button className="library-item" onClick={() => loadLevel(level)} title={status}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "0.4rem", minWidth: 0 }}>
+                    <span
+                      className={errorCount > 0 ? "status-dot bad" : "status-dot good"}
+                      aria-hidden="true"
+                    />
+                    <span>{level.name}</span>
+                  </span>
+                  <span className="muted">
+                    {level.cats.length}c · {level.holes.length}h
+                  </span>
+                </button>
+                <button className="danger-link" onClick={() => handleDeleteLevel(level.id)} title="Delete level">
+                  ×
+                </button>
+              </li>
+            );
+          })}
           {levels.length === 0 && <li className="muted empty">No saved levels yet.</li>}
         </ul>
         <div className="sidebar-footer">
@@ -352,14 +423,36 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
             ref={fileInputRef}
             type="file"
             accept="application/json"
+            multiple
             style={{ display: "none" }}
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleImportFile(file);
+              const { files } = e.target;
+              if (files && files.length > 0) void handleImportFiles(files);
               e.target.value = "";
             }}
           />
-          <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
+          <button onClick={() => fileInputRef.current?.click()}>Import JSON (one or many)</button>
+          <button onClick={() => void handleLoadBundledLevels()} title="Loads level-editor/public/exported-levels, written by Cat Puzzle > Export Levels To Web Editor in Unity">
+            Load Bundled Levels
+          </button>
+          {importSummary && (
+            <p className="hint">
+              Imported {importSummary.imported} level(s).
+              {importSummary.failed.length > 0 && (
+                <>
+                  {" "}
+                  {importSummary.failed.length} failed:
+                  <ul className="issues">
+                    {importSummary.failed.map((f, i) => (
+                      <li key={i} className="error">
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </p>
+          )}
         </div>
       </aside>
 
