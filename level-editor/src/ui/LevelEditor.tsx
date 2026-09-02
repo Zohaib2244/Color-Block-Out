@@ -13,7 +13,6 @@ import { listPresets } from "../level/holePresetLibrary";
 import { connectedComponents, holeCellIndex, makeHole, stampPreset } from "../level/holeShape";
 import { deleteLevel, listLevels, saveLevel } from "../level/levelLibrary";
 import { validateLevel } from "../level/validate";
-import type { ValidationIssue } from "../level/validate";
 import { newId } from "../storage";
 import { useTheme } from "../theme";
 import { BLOCK_COLORS, cellKey } from "../types";
@@ -580,7 +579,6 @@ export function LevelEditor({ gridsVersion, presetsVersion, onLevelsChanged, onG
             accept="application/json"
             multiple
             style={{ display: "none" }}
-            multiple
             onChange={(e) => {
               void handleImportFiles(e.target.files);
               e.target.value = "";
