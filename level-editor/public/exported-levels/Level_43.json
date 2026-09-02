@@ -1,0 +1,160 @@
+{
+  "formatVersion": 3,
+  "levelName": "Level_43",
+  "grid": {
+    "id": "Grid5x7_Preset",
+    "width": 5,
+    "length": 7,
+    "cellSize": 0.57,
+    "playableCells": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "cats": [
+    {
+      "color": "Purple",
+      "x": 3,
+      "z": 6
+    },
+    {
+      "color": "Purple",
+      "x": 4,
+      "z": 6
+    },
+    {
+      "color": "Purple",
+      "x": 3,
+      "z": 5
+    },
+    {
+      "color": "Purple",
+      "x": 4,
+      "z": 5
+    },
+    {
+      "color": "Red",
+      "x": 2,
+      "z": 4
+    },
+    {
+      "color": "Red",
+      "x": 3,
+      "z": 4
+    },
+    {
+      "color": "Red",
+      "x": 4,
+      "z": 4
+    },
+    {
+      "color": "Teal",
+      "x": 0,
+      "z": 3
+    }
+  ],
+  "holes": [
+    {
+      "id": "Level_43_hole_0",
+      "color": "Purple",
+      "capacity": 4,
+      "cells": [
+        {
+          "x": 0,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 0,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 0,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 1,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "Level_43_hole_1",
+      "color": "Red",
+      "capacity": 3,
+      "cells": [
+        {
+          "x": 1,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 1,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "Level_43_hole_2",
+      "color": "Teal",
+      "capacity": 1,
+      "cells": [
+        {
+          "x": 2,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    }
+  ]
+}

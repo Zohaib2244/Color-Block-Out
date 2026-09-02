@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37d9ba77988ef914797f097b4a69b4a5, type: 3}
+  m_Name: Level_51
+  m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
+  levelName: Level_51
+  grid: {fileID: 11400000, guid: 1ffeaa959c4d2d741a81fae1748d8d63, type: 2}
+  levelTime: 60
+  cats:
+  - colorId: 0
+    cell: {x: 4, y: 6}
+  - colorId: 0
+    cell: {x: 3, y: 5}
+  - colorId: 0
+    cell: {x: 4, y: 5}
+  - colorId: 0
+    cell: {x: 0, y: 4}
+  - colorId: 3
+    cell: {x: 1, y: 4}
+  - colorId: 3
+    cell: {x: 4, y: 4}
+  - colorId: 7
+    cell: {x: 0, y: 3}
+  - colorId: 7
+    cell: {x: 1, y: 3}
+  - colorId: 7
+    cell: {x: 2, y: 3}
+  holes:
+  - colorId: 0
+    origin: {x: 0, y: 5}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+  - colorId: 3
+    origin: {x: 2, y: 6}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+  - colorId: 7
+    origin: {x: 2, y: 4}
+    offsets:
+    - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}

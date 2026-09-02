@@ -280,6 +280,22 @@ input[type="checkbox"] {
   transform: none;
 }
 
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+}
+
+.status-dot.good {
+  background: var(--status-up);
+}
+
+.status-dot.bad {
+  background: var(--status-down);
+}
+
 .danger-link {
   background: transparent;
   border: none;

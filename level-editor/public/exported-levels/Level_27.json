@@ -1,0 +1,193 @@
+{
+  "formatVersion": 3,
+  "levelName": "Level_27",
+  "grid": {
+    "id": "Grid5x7_Preset",
+    "width": 5,
+    "length": 7,
+    "cellSize": 0.57,
+    "playableCells": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "cats": [
+    {
+      "color": "Red",
+      "x": 4,
+      "z": 6
+    },
+    {
+      "color": "Red",
+      "x": 0,
+      "z": 5
+    },
+    {
+      "color": "Red",
+      "x": 2,
+      "z": 5
+    },
+    {
+      "color": "Red",
+      "x": 4,
+      "z": 5
+    },
+    {
+      "color": "Blue",
+      "x": 0,
+      "z": 3
+    },
+    {
+      "color": "Blue",
+      "x": 1,
+      "z": 3
+    },
+    {
+      "color": "Blue",
+      "x": 2,
+      "z": 3
+    },
+    {
+      "color": "Blue",
+      "x": 3,
+      "z": 3
+    },
+    {
+      "color": "Pink",
+      "x": 4,
+      "z": 3
+    },
+    {
+      "color": "Pink",
+      "x": 0,
+      "z": 2
+    },
+    {
+      "color": "Pink",
+      "x": 1,
+      "z": 2
+    }
+  ],
+  "holes": [
+    {
+      "id": "Level_27_hole_0",
+      "color": "Red",
+      "capacity": 4,
+      "cells": [
+        {
+          "x": 0,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 1,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 1,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "Level_27_hole_1",
+      "color": "Blue",
+      "capacity": 4,
+      "cells": [
+        {
+          "x": 3,
+          "z": 6,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 3,
+          "z": 5,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 3,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 4,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    },
+    {
+      "id": "Level_27_hole_2",
+      "color": "Pink",
+      "capacity": 3,
+      "cells": [
+        {
+          "x": 0,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 1,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        },
+        {
+          "x": 2,
+          "z": 4,
+          "holeType": "Middle",
+          "rotationQuarterTurns": 0
+        }
+      ]
+    }
+  ]
+}

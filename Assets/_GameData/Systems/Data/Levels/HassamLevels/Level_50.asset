@@ -13,70 +13,46 @@ MonoBehaviour:
   m_Name: Level_50
   m_EditorClassIdentifier: Assembly-CSharp::CatLevelData
   levelName: Level_50
-  grid: {fileID: 11400000, guid: aea4dfa278764b309cee0f9b44528686, type: 2}
+  grid: {fileID: 11400000, guid: de3200373662d594fadb44548474edeb, type: 2}
   levelTime: 110
   cats:
   - colorId: 3
-    cell: {x: 4, y: 5}
+    cell: {x: 3, y: 4}
   - colorId: 3
-    cell: {x: 4, y: 5}
+    cell: {x: 4, y: 4}
   - colorId: 3
-    cell: {x: 4, y: 5}
+    cell: {x: 0, y: 3}
   - colorId: 3
-    cell: {x: 4, y: 5}
-  - colorId: 4
-    cell: {x: 7, y: 3}
-  - colorId: 4
-    cell: {x: 7, y: 3}
-  - colorId: 4
-    cell: {x: 7, y: 3}
-  - colorId: 4
-    cell: {x: 7, y: 3}
-  - colorId: 5
-    cell: {x: 1, y: 1}
-  - colorId: 5
-    cell: {x: 1, y: 1}
-  - colorId: 5
-    cell: {x: 1, y: 1}
-  - colorId: 5
-    cell: {x: 1, y: 1}
-  - colorId: 5
-    cell: {x: 9, y: 5}
-  - colorId: 6
-    cell: {x: 6, y: 8}
-  - colorId: 6
-    cell: {x: 6, y: 8}
-  - colorId: 6
-    cell: {x: 6, y: 8}
-  - colorId: 6
-    cell: {x: 6, y: 8}
+    cell: {x: 1, y: 3}
+  - colorId: 1
+    cell: {x: 4, y: 3}
+  - colorId: 1
+    cell: {x: 0, y: 2}
+  - colorId: 1
+    cell: {x: 1, y: 2}
+  - colorId: 7
+    cell: {x: 2, y: 2}
+  - colorId: 7
+    cell: {x: 3, y: 2}
+  - colorId: 7
+    cell: {x: 4, y: 2}
   holes:
   - colorId: 3
-    origin: {x: 9, y: 7}
-    offsets:
-    - {x: 0, y: 0}
-    - {x: -1, y: 0}
-    - {x: 0, y: 1}
-    - {x: 0, y: -1}
-  - colorId: 4
-    origin: {x: 1, y: 3}
+    origin: {x: 0, y: 4}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
     - {x: 0, y: 1}
-    - {x: 0, y: -1}
-  - colorId: 5
-    origin: {x: 9, y: 1}
+    - {x: 1, y: 1}
+  - colorId: 1
+    origin: {x: 2, y: 5}
     offsets:
     - {x: 0, y: 0}
-    - {x: -1, y: 0}
-    - {x: 0, y: 1}
-    - {x: -2, y: 0}
-    - {x: -1, y: 1}
-  - colorId: 6
-    origin: {x: 1, y: 8}
+    - {x: 1, y: 0}
+    - {x: 2, y: 0}
+  - colorId: 7
+    origin: {x: 2, y: 3}
     offsets:
     - {x: 0, y: 0}
     - {x: 1, y: 0}
     - {x: 0, y: 1}
-    - {x: 0, y: -1}
