@@ -92,7 +92,7 @@ public static class CatLevelJson
             holes = BuildHoles(document, colors, result.issues)
         };
 
-        WarnAboutGates(document, result.issues);
+        ApplyGates(document, colors, level, result.issues);
         result.level = level;
         result.issues.AddRange(CatLevelValidator.Validate(level, palette));
         return result;
@@ -544,19 +544,54 @@ public static class CatLevelJson
     }
 
     /// <summary>
-    /// Gates are authored in the web tool but have no Unity counterpart yet, so they are dropped on
-    /// load. Silently losing authored content would be worse than saying so plainly.
+    /// Gates are authored in the web tool but have no Unity counterpart yet. Until they do, a gate
+    /// becomes what it will still look like once they exist: its queued cats sitting on its cell as
+    /// an ordinary pile, with the boundary wall that would otherwise seal that edge left open (see
+    /// <see cref="GridData.WallOpening"/>). This is one way: re-exporting the level writes the pile
+    /// out as plain cats, so the gate itself does not survive a round trip.
     /// </summary>
-    private static void WarnAboutGates(LevelJsonFormat.LevelDocument document, List<CatLevelValidator.Issue> issues)
+    private static void ApplyGates(LevelJsonFormat.LevelDocument document, Dictionary<string, int> colors,
+        CatLevelData level, List<CatLevelValidator.Issue> issues)
     {
         if (document.gates == null || document.gates.Length == 0) return;
+        GridData grid = level.grid;
 
-        int queued = 0;
+        int gateNumber = 0;
+        int queuedCats = 0;
         foreach (LevelJsonFormat.GateEntry gate in document.gates)
-            if (gate != null && gate.cats != null) queued += gate.cats.Length;
+        {
+            gateNumber++;
+            if (gate == null) continue;
 
-        Warning(issues, $"The file has {document.gates.Length} gate(s) holding {queued} cat(s). Unity has no gate yet, " +
-                        "so they were not loaded and those cats are missing from this level.");
+            Vector2Int cell = new Vector2Int(gate.x, gate.z);
+            if (grid == null || !grid.IsWithinGrid(cell.x, cell.y) || !grid.IsPlayable(cell))
+            {
+                Warning(issues, $"Gate {gateNumber} sits at {cell}, which is not a playable cell, so it was skipped.");
+                continue;
+            }
+
+            if (!Enum.TryParse(gate.side, true, out Direction side))
+            {
+                Warning(issues, $"Gate {gateNumber} names an unknown side '{gate.side}' and was skipped.");
+                continue;
+            }
+            grid.wallOpenings.Add(new GridData.WallOpening { x = cell.x, z = cell.y, side = (int)side });
+
+            if (gate.cats == null) continue;
+
+            // The queue lists index 0 as the next cat out - the top of the pile - but a stack lists
+            // the last entry added as the top (see CatLevelBuilder.RestackCats), so it is walked back
+            // to front going in.
+            for (int i = gate.cats.Length - 1; i >= 0; i--)
+            {
+                level.cats.Add(new CatPlacement { colorId = colors[Key(gate.cats[i])], cell = cell });
+                queuedCats++;
+            }
+        }
+
+        if (queuedCats > 0)
+            Warning(issues, $"Unity has no gate yet: {queuedCats} queued cat(s) across {document.gates.Length} gate(s) were placed as " +
+                            "an ordinary pile on the gate's cell instead, with that edge's wall left open.");
     }
     #endregion
 
@@ -584,6 +619,12 @@ public static class CatLevelJson
         if (document.holes != null)
             foreach (LevelJsonFormat.HoleEntry hole in document.holes)
                 if (hole != null) yield return Key(hole.color);
+
+        if (document.gates != null)
+            foreach (LevelJsonFormat.GateEntry gate in document.gates)
+                if (gate != null && gate.cats != null)
+                    foreach (string catColor in gate.cats)
+                        yield return Key(catColor);
     }
 
     private static string Key(string name) => (name ?? string.Empty).Trim();

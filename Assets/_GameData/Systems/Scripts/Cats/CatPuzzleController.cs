@@ -218,8 +218,10 @@ public sealed class CatPuzzleController : MonoBehaviour
         }
         if (collectedCount == 0) return;
 
-        CatLevelBuilder.RestackCats(Cats, GridManager, StackHeight);
+        CatPuzzleConfig config = Config;
+        CatLevelBuilder.RestackCats(activeLevel, config);
         hole.RegisterCollected(collectedCount);
+        hole.GetComponent<CatHoleCountBadge>()?.Refresh(config != null ? config.palette : null);
 
         // A hole retires once it has taken one cat per cell it covers — a 1-cell hole is done
         // after a single catch, it does not wait for the whole colour to clear.
@@ -237,6 +239,7 @@ public sealed class CatPuzzleController : MonoBehaviour
             foreach (CatHole sameColor in Holes.Where(candidate => candidate != null && candidate.IsActive && candidate.ColorId == hole.ColorId).ToArray())
             {
                 sameColor.Complete();
+                sameColor.GetComponent<CatHoleCountBadge>()?.Hide();
                 HoleCompleted.Invoke(sameColor);
             }
         }
@@ -269,10 +272,8 @@ public sealed class CatPuzzleController : MonoBehaviour
         return true;
     }
 
-    /// <summary>Vertical gap between stacked cats, sourced from the level spawner's shared config.</summary>
-    private static float StackHeight => LevelSpawner.Instance != null && LevelSpawner.Instance.Config != null
-        ? LevelSpawner.Instance.Config.catStackHeight
-        : 0f;
+    /// <summary>The level spawner's shared config, for the stack height and count badge settings.</summary>
+    private static CatPuzzleConfig Config => LevelSpawner.Instance != null ? LevelSpawner.Instance.Config : null;
 
     /// <summary>
     /// Where the hole surface sits in the Cats parent's space, which cats fall through. Read off the

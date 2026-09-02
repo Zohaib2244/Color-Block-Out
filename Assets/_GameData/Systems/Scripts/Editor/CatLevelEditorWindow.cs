@@ -727,7 +727,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
             Undo.RecordObject(cat.transform, "Snap Cat");
             cat.SetGridPosition(instance.Grid.LocalPositionToCell(cat.transform.localPosition));
         }
-        CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
+        CatLevelBuilder.RestackCats(instance, config);
         foreach (CatHole hole in instance.Holes)
         {
             if (hole == null) continue;
@@ -764,7 +764,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         else
         {
             CatLevelBuilder.SpawnCat(new CatPlacement { colorId = selectedColorId, cell = cell }, instance, config);
-            CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
+            CatLevelBuilder.RestackCats(instance, config);
         }
         MarkSceneDirty();
     }
@@ -788,7 +788,7 @@ public sealed class CatLevelEditorWindow : EditorWindow
         {
             Undo.DestroyObjectImmediate(stack[stack.Count - 1].gameObject);
             instance.RefreshContents();
-            CatLevelBuilder.RestackCats(instance.Cats, instance.Grid, config.catStackHeight);
+            CatLevelBuilder.RestackCats(instance, config);
         }
         else if (MapHoles().TryGetValue(cell, out CatHole hole) && hole != null) Undo.DestroyObjectImmediate(hole.gameObject);
         selection.Remove(cell);

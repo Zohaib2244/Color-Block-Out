@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -32,6 +33,25 @@ public class GridData
     /// </summary>
     public SerializableGridData gridData;
 
+    /// <summary>One boundary edge <see cref="GridBuilder"/> should leave open rather than wall off.</summary>
+    [Serializable]
+    public struct WallOpening
+    {
+        public int x;
+        public int z;
+
+        /// <summary>Matches <c>GridBuilder.Side</c> / <see cref="Direction"/>: 0=North, 1=East, 2=South, 3=West.</summary>
+        public int side;
+    }
+
+    /// <summary>
+    /// Edges left un-walled even though they sit on the board boundary. Unity has no gate yet, so
+    /// this is how <see cref="CatLevelJson"/> opens a gap where one was authored - see
+    /// <c>CatLevelJson.ApplyGates</c>. Never written by the Grid Creator; only a level's own copy of
+    /// its board carries any.
+    /// </summary>
+    public List<WallOpening> wallOpenings = new List<WallOpening>();
+
     public GridData() { }
 
     public GridData(int width, int length) => Initialize(width, length);
@@ -46,7 +66,8 @@ public class GridData
             gridWidth = gridWidth,
             gridLength = gridLength,
             cellSize = cellSize,
-            gridData = new SerializableGridData { wallCells = (bool[])gridData.wallCells.Clone() }
+            gridData = new SerializableGridData { wallCells = (bool[])gridData.wallCells.Clone() },
+            wallOpenings = new List<WallOpening>(wallOpenings ?? new List<WallOpening>())
         };
         return copy;
     }

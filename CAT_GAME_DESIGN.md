@@ -7,6 +7,11 @@ one or more cells drawn by the designer. Drag a hole onto cats of its own colour
 cats are collected. When no cats of a colour remain, every hole of that colour disappears.
 The level is complete when all cats are collected.
 
+A cell holding two or more cats (a "pile") shows a badge with the stack count, at the bottom-left
+corner of whichever cat is currently on top; a hole shows one too, for how many more cats it can
+still swallow. Both come from the single `CatPuzzleConfig.countBadgePrefab` and are tinted to the
+pile/hole's colour — see `CatLevelBuilder.RefreshPileBadges` and `CatHoleCountBadge`.
+
 ## Architecture
 
 ### Data
@@ -26,8 +31,9 @@ A grid file is a starting point, not a live link: once a level is saved it carri
 a level is one self-contained file and reshaping the grid later leaves it alone. `CatLevelJson` is
 the only code that reads or writes the format, at runtime as well as in the editor. Colours travel
 as names ("Red") and are matched to palette ids by `CatColorEntry.displayName`, so the two sides have
-to agree on spelling. Gates can be authored on the web but have no Unity counterpart yet, so they are
-dropped on load with a warning rather than silently.
+to agree on spelling. Gates can be authored on the web but have no Unity counterpart yet, so each
+one's queued cats are placed as an ordinary pile on the gate's cell instead, with the wall on that
+edge left open and a warning noting the substitution (see `CatLevelJson.ApplyGates`).
 
 ### Scene
 

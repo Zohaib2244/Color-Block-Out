@@ -116,6 +116,18 @@ public static class GridBuilder
             }
         }
 
+        // Gate cells (see CatLevelJson.ApplyGates) open a specific edge even though it sits on the
+        // board boundary, so no wall - straight or corner - gets built there.
+        if (data.wallOpenings != null)
+        {
+            foreach (GridData.WallOpening opening in data.wallOpenings)
+            {
+                if (!data.IsWithinGrid(opening.x, opening.z)) continue;
+                if (opening.side < 0 || opening.side > 3) continue;
+                wallMap[opening.x, opening.z, opening.side] = false;
+            }
+        }
+
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < length; z++)

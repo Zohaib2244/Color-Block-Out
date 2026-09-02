@@ -25,6 +25,12 @@ public sealed class CatLevelInstance : MonoBehaviour
     [SerializeField] private List<CatPiece> cats = new List<CatPiece>();
     [SerializeField] private List<CatHole> holes = new List<CatHole>();
 
+    /// <summary>
+    /// One badge per pile cell, keyed by grid position. Not serialized: rebuilt as piles change (see
+    /// <see cref="CatLevelBuilder.RefreshPileBadges"/>), so it would only go stale across a reload.
+    /// </summary>
+    private readonly Dictionary<Vector2Int, CatCountBadge> pileBadges = new Dictionary<Vector2Int, CatCountBadge>();
+
     public CatLevelData Source
     {
         get
@@ -73,6 +79,20 @@ public sealed class CatLevelInstance : MonoBehaviour
 
     public void Forget(CatPiece cat) => cats.Remove(cat);
     public void Forget(CatHole hole) => holes.Remove(hole);
+
+    public IReadOnlyDictionary<Vector2Int, CatCountBadge> PileBadges => pileBadges;
+    public bool TryGetPileBadge(Vector2Int cell, out CatCountBadge badge) => pileBadges.TryGetValue(cell, out badge);
+    public void SetPileBadge(Vector2Int cell, CatCountBadge badge) => pileBadges[cell] = badge;
+
+    public void RemovePileBadge(Vector2Int cell)
+    {
+        if (pileBadges.TryGetValue(cell, out CatCountBadge badge) && badge != null)
+        {
+            if (Application.isPlaying) Destroy(badge.gameObject);
+            else DestroyImmediate(badge.gameObject);
+        }
+        pileBadges.Remove(cell);
+    }
 
     private void Awake()
     {

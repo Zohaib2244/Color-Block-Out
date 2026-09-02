@@ -50,5 +50,13 @@ public sealed class CatPuzzleConfig : ScriptableObject
     [Tooltip("Hole piece prefabs and the hole root prefab, which carries the exit and highlight settings.")]
     public CatHoleConfiguration holeConfiguration;
 
+    [Header("Count Badges")]
+    [Tooltip("Shown over a cat pile of two or more, and over a hole (how many more it can swallow). " +
+             "Needs a TMP_Text somewhere in its hierarchy. Left unassigned, no badges are built.")]
+    public GameObject countBadgePrefab;
+
+    [Tooltip("Extra local Y on top of the pile/hole height, so a badge clears the geometry it sits over.")]
+    public float countBadgeHeight = 0.05f;
+
     public CatColorPalette Palette => palette;
 }

@@ -91,7 +91,11 @@ and exported as JSON; Unity's own tools read and write that same format. `GridDa
 in play mode as well as in the editor. Two things it translates rather than copies: colour **names**
 in the file map to palette **ids** via `CatColorEntry.displayName` (an unknown name is a hard error,
 never a silent default), and a JSON hole's absolute cells become a `CatHolePlacement` origin plus
-offsets. Gates exist in v4 files but have no Unity counterpart, so they are dropped with a warning.
+offsets. Gates exist in v4 files but have no Unity counterpart yet: `CatLevelJson.ApplyGates` places
+each gate's queued cats as an ordinary pile on the gate's own cell and opens the wall on that edge
+(`GridData.wallOpenings`, cleared by `GridBuilder` when it builds the walls) rather than dropping
+them, with a warning noting the substitution. This is one-way — re-exporting the level writes the
+pile out as plain cats, so the gate itself does not survive a round trip.
 `LevelJsonFormat` holds the DTOs and must stay field-for-field in step with `level-editor/src/io/`.
 
 Old ScriptableObject content is recovered by `Cat Puzzle/Migrate Level Assets To JSON`, which reads

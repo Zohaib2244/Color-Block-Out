@@ -45,8 +45,31 @@ public static class CatHoleBuilder
         if (root.GetComponent<CatHoleDragHandler>() == null) root.AddComponent<CatHoleDragHandler>();
 
         BuildPieces(hole, grid, config);
+        BuildCountBadge(hole, grid, config);
         MoveTo(hole, placement.origin, grid);
         return hole;
+    }
+
+    /// <summary>
+    /// The hole root always sits on the shape's bounding-box corner - the lowest x and z among its
+    /// cells (see <see cref="Normalise"/>) - so a fixed offset off it reaches the bottom-left corner
+    /// for every convex shape (a single cell, a line, a rectangle, an L that keeps its own corner).
+    /// A concave shape whose corner cell isn't actually part of it (e.g. an L missing that corner)
+    /// is the one case this undershoots; anchoring on the true covered-cell minimum instead would
+    /// need rescanning offsets on every move, which a plain parent-space offset gets for free.
+    /// </summary>
+    private static void BuildCountBadge(CatHole hole, GridManager grid, CatPuzzleConfig config)
+    {
+        CatCountBadge badge = CatCountBadgeBuilder.Spawn(hole.transform, config);
+        if (badge == null) return;
+
+        float cellSize = grid != null ? grid.GetCellSize() : 1f;
+        float height = config != null ? config.countBadgeHeight : 0f;
+        badge.transform.localPosition = new Vector3(-cellSize * 0.5f, height, -cellSize * 0.5f);
+
+        CatHoleCountBadge companion = hole.GetComponent<CatHoleCountBadge>();
+        if (companion == null) companion = hole.gameObject.AddComponent<CatHoleCountBadge>();
+        companion.Initialize(badge, config != null ? config.palette : null);
     }
 
     /// <summary>Rebuilds the piece meshes and colliders for a hole that already exists.</summary>

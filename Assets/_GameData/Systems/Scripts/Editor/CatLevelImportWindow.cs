@@ -184,7 +184,7 @@ public sealed class CatLevelImportWindow : EditorWindow
         {
             entry.title = summary.levelName;
             entry.detail = $"{summary.width}x{summary.length} board · {summary.catCount} cats · {summary.holeCount} holes" +
-                           (summary.gateCount > 0 ? $" · {summary.gateCount} gates (dropped, Unity has no gate yet)" : string.Empty);
+                           (summary.gateCount > 0 ? $" · {summary.gateCount} gates (loaded as piles, Unity has no gate yet)" : string.Empty);
             entry.unknownColors.AddRange(summary.unknownColors);
             return entry;
         }
